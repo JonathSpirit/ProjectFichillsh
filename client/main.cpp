@@ -55,7 +55,7 @@ public:
                 fge::vulkan::Shader::Type::SHADER_VERTEX, fge::shader::ShaderInputTypes::SHADER_GLSL);
 
         //Load textures
-        fge::texture::gManager.loadFromFile("outdoors_tileset_1", "resources/tilesets/OutdoorsTileset.png");
+        fge::texture::gManager.loadFromFile("OutdoorsTileset", "resources/tilesets/OutdoorsTileset.png");
 
         // Creating objects
 
