@@ -1,0 +1,56 @@
+{
+   "type": "tileset",
+   "gridSize": {"x": 32, "y": 32},
+   "tileset": "human_1.png",
+   
+   "data": {
+       "idle_down": [
+           {
+               "ticks": 10,
+               "position": {"x": 3, "y": 0}
+           }
+       ],
+       "idle_down_right": [
+           {
+               "ticks": 10,
+               "position": {"x": 3, "y": 1}
+           }
+       ],
+       "idle_right": [
+           {
+               "ticks": 10,
+               "position": {"x": 3, "y": 2}
+           }
+       ],
+       "idle_up_right": [
+           {
+               "ticks": 10,
+               "position": {"x": 3, "y": 3}
+           }
+       ],
+       "idle_up": [
+           {
+               "ticks": 10,
+               "position": {"x": 3, "y": 4}
+           }
+       ],
+       "idle_up_left": [
+           {
+               "ticks": 10,
+               "position": {"x": 3, "y": 5}
+           }
+       ],
+       "idle_left": [
+           {
+               "ticks": 10,
+               "position": {"x": 3, "y": 6}
+           }
+       ],
+       "idle_down_left": [
+           {
+               "ticks": 10,
+               "position": {"x": 3, "y": 7}
+           }
+       ]
+   }
+}

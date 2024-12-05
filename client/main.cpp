@@ -1,5 +1,6 @@
 #include "FastEngine/fge_includes.hpp"
 #include "FastEngine/manager/reg_manager.hpp"
+#include "FastEngine/manager/anim_manager.hpp"
 #include "FastEngine/network/C_server.hpp"
 #include "FastEngine/graphic/C_renderWindow.hpp"
 #include "FastEngine/object/C_objTilemap.hpp"
@@ -36,12 +37,11 @@ public:
         fge::Clock returnPacketClock;
         fge::Clock mainClock;
 
-        //Init texture manager
+        //Init managers
         fge::texture::gManager.initialize();
-        //Init font manager
         fge::font::gManager.initialize();
-        //Init shader manager
         fge::shader::gManager.initialize();
+        fge::anim::gManager.initialize();
 
         //Load shaders
         fge::shader::gManager.loadFromFile(
@@ -57,7 +57,17 @@ public:
         //Load textures
         fge::texture::gManager.loadFromFile("OutdoorsTileset", "resources/tilesets/OutdoorsTileset.png");
 
+        //Load animations
+        fge::anim::gManager.loadFromFile("human_1", "resources/sprites/human_1.json");
+
+        //Prepare the view
+        auto view = renderWindow.getView();
+        view.zoom(0.1f);
+        view.setCenter({0,0});
+        renderWindow.setView(view);
+
         // Creating objects
+        auto* objPlayer = this->newObject<fge::ObjAnimation>(fge::Animation{"human_1", "idle_down"});
 
         // Create a tileMap object
         auto* objMap = this->newObject<fge::ObjTileMap>({FGE_SCENE_PLAN_BACK});
@@ -139,6 +149,7 @@ public:
         fge::texture::gManager.uninitialize();
         fge::font::gManager.uninitialize();
         fge::shader::gManager.uninitialize();
+        fge::anim::gManager.uninitialize();
     }
 };
 
