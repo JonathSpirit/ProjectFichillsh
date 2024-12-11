@@ -32,8 +32,8 @@ set(CMAKE_RELEASE_POSTFIX "${ARCH}")
 #Executable
 add_executable(${PROJECT_CLIENT})
 target_sources(${PROJECT_CLIENT} PRIVATE client/main.cpp)
+target_sources(${PROJECT_CLIENT} PRIVATE client/player.cpp client/player.hpp)
 target_link_libraries(${PROJECT_CLIENT} PRIVATE SDL2::SDL2main FastEngine::FastEngine)
-
 
 #Resources
 add_custom_command(TARGET ${PROJECT_CLIENT} PRE_BUILD
@@ -42,10 +42,6 @@ add_custom_command(TARGET ${PROJECT_CLIENT} PRE_BUILD
         ${CMAKE_CURRENT_BINARY_DIR}/resources
         BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/resources
         VERBATIM)
-
-#Dependencies
-#add_custom_target(copyAllDeps ALL)
-#add_dependencies(${PROJECT_CLIENT} copyAllDeps)
 
 if(WIN32)
     set(FGE_LINK_SERVER_LIBRARIES "FastEngine::FastEngineServer;SDL2::SDL2;SDL2_image::SDL2_image")
@@ -57,13 +53,4 @@ if(WIN32)
                 $<TARGET_FILE:${FGE_LINK_LIBRARY}>
                 $<TARGET_FILE_DIR:${PROJECT_CLIENT}>)
     endforeach()
-
-    #foreach (TARGET_NAME SpaceCreatorIndex SpaceCreatorServer)
-    #    foreach (FGE_LINK_LIBRARY ${FGE_LINK_SERVER_LIBRARIES})
-    #        add_custom_command(TARGET copyAllDeps PRE_BUILD
-    #                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    #                $<TARGET_FILE:${FGE_LINK_LIBRARY}>
-    #                $<TARGET_FILE_DIR:${TARGET_NAME}>)
-    #    endforeach()
-    #endforeach()
 endif()

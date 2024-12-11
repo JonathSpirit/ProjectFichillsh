@@ -8,6 +8,8 @@
 #include "FastEngine/C_clock.hpp"
 #include "SDL.h"
 
+#include "player.hpp"
+
 #include <iostream>
 #include <memory>
 
@@ -67,7 +69,7 @@ public:
         renderWindow.setView(view);
 
         // Creating objects
-        auto* objPlayer = this->newObject<fge::ObjAnimation>(fge::Animation{"human_1", "idle_down"});
+        auto* objPlayer = this->newObject<Player>();
 
         // Create a tileMap object
         auto* objMap = this->newObject<fge::ObjTileMap>({FGE_SCENE_PLAN_BACK});
