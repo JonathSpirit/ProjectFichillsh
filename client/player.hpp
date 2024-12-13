@@ -26,4 +26,5 @@ public:
 
 private:
     fge::ObjAnimation g_objAnim;
+    bool g_isUsingRod = false;
 };

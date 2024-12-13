@@ -7,44 +7,73 @@ FGE_OBJ_UPDATE_BODY(Player)
     //Player movement and animation
     std::string animationName;
 
-    fge::Vector2i moveDirection{0, 0};
-    if (event.isKeyPressed(SDLK_w))
+    if (!this->g_isUsingRod)
     {
-        moveDirection.y = -1;
-        animationName += "_up";
-    }
-    else if (event.isKeyPressed(SDLK_s))
-    {
-        moveDirection.y = 1;
-        animationName += "_down";
-    }
+        if (event.isKeyPressed(SDLK_SPACE))
+        {
+            this->g_isUsingRod = true;
+            this->g_objAnim.getAnimation().setLoop(false);
+            animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
+            animationName = animationName.substr(animationName.find('_'));
+            animationName = "rod" + animationName;
+            this->g_objAnim.getAnimation().setGroup(animationName);
+            this->g_objAnim.getAnimation().setFrame(0);
+            goto skip;
+        }
 
-    if (event.isKeyPressed(SDLK_a))
-    {
-        moveDirection.x = -1;
-        animationName += "_left";
-    }
-    else if (event.isKeyPressed(SDLK_d))
-    {
-        moveDirection.x = 1;
-        animationName += "_right";
-    }
+        fge::Vector2i moveDirection{0, 0};
+        if (event.isKeyPressed(SDLK_w))
+        {
+            moveDirection.y = -1;
+            animationName += "_up";
+        }
+        else if (event.isKeyPressed(SDLK_s))
+        {
+            moveDirection.y = 1;
+            animationName += "_down";
+        }
 
-    if (animationName.empty())
-    {//Idle
-        animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
-        animationName = animationName.substr(animationName.find('_'));
-        animationName = "idle" + animationName;
+        if (event.isKeyPressed(SDLK_a))
+        {
+            moveDirection.x = -1;
+            animationName += "_left";
+        }
+        else if (event.isKeyPressed(SDLK_d))
+        {
+            moveDirection.x = 1;
+            animationName += "_right";
+        }
+
+        if (animationName.empty())
+        {//Idle
+            animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
+            animationName = animationName.substr(animationName.find('_'));
+            animationName = "idle" + animationName;
+        }
+        else
+        {//Walking
+            animationName = "walk" + animationName;
+        }
+
+        auto const delta = fge::DurationToSecondFloat(deltaTime);
+        this->move(static_cast<fge::Vector2f>(moveDirection) * F_PLAYER_SPEED * delta);
+        this->g_objAnim.getAnimation().setGroup(animationName);
     }
     else
-    {//Walking
-        animationName = "walk" + animationName;
+    {
+        if (this->g_objAnim.getAnimation().getFrameIndex() < 2)
+        {
+            goto skip;
+        }
+
+        if (event.isKeyPressed(SDLK_w) || event.isKeyPressed(SDLK_s) || event.isKeyPressed(SDLK_a) || event.isKeyPressed(SDLK_d))
+        {
+            this->g_isUsingRod = false;
+            this->g_objAnim.getAnimation().setLoop(true);
+        }
     }
 
-    auto const delta = fge::DurationToSecondFloat(deltaTime);
-    this->move(static_cast<fge::Vector2f>(moveDirection) * F_PLAYER_SPEED * delta);
-
-    this->g_objAnim.getAnimation().setGroup(animationName);
+    skip:
 
     //Camera movement
     auto view = target.getView();
