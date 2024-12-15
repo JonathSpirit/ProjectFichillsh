@@ -2,8 +2,9 @@
 
 #include "FastEngine/object/C_object.hpp"
 #include "FastEngine/object/C_objAnim.hpp"
+#include "box2d/box2d.h"
 
-#define F_PLAYER_SPEED 60.0f
+#define F_PLAYER_SPEED 30.0f
 
 class Player : public fge::Object
 {
@@ -27,4 +28,5 @@ public:
 private:
     fge::ObjAnimation g_objAnim;
     bool g_isUsingRod = false;
+    b2BodyId g_bodyId;
 };

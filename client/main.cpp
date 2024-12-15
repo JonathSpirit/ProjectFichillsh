@@ -9,6 +9,7 @@
 #include "SDL.h"
 
 #include "player.hpp"
+#include "game.hpp"
 
 #include <iostream>
 #include <memory>
@@ -26,6 +27,9 @@ public:
     void run(fge::RenderWindow& renderWindow, fge::net::ClientSideNetUdp& network)
     {
         network._client.setCTOSLatency_ms(5);
+
+        gGameHandler = std::make_unique<GameHandler>();
+        gGameHandler->createWorld();
 
         fge::Event event;
         fge::GuiElementHandler guiElementHandler(event, renderWindow);
@@ -78,6 +82,35 @@ public:
 
         //Load the tileMap from a "tiled" json
         objMap->loadFromFile("resources/map_1/map_1.json", false);
+        for (auto const& layer : objMap->getTileLayers())
+        {
+            for (auto const& tile : layer->getTiles())
+            {
+                if (tile.getGid() == 0)
+                {
+                    continue;
+                }
+                auto const& tileset = tile.getTileSet();
+                auto const& collisions = tileset->getTile(tileset->getLocalId(tile.getGid()))->_collisionRects;
+                for (auto const& collision : collisions)
+                {
+                    auto collisionRect = static_cast<fge::RectFloat>(collision);
+                    collisionRect._x += tile.getPosition().x;
+                    collisionRect._y += tile.getPosition().y;
+                    gGameHandler->pushStaticCollider(collisionRect);
+                }
+            }
+        }
+        fge::RectFloat mapBounds{};
+        {
+            auto const tileLayer = objMap->getTileLayers().begin()->get();
+            mapBounds._width = 16.0f * tileLayer->getTiles().getSizeX(); ///TODO: Do not hardcode
+            mapBounds._height = 16.0f * tileLayer->getTiles().getSizeY();
+        }
+        //gGameHandler->pushStaticCollider({mapBounds.getPosition()-fge::Vector2f{16.0f, 0.0f}, {16.0f, 500.0f}});
+        //gGameHandler->pushStaticCollider({mapBounds.getPosition()-fge::Vector2f{0.0f, 16.0f}, {500.0f, 16.0f}});
+        //gGameHandler->pushStaticCollider({mapBounds.getPosition()+mapBounds.getSize()+fge::Vector2f{16.0f, 0.0f}, {16.0f, 500.0f}});
+        //gGameHandler->pushStaticCollider({mapBounds.getPosition()+mapBounds.getSize()+fge::Vector2f{0.0f, 16.0f}, {500.0f, 16.0f}});
 
         bool running = true;
         while (running)
@@ -92,6 +125,7 @@ public:
             //Update
             auto const deltaTime = std::chrono::duration_cast<fge::DeltaTime>(mainClock.restart());
             this->update(renderWindow, event, deltaTime);
+            gGameHandler->updateWorld();
 
             //Drawing
             auto imageIndex = renderWindow.prepareNextFrame(nullptr, FGE_RENDER_TIMEOUT_BLOCKING);
@@ -153,6 +187,8 @@ public:
         fge::font::gManager.uninitialize();
         fge::shader::gManager.uninitialize();
         fge::anim::gManager.uninitialize();
+
+        gGameHandler.reset();
     }
 };
 

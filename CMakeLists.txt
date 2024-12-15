@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.23)
 project(Fichillsh)
 
+include(FetchContent)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -17,14 +19,21 @@ endif()
 
 find_package(FastEngine REQUIRED)
 
-#Libs
-#add_subdirectory("libs/box2d" EXCLUDE_FROM_ALL)
+#Fetch box2d
+FetchContent_Declare(
+        box2d
+        GIT_REPOSITORY https://github.com/erincatto/box2d.git
+        GIT_TAG f0763aca7d4dfa8f1c19c2c4a9e66fa6e93ea32e
+)
 
-#Dependency
-#add_dependencies(FastEngine::FastEngineServer gTerminal)
+set(BOX2D_SAMPLES OFF)
+set(BOX2D_BENCHMARKS OFF)
+set(BOX2D_DOCS OFF)
+set(BOX2D_PROFILE OFF)
+set(BOX2D_VALIDATE ON)
+set(BOX2D_UNIT_TESTS OFF)
 
-#Libs
-#include_directories("libs/include")
+FetchContent_MakeAvailable(box2d)
 
 set(CMAKE_DEBUG_POSTFIX "${ARCH}_d")
 set(CMAKE_RELEASE_POSTFIX "${ARCH}")
@@ -33,7 +42,13 @@ set(CMAKE_RELEASE_POSTFIX "${ARCH}")
 add_executable(${PROJECT_CLIENT})
 target_sources(${PROJECT_CLIENT} PRIVATE client/main.cpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/player.cpp client/player.hpp)
+target_sources(${PROJECT_CLIENT} PRIVATE client/game.cpp client/game.hpp)
+
+#Dependencies
+add_dependencies(${PROJECT_CLIENT} box2d)
+
 target_link_libraries(${PROJECT_CLIENT} PRIVATE SDL2::SDL2main FastEngine::FastEngine)
+target_link_libraries(${PROJECT_CLIENT} PRIVATE box2d)
 
 #Resources
 add_custom_command(TARGET ${PROJECT_CLIENT} PRE_BUILD

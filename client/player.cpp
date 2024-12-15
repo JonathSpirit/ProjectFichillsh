@@ -1,4 +1,5 @@
 #include "player.hpp"
+#include "game.hpp"
 
 FGE_OBJ_UPDATE_BODY(Player)
 {
@@ -56,7 +57,11 @@ FGE_OBJ_UPDATE_BODY(Player)
         }
 
         auto const delta = fge::DurationToSecondFloat(deltaTime);
-        this->move(static_cast<fge::Vector2f>(moveDirection) * F_PLAYER_SPEED * delta);
+        b2Body_SetLinearVelocity(this->g_bodyId, {
+            static_cast<float>(moveDirection.x) * F_PLAYER_SPEED,
+            static_cast<float>(moveDirection.y) * F_PLAYER_SPEED
+        });
+        //this->move(static_cast<fge::Vector2f>(moveDirection) * F_PLAYER_SPEED * delta);
         this->g_objAnim.getAnimation().setGroup(animationName);
     }
     else
@@ -79,6 +84,10 @@ FGE_OBJ_UPDATE_BODY(Player)
     auto view = target.getView();
     view.setCenter(this->getPosition());
     target.setView(view);
+
+    //Update position
+    auto const bpos = b2Body_GetPosition(this->g_bodyId);
+    this->setPosition({bpos.x, bpos.y});
 }
 FGE_OBJ_DRAW_BODY(Player)
 {
@@ -94,6 +103,22 @@ void Player::first(fge::Scene &scene)
     this->g_objAnim.getAnimation().setLoop(true);
     auto const size = static_cast<fge::Vector2f>(this->g_objAnim.getTextureRect().getSize()) / 2.0f;
     this->g_objAnim.setOrigin(size);
+
+    //Create the player's body
+    b2BodyDef bodyDef = b2DefaultBodyDef();
+    bodyDef.position = {this->getPosition().x, this->getPosition().y};
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.fixedRotation = true;
+
+    this->g_bodyId = b2CreateBody(gGameHandler->getWorld(), &bodyDef);
+
+    b2Polygon dynamicBox = b2MakeBox(2.0f, 2.0f);
+
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+    shapeDef.density = 1.0f;
+    shapeDef.friction = 1.0f;
+
+    b2CreatePolygonShape(this->g_bodyId, &shapeDef, &dynamicBox);
 }
 
 void Player::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)
