@@ -17,6 +17,8 @@
 #define BAD_PACKET_LIMIT 10
 #define RETURN_PACKET_DELAYms 100
 
+#define SHOW_COLLIDERS 0
+
 std::atomic_bool gAskForFullUpdate = false;
 
 class Scene : public fge::Scene
@@ -75,10 +77,15 @@ public:
 
         // Creating objects
         auto* objPlayer = this->newObject<Player>();
+        objPlayer->boxMove({32.0f, 32.0f});
 
         // Create a tileMap object
         auto* objMap = this->newObject<fge::ObjTileMap>({FGE_SCENE_PLAN_BACK});
         objMap->_drawMode = fge::Object::DrawModes::DRAW_ALWAYS_DRAWN;
+
+#if SHOW_COLLIDERS
+        std::vector<fge::ObjRectangleShape*> objRectCollider;
+#endif
 
         //Load the tileMap from a "tiled" json
         objMap->loadFromFile("resources/map_1/map_1.json", false);
@@ -94,10 +101,22 @@ public:
                 auto const& collisions = tileset->getTile(tileset->getLocalId(tile.getGid()))->_collisionRects;
                 for (auto const& collision : collisions)
                 {
+                    constexpr float epsilon = 0.00f;
+
                     auto collisionRect = static_cast<fge::RectFloat>(collision);
-                    collisionRect._x += tile.getPosition().x;
-                    collisionRect._y += tile.getPosition().y;
+                    collisionRect._x += tile.getPosition().x - epsilon;
+                    collisionRect._y += tile.getPosition().y - epsilon;
+                    collisionRect._width += epsilon*2.0f;
+                    collisionRect._height += epsilon*2.0f;
+
                     gGameHandler->pushStaticCollider(collisionRect);
+#if SHOW_COLLIDERS
+                    objRectCollider.emplace_back(new fge::ObjRectangleShape(collisionRect.getSize()));
+                    objRectCollider.back()->setPosition(collisionRect.getPosition());
+                    objRectCollider.back()->setFillColor(fge::SetAlpha(fge::Color::Red, 100));
+                    objRectCollider.back()->setOutlineColor(fge::Color::Black);
+                    objRectCollider.back()->setOutlineThickness(1.0f);
+#endif
                 }
             }
         }
@@ -107,10 +126,27 @@ public:
             mapBounds._width = 16.0f * tileLayer->getTiles().getSizeX(); ///TODO: Do not hardcode
             mapBounds._height = 16.0f * tileLayer->getTiles().getSizeY();
         }
-        //gGameHandler->pushStaticCollider({mapBounds.getPosition()-fge::Vector2f{16.0f, 0.0f}, {16.0f, 500.0f}});
-        //gGameHandler->pushStaticCollider({mapBounds.getPosition()-fge::Vector2f{0.0f, 16.0f}, {500.0f, 16.0f}});
-        //gGameHandler->pushStaticCollider({mapBounds.getPosition()+mapBounds.getSize()+fge::Vector2f{16.0f, 0.0f}, {16.0f, 500.0f}});
-        //gGameHandler->pushStaticCollider({mapBounds.getPosition()+mapBounds.getSize()+fge::Vector2f{0.0f, 16.0f}, {500.0f, 16.0f}});
+
+        //Wall colliders
+        gGameHandler->pushStaticCollider(
+            {mapBounds.getPosition()-fge::Vector2f{16.0f, 0.0f},
+                {16.0f, 500.0f}}); //Left
+        gGameHandler->pushStaticCollider(
+            {mapBounds.getPosition()-fge::Vector2f{0.0f, 16.0f},
+                {500.0f, 16.0f}}); //Top
+        gGameHandler->pushStaticCollider(
+            {{mapBounds.getPosition().x+mapBounds._width, mapBounds.getPosition().y},
+                {16.0f, 500.0f}}); //Right
+        gGameHandler->pushStaticCollider(
+            {{mapBounds.getPosition().x, mapBounds.getPosition().y+mapBounds._height},
+                {500.0f, 16.0f}}); //Bottom
+
+#if SHOW_COLLIDERS
+        for (auto const& obj : objRectCollider)
+        {
+            this->newObject(FGE_NEWOBJECT_PTR(obj), FGE_SCENE_PLAN_TOP);
+        }
+#endif
 
         bool running = true;
         while (running)

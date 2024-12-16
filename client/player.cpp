@@ -112,7 +112,7 @@ void Player::first(fge::Scene &scene)
 
     this->g_bodyId = b2CreateBody(gGameHandler->getWorld(), &bodyDef);
 
-    b2Polygon dynamicBox = b2MakeBox(2.0f, 2.0f);
+    b2Polygon dynamicBox = b2MakeRoundedBox(2.0f, 2.0f, 2.0f);
 
     b2ShapeDef shapeDef = b2DefaultShapeDef();
     shapeDef.density = 1.0f;
@@ -141,4 +141,12 @@ fge::RectFloat Player::getGlobalBounds() const
 fge::RectFloat Player::getLocalBounds() const
 {
     return this->g_objAnim.getLocalBounds();
+}
+
+void Player::boxMove(fge::Vector2f const& move)
+{
+    b2Body_SetTransform(this->g_bodyId,
+        {this->getPosition().x + move.x, this->getPosition().y + move.y},
+        b2MakeRot(0.0f));
+    this->move(move);
 }

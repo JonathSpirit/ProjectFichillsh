@@ -25,7 +25,7 @@ void GameHandler::pushStaticCollider(fge::RectFloat const& rect)
 
     b2BodyId bodyId = b2CreateBody(this->g_bworld, &groundBodyDef);
 
-    b2Polygon groundBox = b2MakeBox(rect._height/2.0f, rect._width/2.0f);
+    b2Polygon groundBox = b2MakeBox(rect._width/2.0f, rect._height/2.0f);
 
     b2ShapeDef groundShapeDef = b2DefaultShapeDef();
     b2CreatePolygonShape(bodyId, &groundShapeDef, &groundBox);

@@ -25,6 +25,8 @@ public:
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
 
+    void boxMove(fge::Vector2f const& move);
+
 private:
     fge::ObjAnimation g_objAnim;
     bool g_isUsingRod = false;
