@@ -1,6 +1,84 @@
 #include "player.hpp"
 #include "game.hpp"
 
+//FishBait
+
+FishBait::FishBait(fge::Vector2i const& throwDirection, fge::Vector2f const& position) :
+        g_throwDirection(throwDirection),
+        g_startPosition(position)
+{
+    this->setPosition(position);
+}
+
+FGE_OBJ_UPDATE_BODY(FishBait)
+{
+    switch (this->g_state)
+    {
+    case States::THROWING:
+    {
+        auto const delta = fge::DurationToSecondFloat(deltaTime);
+        this->g_time += delta;
+        auto sinusValue = std::sin(this->g_time * F_BAIT_SPEED);
+
+        //y = sin(t * speed)
+        //t = asin(y) / speed
+        //t = asin(1) / speed
+        //t = PI/(2*speed)
+        if (this->g_time >= static_cast<float>(FGE_MATH_PI)/(2.0f * F_BAIT_SPEED))
+        {
+            this->g_state = States::WAITING;
+            sinusValue = 1.0f;
+        }
+
+        auto const newPosition = this->g_startPosition + static_cast<fge::Vector2f>(this->g_throwDirection) * F_BAIT_THROW_LENGTH * sinusValue;
+        this->setPosition(newPosition);
+    }
+        break;
+    case States::WAITING:
+        break;
+    }
+}
+
+FGE_OBJ_DRAW_BODY(FishBait)
+{
+    auto copyStates = states.copy();
+    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+
+    this->g_objSprite.draw(target, copyStates);
+}
+
+void FishBait::first(fge::Scene &scene)
+{
+    this->g_objSprite.setTexture("fishBait_1");
+    this->g_objSprite.centerOriginFromLocalBounds();
+    this->g_startPosition = this->getPosition();
+}
+
+void FishBait::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)
+{
+}
+
+const char * FishBait::getClassName() const
+{
+    return "FISH_BAIT";
+}
+
+const char * FishBait::getReadableClassName() const
+{
+    return "fish bait";
+}
+
+fge::RectFloat FishBait::getGlobalBounds() const
+{
+    return this->getTransform() * this->g_objSprite.getGlobalBounds();
+}
+fge::RectFloat FishBait::getLocalBounds() const
+{
+    return this->g_objSprite.getLocalBounds();
+}
+
+//Player
+
 FGE_OBJ_UPDATE_BODY(Player)
 {
     FGE_OBJ_UPDATE_CALL(this->g_objAnim);
@@ -19,6 +97,7 @@ FGE_OBJ_UPDATE_BODY(Player)
             animationName = "rod" + animationName;
             this->g_objAnim.getAnimation().setGroup(animationName);
             this->g_objAnim.getAnimation().setFrame(0);
+            scene.newObject<FishBait>(fge::Vector2i{1,0}, this->getPosition());
             goto skip;
         }
 
