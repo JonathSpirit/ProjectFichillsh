@@ -29,6 +29,8 @@ public:
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
 
+    [[nodiscard]] bool isWaiting() const;
+
 private:
     fge::ObjSprite g_objSprite;
     fge::Vector2i g_throwDirection;
@@ -61,9 +63,18 @@ public:
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
 
     void boxMove(fge::Vector2f const& move);
+    [[nodiscard]] bool isFishing() const;
 
 private:
     fge::ObjAnimation g_objAnim;
-    bool g_isUsingRod = false;
     b2BodyId g_bodyId;
+    enum class States
+    {
+        WALKING,
+        IDLE,
+        THROWING,
+        FISHING
+    } g_state = States::WALKING;
+    fge::ObjectDataWeak g_fishBait;
+    fge::Vector2i g_direction{0, 1};
 };

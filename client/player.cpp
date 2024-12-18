@@ -77,28 +77,38 @@ fge::RectFloat FishBait::getLocalBounds() const
     return this->g_objSprite.getLocalBounds();
 }
 
+bool FishBait::isWaiting() const
+{
+    return this->g_state == States::WAITING;
+}
+
 //Player
 
 FGE_OBJ_UPDATE_BODY(Player)
 {
     FGE_OBJ_UPDATE_CALL(this->g_objAnim);
 
-    //Player movement and animation
-    std::string animationName;
-
-    if (!this->g_isUsingRod)
+    switch (this->g_state)
     {
+    case States::WALKING: {
+        //Player movement and animation
+        std::string animationName;
+
         if (event.isKeyPressed(SDLK_SPACE))
         {
-            this->g_isUsingRod = true;
-            this->g_objAnim.getAnimation().setLoop(false);
             animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
             animationName = animationName.substr(animationName.find('_'));
             animationName = "rod" + animationName;
+
             this->g_objAnim.getAnimation().setGroup(animationName);
             this->g_objAnim.getAnimation().setFrame(0);
-            scene.newObject<FishBait>(fge::Vector2i{1,0}, this->getPosition());
-            goto skip;
+            this->g_fishBait = scene.newObject(FGE_NEWOBJECT(FishBait, this->g_direction, this->getPosition()));
+
+            b2Body_SetLinearVelocity(this->g_bodyId, {0.0f, 0.0f});
+
+            this->g_state = States::THROWING;
+            this->g_objAnim.getAnimation().setLoop(false);
+            break;
         }
 
         fge::Vector2i moveDirection{0, 0};
@@ -133,31 +143,44 @@ FGE_OBJ_UPDATE_BODY(Player)
         else
         {//Walking
             animationName = "walk" + animationName;
+            this->g_direction = moveDirection;
         }
 
-        auto const delta = fge::DurationToSecondFloat(deltaTime);
         b2Body_SetLinearVelocity(this->g_bodyId, {
             static_cast<float>(moveDirection.x) * F_PLAYER_SPEED,
             static_cast<float>(moveDirection.y) * F_PLAYER_SPEED
         });
-        //this->move(static_cast<fge::Vector2f>(moveDirection) * F_PLAYER_SPEED * delta);
         this->g_objAnim.getAnimation().setGroup(animationName);
-    }
-    else
-    {
-        if (this->g_objAnim.getAnimation().getFrameIndex() < 2)
+        break;
+    } case States::IDLE:
+        break;
+    case States::THROWING:
+        if (auto fishBait = this->g_fishBait.lock())
         {
-            goto skip;
+            if (fishBait->getObject<FishBait>()->isWaiting())
+            {
+                this->g_state = States::FISHING;
+            }
         }
-
-        if (event.isKeyPressed(SDLK_w) || event.isKeyPressed(SDLK_s) || event.isKeyPressed(SDLK_a) || event.isKeyPressed(SDLK_d))
+        else
         {
-            this->g_isUsingRod = false;
+            this->g_state = States::WALKING;
             this->g_objAnim.getAnimation().setLoop(true);
         }
-    }
+        break;
+    case States::FISHING:
+        if (event.isKeyPressed(SDLK_w) || event.isKeyPressed(SDLK_s) || event.isKeyPressed(SDLK_a) || event.isKeyPressed(SDLK_d))
+        {
+            if (auto fishBait = this->g_fishBait.lock())
+            {
+                scene.delObject(fishBait->getSid());
+            }
 
-    skip:
+            this->g_state = States::WALKING;
+            this->g_objAnim.getAnimation().setLoop(true);
+        }
+        break;
+    }
 
     //Camera movement
     auto view = target.getView();
@@ -228,4 +251,8 @@ void Player::boxMove(fge::Vector2f const& move)
         {this->getPosition().x + move.x, this->getPosition().y + move.y},
         b2MakeRot(0.0f));
     this->move(move);
+}
+bool Player::isFishing() const
+{
+    return this->g_state == States::FISHING;
 }

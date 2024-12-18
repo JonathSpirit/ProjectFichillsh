@@ -30,7 +30,7 @@ public:
     {
         network._client.setCTOSLatency_ms(5);
 
-        gGameHandler = std::make_unique<GameHandler>();
+        gGameHandler = std::make_unique<GameHandler>(*this);
         gGameHandler->createWorld();
 
         fge::Event event;
@@ -161,7 +161,7 @@ public:
             //Update
             auto const deltaTime = std::chrono::duration_cast<fge::DeltaTime>(mainClock.restart());
             this->update(renderWindow, event, deltaTime);
-            gGameHandler->updateWorld();
+            gGameHandler->update(deltaTime);
 
             //Drawing
             auto imageIndex = renderWindow.prepareNextFrame(nullptr, FGE_RENDER_TIMEOUT_BLOCKING);

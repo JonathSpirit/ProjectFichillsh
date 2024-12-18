@@ -1,5 +1,13 @@
 #include "game.hpp"
 
+#include "player.hpp"
+#include "FastEngine/C_random.hpp"
+
+GameHandler::GameHandler(fge::Scene& scene) :
+    g_scene(&scene)
+{
+    this->g_fishCountDown = fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
+}
 GameHandler::~GameHandler()
 {
     b2DestroyWorld(this->g_bworld);
@@ -36,6 +44,43 @@ void GameHandler::updateWorld()
     constexpr int subStepCount = 4;
 
     b2World_Step(this->g_bworld, timeStep, subStepCount);
+}
+
+Player* GameHandler::getPlayer() const
+{
+    if (auto player = this->g_scene->getFirstObj_ByClass("FISH_PLAYER"))
+    {//Should be always valid
+        return player->getObject<Player>();
+    }
+    return nullptr;
+}
+fge::Scene & GameHandler::getScene() const
+{
+    return *this->g_scene;
+}
+
+void GameHandler::update(fge::DeltaTime const &deltaTime)
+{
+    this->updateWorld();
+
+    this->g_checkTime += deltaTime;
+    if (this->g_checkTime >= std::chrono::milliseconds(F_GAME_CHECK_TIME_MS))
+    {
+        auto player = this->getPlayer();
+
+        if (player->isFishing())
+        {
+            if (--this->g_fishCountDown == 0)
+            {
+                this->g_fishCountDown = fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
+
+                //TODO: Run the fishing minigame
+                this->g_scene->delObject(this->g_scene->getFirstObj_ByClass("FISH_BAIT")->getSid());
+            }
+        }
+
+        this->g_checkTime = std::chrono::milliseconds(0);
+    }
 }
 
 std::unique_ptr<GameHandler> gGameHandler;
