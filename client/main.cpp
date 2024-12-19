@@ -5,6 +5,7 @@
 #include "FastEngine/graphic/C_renderWindow.hpp"
 #include "FastEngine/object/C_objTilemap.hpp"
 #include "FastEngine/object/C_objSpriteBatches.hpp"
+#include "FastEngine/object/C_objRenderMap.hpp"
 #include "FastEngine/C_clock.hpp"
 #include "SDL.h"
 
@@ -79,6 +80,11 @@ public:
         // Creating objects
         auto* objPlayer = this->newObject<Player>();
         objPlayer->boxMove({32.0f, 32.0f});
+
+        auto* objTopMap = this->newObject<fge::ObjRenderMap>({FGE_SCENE_PLAN_HIGH_TOP});
+        objTopMap->setClearColor(fge::Color{50, 50, 50, 140});
+        objTopMap->_tags.add("topMap");
+        objTopMap->_drawMode = fge::Object::DrawModes::DRAW_ALWAYS_HIDDEN;
 
         // Create a tileMap object
         auto* objMap = this->newObject<fge::ObjTileMap>({FGE_SCENE_PLAN_BACK});

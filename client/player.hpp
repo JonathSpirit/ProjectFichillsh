@@ -65,6 +65,9 @@ public:
     void boxMove(fge::Vector2f const& move);
     [[nodiscard]] bool isFishing() const;
 
+    void catchingFish();
+    void endCatchingFish();
+
 private:
     fge::ObjAnimation g_objAnim;
     b2BodyId g_bodyId;
@@ -73,7 +76,8 @@ private:
         WALKING,
         IDLE,
         THROWING,
-        FISHING
+        FISHING,
+        CATCHING
     } g_state = States::WALKING;
     fge::ObjectDataWeak g_fishBait;
     fge::Vector2i g_direction{0, 1};

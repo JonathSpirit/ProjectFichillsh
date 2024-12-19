@@ -203,8 +203,7 @@ void Player::first(fge::Scene &scene)
 {
     this->g_objAnim.setAnimation(fge::Animation{"human_1", "idle_down"});
     this->g_objAnim.getAnimation().setLoop(true);
-    auto const size = static_cast<fge::Vector2f>(this->g_objAnim.getTextureRect().getSize()) / 2.0f;
-    this->g_objAnim.setOrigin(size);
+    this->g_objAnim.centerOriginFromLocalBounds();
 
     //Create the player's body
     b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -255,4 +254,19 @@ void Player::boxMove(fge::Vector2f const& move)
 bool Player::isFishing() const
 {
     return this->g_state == States::FISHING;
+}
+
+void Player::catchingFish()
+{
+    if (this->g_state == States::FISHING)
+    {
+        this->g_state = States::CATCHING;
+    }
+}
+void Player::endCatchingFish()
+{
+    if (this->g_state == States::CATCHING)
+    {
+        this->g_state = States::WALKING;
+    }
 }
