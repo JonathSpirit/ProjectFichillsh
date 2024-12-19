@@ -1,1 +1,9 @@
-https://merchant-shade.itch.io/16x16-puny-characters
+Original name : 16x16-puny-characters
+    URL : https://merchant-shade.itch.io/16x16-puny-characters
+    Author : Shade
+    Original license : Creative Commons Zero v1.0 Universal
+
+Original name :
+    URL : https://srtoasty.itch.io/ui-assets-pack-2
+    Author : Sr.Toasty
+    Original license : Creative Commons Zero v1.0 Universal

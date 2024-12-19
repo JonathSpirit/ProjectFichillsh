@@ -65,6 +65,7 @@ public:
         //Load textures
         fge::texture::gManager.loadFromFile("OutdoorsTileset", "resources/tilesets/OutdoorsTileset.png");
         fge::texture::gManager.loadFromFile("fishBait_1", "resources/sprites/fishBait_1.png");
+        fge::texture::gManager.loadFromFile("fishingFrame", "resources/sprites/fishingFrame.png");
 
         //Load animations
         fge::anim::gManager.loadFromFile("human_1", "resources/sprites/human_1.json");
