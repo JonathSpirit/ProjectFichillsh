@@ -8,7 +8,7 @@
 GameHandler::GameHandler(fge::Scene& scene) :
     g_scene(&scene)
 {
-    this->g_fishCountDown = fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
+    this->g_fishCountDown = 1;//fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
 }
 GameHandler::~GameHandler()
 {
@@ -95,13 +95,12 @@ FGE_OBJ_UPDATE_BODY(Minigame)
 {
     auto const delta = fge::DurationToSecondFloat(deltaTime);
     this->g_currentTime += delta;
-
-    if (this->g_currentTime >= this->g_fishTotalTime)
+    if (this->g_currentTime >= this->g_fishPositions.size() * F_MINIGAME_DELTA_TIME_S)
     {
-        scene.delUpdatedObject();
-        return;
+        this->g_currentTime = 0.0f;
     }
 
+    //Update slider
     if (event.isKeyPressed(SDLK_w))
     {
         this->g_sliderVelocity = std::clamp<float>(this->g_sliderVelocity - F_MINIGAME_SLIDER_ACCELERATION * delta,
@@ -130,8 +129,55 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         this->g_sliderVelocity = 0.0f;
     }
 
+    //Check if fish is inside the gauge slider
+    auto const sliderBounds = this->g_gaugeSlider.getGlobalBounds();
+    auto const fishBounds = this->g_fish.getGlobalBounds();
+    float posXeffect = 0.0f;
+    bool caughting = false;
+    if (auto rect = sliderBounds.findIntersection(fishBounds))
+    {
+        if (rect->getSize().y >= fishBounds.getSize().y)
+        {//Fish is inside the slider
+            posXeffect = fge::_random.range(-2.0f, 2.0f);
+            caughting = true;
+        }
+    }
+
+    if (!caughting)
+    {//Loosing life
+        for (std::size_t i=0; i<this->g_hearts.size(); ++i)
+        {
+            auto& heart = this->g_hearts[i];
+            if (heart.getScale().x > 0.0f)
+            {
+                heart.scale(1.0f - F_MINIGAME_LOOSING_HEARTS_SPEED * delta);
+                if (heart.getScale().x <= 0.1f)
+                {//Loosing a heart
+                    heart.setScale(0.0f);
+                    if (i == this->g_hearts.size()-1)
+                    {//Lost the last heart
+                        scene.delUpdatedObject();
+                        return;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    else
+    {//Fish loosing time
+        this->g_fishRemainingTime -= delta;
+        if (this->g_fishRemainingTime <= 0.0f)
+        {
+            ///TODO: Wining the minigame
+            scene.delUpdatedObject();
+            return;
+        }
+    }
+
+    //Update fish position
     auto index = std::clamp<std::size_t>(this->g_currentTime / F_MINIGAME_DELTA_TIME_S, 0, this->g_fishPositions.size()-1);
-    this->g_fish.setPosition({this->g_gauge.getPosition().x, this->g_fishPositions[index]});
+    this->g_fish.setPosition({this->g_gauge.getPosition().x + posXeffect, this->g_fishPositions[index]});
 }
 
 FGE_OBJ_DRAW_BODY(Minigame)
@@ -146,6 +192,11 @@ FGE_OBJ_DRAW_BODY(Minigame)
     this->g_gauge.draw(target, copyStates);
     this->g_gaugeSlider.draw(target, copyStates);
     this->g_fish.draw(target, copyStates);
+
+    for (auto const& heart : this->g_hearts)
+    {
+        heart.draw(target, copyStates);
+    }
 
     target.setView(viewBackup);
 }
@@ -173,11 +224,21 @@ void Minigame::first(fge::Scene &scene)
     this->g_fish.setTexture("fishingIcon");
     this->g_fish.centerOriginFromLocalBounds();
 
-    this->g_fishTotalTime = F_MINIGAME_BASE_TIME_S + static_cast<float>(this->g_difficulty) * F_MINIGAME_DIFFICULTY_TIME_RATIO;
-    this->g_fishPositions.resize(this->g_fishTotalTime / F_MINIGAME_DELTA_TIME_S);
+    for (std::size_t i=0; i<this->g_hearts.size(); ++i)
+    {
+        this->g_hearts[i].setTexture("fishBait_1");
+        this->g_hearts[i].centerOriginFromLocalBounds();
+        this->g_hearts[i].setPosition({-60.0f, -20.0f + 60.0f * i});
+        this->g_hearts[i].scale(10.0f);
+    }
+
+    this->g_fishRemainingTime = F_MINIGAME_BASE_TIME_S + static_cast<float>(this->g_difficulty) * F_MINIGAME_DIFFICULTY_TIME_RATIO;
 
     //Generate fish positions
-    auto const speed = 2.0f * FGE_MATH_PI * (this->g_difficulty+1) * F_MINIGAME_DIFFICULTY_SPEED_RATIO;
+    auto const frequency = (this->g_difficulty+1) * F_MINIGAME_DIFFICULTY_SPEED_RATIO;
+    auto const speed = 2.0f * FGE_MATH_PI * frequency;
+    auto const sinPeriod = 1.0f / frequency;
+    this->g_fishPositions.resize(sinPeriod / F_MINIGAME_DELTA_TIME_S);
 
     for (std::size_t i=0; i<this->g_fishPositions.size(); ++i)
     {

@@ -20,6 +20,9 @@
 #define F_MINIGAME_SLIDER_MAX_VELOCITY 400.0f
 #define F_MINIGAME_SLIDER_FRICTION 300.0f
 
+#define F_MINIGAME_LOOSING_HEARTS_SPEED 3.0f
+#define F_MINIGAME_HEARTS_COUNT 3
+
 class Player;
 
 class GameHandler
@@ -71,8 +74,9 @@ public:
 private:
     unsigned int g_difficulty;
     std::vector<float> g_fishPositions;
-    float g_fishTotalTime;
     float g_currentTime;
+    float g_fishRemainingTime;
+    std::array<fge::ObjSprite, F_MINIGAME_HEARTS_COUNT> g_hearts;
 
     fge::ObjRectangleShape g_gauge;
     fge::ObjRectangleShape g_gaugeSlider;
