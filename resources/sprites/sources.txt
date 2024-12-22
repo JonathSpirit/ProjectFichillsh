@@ -3,7 +3,12 @@ Original name : 16x16-puny-characters
     Author : Shade
     Original license : Creative Commons Zero v1.0 Universal
 
-Original name :
+Original name : ui-assets-pack-2
     URL : https://srtoasty.itch.io/ui-assets-pack-2
     Author : Sr.Toasty
     Original license : Creative Commons Zero v1.0 Universal
+
+Original name: Bobbit Worm
+    URL : https://rapidpunches.itch.io/bobbit-worm
+    Author : RAPIDPUNCHES
+    Original license : Creative Commons Attribution v4.0 International
