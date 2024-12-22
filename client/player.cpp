@@ -267,6 +267,11 @@ void Player::endCatchingFish()
 {
     if (this->g_state == States::CATCHING)
     {
+        if (auto fishBait = this->g_fishBait.lock())
+        {
+            this->_myObjectData.lock()->getScene()->delObject(fishBait->getSid());
+        }
+
         this->g_state = States::WALKING;
     }
 }
