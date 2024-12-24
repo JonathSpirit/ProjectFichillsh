@@ -183,8 +183,6 @@ public:
         }
 #endif
 
-        this->newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, "anchovy");
-
         bool running = true;
         while (running)
         {
