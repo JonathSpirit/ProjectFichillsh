@@ -1,6 +1,6 @@
 #include "game.hpp"
-
 #include "player.hpp"
+#include "fish.hpp"
 #include "FastEngine/C_random.hpp"
 
 //GameHandler
@@ -290,6 +290,112 @@ fge::RectFloat Minigame::getGlobalBounds() const
 }
 
 fge::RectFloat Minigame::getLocalBounds() const
+{
+    return Object::getLocalBounds();
+}
+
+//FishAward
+
+FishAward::FishAward(std::string const &fishName)
+{
+    auto const fish = gFishManager.getElement(fishName);
+    this->g_fish.setTexture(fish->_ptr->_textureName);
+    this->g_fish.setTextureRect(fish->_ptr->_textureRect);
+    this->g_fish.scale(20.0f);
+    this->g_fish.centerOriginFromLocalBounds();
+}
+
+void FishAward::update(fge::RenderTarget &target, fge::Event &event, fge::DeltaTime const &deltaTime, fge::Scene &scene)
+{
+    auto const delta = fge::DurationToSecondFloat(deltaTime);
+    this->g_currentTime += delta;
+    auto sinus = std::sin(this->g_currentTime * 2.0f);
+    this->g_fish.setRotation(sinus * 10.0f);
+
+    this->setPosition(fge::ReachVector(this->getPosition(), this->g_positionGoal, 200.0f, delta));
+
+    if (this->g_currentTime >= 5.0f)
+    {//Start to fade out
+        auto const alpha = this->g_fish.getColor()._a - 0.5f * delta;
+
+        this->g_fish.setColor(fge::SetAlpha(this->g_fish.getColor(), alpha));
+        for (std::size_t i=0; i<this->g_stars.getSpriteCount(); ++i)
+        {
+            this->g_stars.setColor(i, fge::Color(255, 255, 255, alpha));
+        }
+        this->g_text.setFillColor(fge::SetAlpha(this->g_text.getFillColor(), alpha));
+        this->g_text.setOutlineColor(fge::SetAlpha(this->g_text.getOutlineColor(), alpha));
+        if (this->g_fish.getColor()._a <= 0.0f)
+        {
+            scene.delUpdatedObject();
+        }
+    }
+}
+
+void FishAward::draw(fge::RenderTarget &target, const fge::RenderStates &states) const
+{
+    auto const backupView = target.getView();
+    target.setView(target.getDefaultView());
+
+    auto copyStates = states.copy();
+    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+
+    this->g_fish.draw(target, copyStates);
+    this->g_stars.draw(target, copyStates);
+    this->g_text.draw(target, copyStates);
+
+    target.setView(backupView);
+}
+
+void FishAward::first(fge::Scene &scene)
+{
+    this->_drawMode = DrawModes::DRAW_ALWAYS_DRAWN;
+
+    auto target = scene.getLinkedRenderTarget();
+    this->g_positionGoal = {
+        static_cast<float>(target->getSize().x)/2.0f,
+        static_cast<float>(target->getSize().y)/2.0f};
+    this->setPosition({this->g_positionGoal.x, static_cast<float>(target->getSize().y) * 1.2f});
+
+    this->g_stars.setTexture("stars");
+    for (std::size_t i=0; i<5; ++i)
+    {
+        auto& transform = this->g_stars.addSprite(fge::RectInt{{32, 0}, {16, 16}});
+        transform.setOrigin({8.0f + 20.0f*static_cast<float>(i), 8.0f});
+        transform.scale(5.0f);
+    }
+    this->g_stars.setPosition({200.0f, 100.0f});
+
+    this->g_text.setFont("default");
+    this->g_text.setCharacterSize(40);
+    this->g_text.setString("You caught a fish!\n   -> "+this->g_fish.getTexture().getName());
+    this->g_text.setFillColor(fge::Color::White);
+    this->g_text.setOutlineColor(fge::Color::Black);
+    this->g_text.setOutlineThickness(1.8f);
+    this->g_text.centerOriginFromLocalBounds();
+    this->g_text.setPosition({0.0f, 200.0f});
+}
+
+void FishAward::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)
+{
+}
+
+const char * FishAward::getClassName() const
+{
+    return "FISH_AWARD";
+}
+
+const char * FishAward::getReadableClassName() const
+{
+    return "fish award";
+}
+
+fge::RectFloat FishAward::getGlobalBounds() const
+{
+    return Object::getGlobalBounds();
+}
+
+fge::RectFloat FishAward::getLocalBounds() const
 {
     return Object::getLocalBounds();
 }

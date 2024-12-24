@@ -11,6 +11,7 @@
 
 #include "player.hpp"
 #include "game.hpp"
+#include "fish.hpp"
 
 #include <iostream>
 #include <memory>
@@ -51,6 +52,7 @@ public:
         fge::font::gManager.initialize();
         fge::shader::gManager.initialize();
         fge::anim::gManager.initialize();
+        gFishManager.initialize();
 
         //Load shaders
         fge::shader::gManager.loadFromFile(
@@ -68,9 +70,34 @@ public:
         fge::texture::gManager.loadFromFile("fishBait_1", "resources/sprites/fishBait_1.png");
         fge::texture::gManager.loadFromFile("fishingFrame", "resources/sprites/fishingFrame.png");
         fge::texture::gManager.loadFromFile("fishingIcon", "resources/sprites/fishingIcon.png");
+        fge::texture::gManager.loadFromFile("stars", "resources/sprites/stars.png");
 
         //Load animations
         fge::anim::gManager.loadFromFile("human_1", "resources/sprites/human_1.json");
+
+        //Load fonts
+        fge::font::gManager.loadFromFile("default", "resources/fonts/ttf/monogram.ttf");
+
+        //Load fishes
+        gFishManager.loadFromFile("algae", std::nullopt, "resources/sprites/fishes/algae.png");
+        gFishManager.loadFromFile("anchovy", std::nullopt, "resources/sprites/fishes/fish-anchovy.png");
+        gFishManager.loadFromFile("bronze-striped-grunt", std::nullopt, "resources/sprites/fishes/fish-bronze-striped-grunt.png");
+        gFishManager.loadFromFile("butter", std::nullopt, "resources/sprites/fishes/fish-butter.png");
+        gFishManager.loadFromFile("gulf-croaker", std::nullopt, "resources/sprites/fishes/fish-gulf-croaker.png");
+        gFishManager.loadFromFile("halfbeak", std::nullopt, "resources/sprites/fishes/fish-halfbeak.png");
+        gFishManager.loadFromFile("herring", std::nullopt, "resources/sprites/fishes/fish-herring.png");
+        gFishManager.loadFromFile("pollock", std::nullopt, "resources/sprites/fishes/fish-pollock.png");
+        gFishManager.loadFromFile("sandlance", std::nullopt, "resources/sprites/fishes/fish-sandlance.png");
+        gFishManager.loadFromFile("sardine", std::nullopt, "resources/sprites/fishes/fish-sardine.png");
+        gFishManager.loadFromFile("krill", std::nullopt, "resources/sprites/fishes/krill.png");
+        gFishManager.loadFromFile("krill-1", std::nullopt, "resources/sprites/fishes/krill-1.png");
+        gFishManager.loadFromFile("krill-2", std::nullopt, "resources/sprites/fishes/krill-2.png");
+        gFishManager.loadFromFile("krill-3", std::nullopt, "resources/sprites/fishes/krill-3.png");
+        gFishManager.loadFromFile("shrimp-anemone", std::nullopt, "resources/sprites/fishes/shrimp-anemone.png");
+        gFishManager.loadFromFile("shrimp-northern-prawn", std::nullopt, "resources/sprites/fishes/shrimp-northern-prawn.png");
+        gFishManager.loadFromFile("squid-reef", std::nullopt, "resources/sprites/fishes/squid-reef.png");
+        gFishManager.loadFromFile("zoo-plankton", std::nullopt, "resources/sprites/fishes/zoo-plankton.png");
+        gFishManager.loadFromFile("zoo-plankton-small", std::nullopt, "resources/sprites/fishes/zoo-plankton-small.png");
 
         //Prepare the view
         auto view = renderWindow.getView();
@@ -155,6 +182,8 @@ public:
             this->newObject(FGE_NEWOBJECT_PTR(obj), FGE_SCENE_PLAN_TOP);
         }
 #endif
+
+        this->newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, "anchovy");
 
         bool running = true;
         while (running)

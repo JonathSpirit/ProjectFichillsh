@@ -3,9 +3,12 @@
 #include "FastEngine/object/C_objSprite.hpp"
 #include "FastEngine/object/C_object.hpp"
 #include "FastEngine/C_scene.hpp"
+#include "FastEngine/object/C_objRectangleShape.hpp"
+#include "FastEngine/object/C_objSpriteBatches.hpp"
+#include "FastEngine/object/C_objText.hpp"
+
 #include "box2d/box2d.h"
 #include <memory>
-#include <FastEngine/object/C_objRectangleShape.hpp>
 
 #define F_GAME_CHECK_TIME_MS 200
 #define F_GAME_FISH_COUNTDOWN_MAX 200
@@ -84,4 +87,32 @@ private:
     fge::ObjSprite g_fish;
 
     float g_sliderVelocity = 0.0f;
+};
+
+class FishAward : public fge::Object
+{
+public:
+    FishAward() = default;
+    FishAward(std::string const& fishName);
+    ~FishAward() override = default;
+
+    FGE_OBJ_UPDATE_DECLARE
+    FGE_OBJ_DRAW_DECLARE
+
+    void first(fge::Scene &scene) override;
+
+    void callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr) override;
+
+    const char * getClassName() const override;
+    const char * getReadableClassName() const override;
+
+    [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
+    [[nodiscard]] fge::RectFloat getLocalBounds() const override;
+
+private:
+    fge::ObjSprite g_fish;
+    fge::ObjSpriteBatches g_stars;
+    fge::ObjText g_text;
+    float g_currentTime = 0.0f;
+    fge::Vector2f g_positionGoal;
 };

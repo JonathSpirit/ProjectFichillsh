@@ -1,4 +1,4 @@
-Original name : 16x16-puny-characters
+Original name : Puny Characters
     URL : https://merchant-shade.itch.io/16x16-puny-characters
     Author : Shade
     Original license : Creative Commons Zero v1.0 Universal
@@ -13,3 +13,7 @@ Original name: Bobbit Worm
     Author : RAPIDPUNCHES
     Original license : Creative Commons Attribution v4.0 International
 
+Original name: Forage Fish
+    URL : https://rapidpunches.itch.io/forage-fish
+    Author : RAPIDPUNCHES
+    Original license : Creative Commons Attribution_ShareAlike v4.0 International
