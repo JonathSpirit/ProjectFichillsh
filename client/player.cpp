@@ -271,7 +271,7 @@ void Player::endCatchingFish()
         {
             this->_myObjectData.lock()->getScene()->delObject(fishBait->getSid());
         }
-
+        this->g_objAnim.getAnimation().setLoop(true);
         this->g_state = States::WALKING;
     }
 }
