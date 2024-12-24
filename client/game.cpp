@@ -8,7 +8,7 @@
 GameHandler::GameHandler(fge::Scene& scene) :
     g_scene(&scene)
 {
-    this->g_fishCountDown = 1;//fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
+    this->g_fishCountDown = fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
 }
 GameHandler::~GameHandler()
 {
@@ -75,7 +75,7 @@ void GameHandler::update(fge::DeltaTime const &deltaTime)
             if (--this->g_fishCountDown == 0)
             {
                 this->g_fishCountDown = fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
-                this->g_scene->newObject<Minigame>({FGE_SCENE_PLAN_HIGH_TOP + 1}, 4);
+                this->g_scene->newObject<Minigame>({FGE_SCENE_PLAN_HIGH_TOP + 1}, fge::_random.range(0, 10));
             }
         }
 
@@ -169,7 +169,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         this->g_fishRemainingTime -= delta;
         if (this->g_fishRemainingTime <= 0.0f)
         {
-            ///TODO: Wining the minigame
+            scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, gFishManager.getRandomFishName());
             scene.delUpdatedObject();
             return;
         }
