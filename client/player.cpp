@@ -7,7 +7,26 @@ FishBait::FishBait(fge::Vector2i const& throwDirection, fge::Vector2f const& pos
         g_throwDirection(throwDirection),
         g_startPosition(position)
 {
-    this->setPosition(position);
+    fge::Vector2f throwOffset{0.0f, 0.0f};
+
+    if (throwDirection == F_DIRECTION_UP)
+    {
+        throwOffset = {3.0f, 0.0f};
+    }
+    else if (throwDirection == F_DIRECTION_DOWN)
+    {
+        throwOffset = {-3.0f, 0.0f};
+    }
+    else if (throwDirection == F_DIRECTION_LEFT)
+    {
+        throwOffset = {0.0f, 3.0f};
+    }
+    else if (throwDirection == F_DIRECTION_RIGHT)
+    {
+        throwOffset = {0.0f, 3.0f};
+    }
+
+    this->setPosition(position + throwOffset + static_cast<fge::Vector2f>(throwDirection) * 10.0f);
 }
 
 FGE_OBJ_UPDATE_BODY(FishBait)
@@ -30,7 +49,8 @@ FGE_OBJ_UPDATE_BODY(FishBait)
             sinusValue = 1.0f;
         }
 
-        auto const newPosition = this->g_startPosition + static_cast<fge::Vector2f>(this->g_throwDirection) * F_BAIT_THROW_LENGTH * sinusValue;
+        auto const newPosition = this->g_startPosition + static_cast<fge::Vector2f>(this->g_throwDirection)
+                * (1.0f / glm::length(static_cast<fge::Vector2f>(this->g_throwDirection))) * F_BAIT_THROW_LENGTH * sinusValue;
         this->setPosition(newPosition);
     }
         break;

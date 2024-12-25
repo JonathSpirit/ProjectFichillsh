@@ -7,7 +7,16 @@
 
 #define F_PLAYER_SPEED 30.0f
 #define F_BAIT_SPEED 2.0f
-#define F_BAIT_THROW_LENGTH 22.0f
+#define F_BAIT_THROW_LENGTH 12.0f
+
+#define F_DIRECTION_UP fge::Vector2i{0, -1}
+#define F_DIRECTION_DOWN fge::Vector2i{0, 1}
+#define F_DIRECTION_LEFT fge::Vector2i{-1, 0}
+#define F_DIRECTION_RIGHT fge::Vector2i{1, 0}
+#define F_DIRECTION_UP_LEFT fge::Vector2i{-1, -1}
+#define F_DIRECTION_UP_RIGHT fge::Vector2i{1, -1}
+#define F_DIRECTION_DOWN_LEFT fge::Vector2i{-1, 1}
+#define F_DIRECTION_DOWN_RIGHT fge::Vector2i{1, 1}
 
 class FishBait : public fge::Object
 {
