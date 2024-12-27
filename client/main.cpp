@@ -107,7 +107,6 @@ public:
 
         // Creating objects
         auto* objPlayer = this->newObject<Player>();
-        objPlayer->boxMove({32.0f, 32.0f});
 
         auto* objTopMap = this->newObject<fge::ObjRenderMap>({FGE_SCENE_PLAN_HIGH_TOP});
         objTopMap->setClearColor(fge::Color{50, 50, 50, 140});
@@ -117,6 +116,7 @@ public:
         // Create a tileMap object
         auto* objMap = this->newObject<fge::ObjTileMap>({FGE_SCENE_PLAN_BACK});
         objMap->_drawMode = fge::Object::DrawModes::DRAW_ALWAYS_DRAWN;
+        objMap->_tags.add("map");
 
 #if SHOW_COLLIDERS
         std::vector<fge::ObjRectangleShape*> objRectCollider;
@@ -126,7 +126,12 @@ public:
         objMap->loadFromFile("resources/map_1/map_1.json", false);
         for (auto const& layer : objMap->getTileLayers())
         {
-            for (auto const& tile : layer->getTiles())
+            if (layer->getType() != fge::BaseLayer::Types::TILE_LAYER)
+            {
+                continue;
+            }
+
+            for (auto const& tile : layer->as<fge::TileLayer>()->getTiles())
             {
                 if (tile.getGid() == 0)
                 {
@@ -150,7 +155,7 @@ public:
                 }
             }
         }
-        auto const mapBounds = objMap->getTileLayers().begin()->get()->getGlobalBounds();
+        auto const mapBounds = objMap->findLayerName("Water")->get()->as<fge::TileLayer>()->getGlobalBounds();
 
         //Wall colliders
         gGameHandler->pushStaticCollider(
@@ -172,6 +177,10 @@ public:
             this->newObject(FGE_NEWOBJECT_PTR(obj), FGE_SCENE_PLAN_TOP);
         }
 #endif
+
+        //Load spawn point
+        auto const specialObjects = objMap->findLayerName("SpecialObjects")->get()->as<fge::ObjectGroupLayer>();
+        objPlayer->boxMove(specialObjects->findObjectName("spawn")->_position);
 
         bool running = true;
         while (running)
@@ -258,6 +267,10 @@ int main(int argc, char *argv[])
     using namespace fge::vulkan;
 
     std::cout << "FastEngine version: " << FGE_VERSION_FULL_WITHTAG_STRING << std::endl;
+    if (fge::IsEngineBuiltInDebugMode())
+    {
+        std::cout << "Built in debug mode" << std::endl;
+    }
 
     //Remove Vulkan validation layer
     InstanceLayers.clear();
