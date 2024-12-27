@@ -132,17 +132,12 @@ public:
                 {
                     continue;
                 }
-                auto const& tileset = tile.getTileSet();
-                auto const& collisions = tileset->getTile(tileset->getLocalId(tile.getGid()))->_collisionRects;
+                auto const& collisions = tile.getTileData()->_collisionRects;
                 for (auto const& collision : collisions)
                 {
-                    constexpr float epsilon = 0.00f;
-
                     auto collisionRect = static_cast<fge::RectFloat>(collision);
-                    collisionRect._x += tile.getPosition().x - epsilon;
-                    collisionRect._y += tile.getPosition().y - epsilon;
-                    collisionRect._width += epsilon*2.0f;
-                    collisionRect._height += epsilon*2.0f;
+                    collisionRect._x += tile.getPosition().x;
+                    collisionRect._y += tile.getPosition().y;
 
                     gGameHandler->pushStaticCollider(collisionRect);
 #if SHOW_COLLIDERS
@@ -155,12 +150,7 @@ public:
                 }
             }
         }
-        fge::RectFloat mapBounds{};
-        {
-            auto const tileLayer = objMap->getTileLayers().begin()->get();
-            mapBounds._width = 16.0f * tileLayer->getTiles().getSizeX(); ///TODO: Do not hardcode
-            mapBounds._height = 16.0f * tileLayer->getTiles().getSizeY();
-        }
+        auto const mapBounds = objMap->getTileLayers().begin()->get()->getGlobalBounds();
 
         //Wall colliders
         gGameHandler->pushStaticCollider(
