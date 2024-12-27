@@ -1,5 +1,6 @@
 #include "player.hpp"
 #include "game.hpp"
+#include "FastEngine/object/C_objTilemap.hpp"
 
 //FishBait
 
@@ -45,6 +46,40 @@ FGE_OBJ_UPDATE_BODY(FishBait)
         //t = PI/(2*speed)
         if (this->g_time >= static_cast<float>(FGE_MATH_PI)/(2.0f * F_BAIT_SPEED))
         {
+            //Check if the bait is in water
+            if (auto const map = scene.getFirstObj_ByTag("map"))
+            {
+                auto const waterLayer = map->getObject<fge::ObjTileMap>()->findLayerName("Water")->get()->as<fge::TileLayer>();
+                auto const tileGrid = waterLayer->getGridPosition(this->getPosition());
+                if (!tileGrid || waterLayer->getGid(*tileGrid) == 0)
+                {//Not in water
+                    scene.delUpdatedObject();
+                    return;
+                }
+                auto const& waterTile = waterLayer->getTiles().get(*tileGrid);
+                auto const& collisionRects = waterTile.getTileData()->_collisionRects;
+
+                auto const bounds = this->getGlobalBounds();
+                bool isInside = false;
+                for (auto const& rect : collisionRects)
+                {
+                    auto frect = static_cast<fge::RectFloat>(rect);
+                    frect._x += waterTile.getPosition().x;
+                    frect._y += waterTile.getPosition().y;
+                    if (frect.contains(this->getPosition()))
+                    {
+                        isInside = true;
+                        break;
+                    }
+                }
+
+                if (!isInside)
+                {
+                    scene.delUpdatedObject();
+                    return;
+                }
+            }
+
             this->g_state = States::WAITING;
             sinusValue = 1.0f;
         }
