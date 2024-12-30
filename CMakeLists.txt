@@ -19,6 +19,15 @@ endif()
 
 find_package(FastEngine REQUIRED)
 
+#Fetch GRUpdater
+FetchContent_Declare(
+        GRUpdater
+        GIT_REPOSITORY https://github.com/JonathSpirit/GRUpdater.git
+        GIT_TAG master
+)
+
+FetchContent_MakeAvailable(GRUpdater)
+
 #Fetch box2d
 FetchContent_Declare(
         box2d
@@ -47,10 +56,12 @@ target_sources(${PROJECT_CLIENT} PRIVATE client/fish.cpp client/fish.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/ducky.cpp client/ducky.hpp)
 
 #Dependencies
-add_dependencies(${PROJECT_CLIENT} box2d)
+add_dependencies(${PROJECT_CLIENT} box2d GRUpdater)
 
 target_link_libraries(${PROJECT_CLIENT} PRIVATE SDL2::SDL2main FastEngine::FastEngine)
-target_link_libraries(${PROJECT_CLIENT} PRIVATE box2d)
+target_link_libraries(${PROJECT_CLIENT} PRIVATE box2d GRUpdater)
+
+target_include_directories(${PROJECT_CLIENT} PRIVATE ${GRUpdater_SOURCE_DIR})
 
 #Resources
 add_custom_command(TARGET ${PROJECT_CLIENT} PRE_BUILD
@@ -62,7 +73,7 @@ add_custom_command(TARGET ${PROJECT_CLIENT} PRE_BUILD
 
 if(WIN32)
     set(FGE_LINK_SERVER_LIBRARIES "FastEngine::FastEngineServer;SDL2::SDL2;SDL2_image::SDL2_image")
-    set(FGE_LINK_CLIENT_LIBRARIES "FastEngine::FastEngine;SDL2::SDL2;SDL2_image::SDL2_image;SDL2_mixer::SDL2_mixer")
+    set(FGE_LINK_CLIENT_LIBRARIES "FastEngine::FastEngine;SDL2::SDL2;SDL2_image::SDL2_image;SDL2_mixer::SDL2_mixer;GRUpdater")
 
     foreach (FGE_LINK_LIBRARY ${FGE_LINK_CLIENT_LIBRARIES})
         add_custom_command(TARGET ${PROJECT_CLIENT} PRE_BUILD

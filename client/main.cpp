@@ -289,6 +289,16 @@ int main(int argc, char *argv[])
 {
     using namespace fge::vulkan;
 
+    //Verify update
+    std::filesystem::remove_all(F_TEMP_DIR);
+    if (auto const extractPath = updater::MakeAvailable(F_TAG, F_OWNER, F_REPO, F_TEMP_DIR, true))
+    {
+        if (updater::RequestApplyUpdate(*extractPath))
+        {
+            return 0;
+        }
+    }
+
     std::cout << "FastEngine version: " << FGE_VERSION_FULL_WITHTAG_STRING << std::endl;
     if (fge::IsEngineBuiltInDebugMode())
     {
@@ -308,7 +318,7 @@ int main(int argc, char *argv[])
     SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
     SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "system");
 
-    auto instance = Context::init(SDL_INIT_VIDEO | SDL_INIT_EVENTS, "Fichillsh [v0.1.0]");
+    auto instance = Context::init(SDL_INIT_VIDEO | SDL_INIT_EVENTS, "Fichillsh [" F_TAG_STR "] on FastEngine [" FGE_VERSION_FULL_WITHTAG_STRING "]");
     Context::enumerateExtensions();
 
     SurfaceSDLWindow window(instance, FGE_WINDOWPOS_CENTERED, {1366,768}, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
