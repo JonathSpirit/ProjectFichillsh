@@ -155,10 +155,10 @@ void Ducky::computeRandomWalkPath()
 
             for (auto const& node : path)
             {
-                this->g_walkPath.emplace_back(fge::Vector2f{
+                this->g_walkPath.emplace_back(
                     16.0f * static_cast<float>(node.x) + 8.0f,
                     16.0f * static_cast<float>(node.y) + 8.0f
-                });
+                );
             }
 
             break;
