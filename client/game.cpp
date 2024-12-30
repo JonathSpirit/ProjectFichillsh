@@ -2,6 +2,7 @@
 #include "player.hpp"
 #include "fish.hpp"
 #include "FastEngine/C_random.hpp"
+#include "FastEngine/manager/audio_manager.hpp"
 
 //GameHandler
 
@@ -154,9 +155,11 @@ FGE_OBJ_UPDATE_BODY(Minigame)
                 if (heart.getScale().x <= 0.1f)
                 {//Loosing a heart
                     heart.setScale(0.0f);
+                    Mix_PlayChannel(-1, fge::audio::gManager.getElement("loose_life")->_ptr.get(), 0);
                     if (i == this->g_hearts.size()-1)
                     {//Lost the last heart
                         scene.delUpdatedObject();
+                        Mix_PlayChannel(-1, fge::audio::gManager.getElement("loose_fish")->_ptr.get(), 0);
                         return;
                     }
                 }

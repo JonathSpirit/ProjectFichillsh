@@ -1,6 +1,7 @@
 #include "player.hpp"
 #include "game.hpp"
 #include "FastEngine/object/C_objTilemap.hpp"
+#include "FastEngine/manager/audio_manager.hpp"
 
 //FishBait
 
@@ -80,6 +81,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
                 }
             }
 
+            Mix_PlayChannel(-1, fge::audio::gManager.getElement("splash")->_ptr.get(), 0);
             this->g_state = States::WAITING;
             sinusValue = 1.0f;
         }
@@ -161,6 +163,7 @@ FGE_OBJ_UPDATE_BODY(Player)
 
             b2Body_SetLinearVelocity(this->g_bodyId, {0.0f, 0.0f});
 
+            Mix_PlayChannel(-1, fge::audio::gManager.getElement("swipe")->_ptr.get(), 0);
             this->g_state = States::THROWING;
             this->g_objAnim.getAnimation().setLoop(false);
             break;
@@ -194,9 +197,21 @@ FGE_OBJ_UPDATE_BODY(Player)
             animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
             animationName = animationName.substr(animationName.find('_'));
             animationName = "idle" + animationName;
+            if (this->g_audioWalking != -1)
+            {
+                if (Mix_Playing(this->g_audioWalking) != 0)
+                {
+                    Mix_HaltChannel(this->g_audioWalking);
+                }
+                this->g_audioWalking = -1;
+            }
         }
         else
         {//Walking
+            if (this->g_audioWalking == -1 || Mix_Playing(this->g_audioWalking) == 0)
+            {
+                this->g_audioWalking = Mix_PlayChannel(-1, fge::audio::gManager.getElement("walk_grass")->_ptr.get(), -1);
+            }
             animationName = "walk" + animationName;
             this->g_direction = moveDirection;
         }

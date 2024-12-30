@@ -52,6 +52,7 @@ public:
         fge::font::gManager.initialize();
         fge::shader::gManager.initialize();
         fge::anim::gManager.initialize();
+        fge::audio::gManager.initialize();
         gFishManager.initialize();
 
         //Load shaders
@@ -77,6 +78,14 @@ public:
 
         //Load fonts
         fge::font::gManager.loadFromFile("default", "resources/fonts/ttf/monogram.ttf");
+
+        //Load sounds
+        fge::audio::gManager.loadFromFile("loose_life", "resources/audio/negative_1.ogg");
+        fge::audio::gManager.loadFromFile("loose_fish", "resources/audio/negative_2.ogg");
+        fge::audio::gManager.loadFromFile("walk_grass", "resources/audio/walk_grass_1.ogg");
+        Mix_VolumeChunk(fge::audio::gManager.getElement("walk_grass")->_ptr.get(), MIX_MAX_VOLUME);
+        fge::audio::gManager.loadFromFile("swipe", "resources/audio/swipe_1.ogg");
+        fge::audio::gManager.loadFromFile("splash", "resources/audio/splash_1.ogg");
 
         //Load fishes
         gFishManager.loadFromFile("algae", std::nullopt, "resources/sprites/fishes/algae.png");

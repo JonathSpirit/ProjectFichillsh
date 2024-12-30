@@ -90,4 +90,5 @@ private:
     } g_state = States::WALKING;
     fge::ObjectDataWeak g_fishBait;
     fge::Vector2i g_direction{0, 1};
+    int g_audioWalking = -1;
 };
