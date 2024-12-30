@@ -44,6 +44,7 @@ target_sources(${PROJECT_CLIENT} PRIVATE client/main.cpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/player.cpp client/player.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/game.cpp client/game.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/fish.cpp client/fish.hpp)
+target_sources(${PROJECT_CLIENT} PRIVATE client/ducky.cpp client/ducky.hpp)
 
 #Dependencies
 add_dependencies(${PROJECT_CLIENT} box2d)

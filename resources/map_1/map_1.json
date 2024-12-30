@@ -18,6 +18,42 @@
                  "width":0,
                  "x":130.727272727273,
                  "y":130
+                }, 
+                {
+                 "height":0,
+                 "id":2,
+                 "name":"duckySpawn",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":298.666666666667,
+                 "y":169
+                }, 
+                {
+                 "height":0,
+                 "id":3,
+                 "name":"duckySpawn",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":166,
+                 "y":228.333333333333
+                }, 
+                {
+                 "height":0,
+                 "id":4,
+                 "name":"duckySpawn",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":293.333333333333,
+                 "y":343.666666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -198,7 +234,7 @@
          "y":0
         }],
  "nextlayerid":8,
- "nextobjectid":2,
+ "nextobjectid":5,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.0",

@@ -12,6 +12,7 @@
 #include "player.hpp"
 #include "game.hpp"
 #include "fish.hpp"
+#include "ducky.hpp"
 
 #include <iostream>
 #include <memory>
@@ -76,6 +77,7 @@ public:
 
         //Load animations
         fge::anim::gManager.loadFromFile("human_1", "resources/sprites/human_1.json");
+        fge::anim::gManager.loadFromFile("ducky_1", "resources/sprites/ducky_1.json");
 
         //Load fonts
         fge::font::gManager.loadFromFile("default", "resources/fonts/ttf/monogram.ttf");
@@ -191,6 +193,15 @@ public:
         //Load spawn point
         auto const specialObjects = objMap->findLayerName("SpecialObjects")->get()->as<fge::ObjectGroupLayer>();
         objPlayer->boxMove(specialObjects->findObjectName("spawn")->_position);
+
+        //Load duckies
+        for (auto const& object : specialObjects->getObjects())
+        {
+            if (object._name == "duckySpawn")
+            {
+                this->newObject<Ducky>(object._position);
+            }
+        }
 
         bool running = true;
         while (running)
