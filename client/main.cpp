@@ -323,7 +323,7 @@ int main(int argc, char *argv[])
     vulkanContext._garbageCollector.enable(true);
 
     fge::RenderWindow renderWindow(vulkanContext, window);
-    renderWindow.setClearColor(fge::Color::White);
+    renderWindow.setClearColor(fge::Color(239, 205, 173));
     renderWindow.setPresentMode(VK_PRESENT_MODE_FIFO_KHR);
     //renderWindow.setVerticalSyncEnabled( sc::ConfigVsync() );
 
