@@ -132,7 +132,9 @@ FGE_OBJ_UPDATE_BODY(Minigame)
 
     //Check if fish is inside the gauge slider
     auto const sliderBounds = this->g_gaugeSlider.getGlobalBounds();
-    auto const fishBounds = this->g_fish.getGlobalBounds();
+    auto fishBounds = this->g_fish.getGlobalBounds();
+    fishBounds._y += fishBounds._height/4.0f;
+    fishBounds._height /= 2.0f;
     float posXeffect = 0.0f;
     bool caughting = false;
     if (auto rect = sliderBounds.findIntersection(fishBounds))
