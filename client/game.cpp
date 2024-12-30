@@ -229,10 +229,11 @@ void Minigame::first(fge::Scene &scene)
 
     for (std::size_t i=0; i<this->g_hearts.size(); ++i)
     {
-        this->g_hearts[i].setTexture("fishBait_1");
+        this->g_hearts[i].setTexture("hearts");
+        this->g_hearts[i].setTextureRect({{0, 0}, {16, 16}});
         this->g_hearts[i].centerOriginFromLocalBounds();
         this->g_hearts[i].setPosition({-60.0f, -20.0f + 60.0f * i});
-        this->g_hearts[i].scale(10.0f);
+        this->g_hearts[i].scale(7.0f);
     }
 
     this->g_fishRemainingTime = F_MINIGAME_BASE_TIME_S + static_cast<float>(this->g_difficulty) * F_MINIGAME_DIFFICULTY_TIME_RATIO;

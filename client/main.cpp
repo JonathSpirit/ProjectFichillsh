@@ -72,6 +72,7 @@ public:
         fge::texture::gManager.loadFromFile("fishingFrame", "resources/sprites/fishingFrame.png");
         fge::texture::gManager.loadFromFile("fishingIcon", "resources/sprites/fishingIcon.png");
         fge::texture::gManager.loadFromFile("stars", "resources/sprites/stars.png");
+        fge::texture::gManager.loadFromFile("hearts", "resources/sprites/hearts.png");
 
         //Load animations
         fge::anim::gManager.loadFromFile("human_1", "resources/sprites/human_1.json");
