@@ -90,6 +90,7 @@ public:
         fge::audio::gManager.loadFromFile("swipe", "resources/audio/swipe_1.ogg");
         fge::audio::gManager.loadFromFile("splash", "resources/audio/splash_1.ogg");
         fge::audio::gManager.loadFromFile("victory_fish", "resources/audio/positive_1.ogg");
+        fge::audio::gManager.loadFromFile("ducky", "resources/audio/duck_1.ogg");
 
         //Load fishes
         gFishManager.loadFromFile("algae", std::nullopt, "resources/sprites/fishes/algae.png");

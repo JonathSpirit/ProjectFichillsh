@@ -7,6 +7,8 @@
 #define F_DUCK_SPEED 50.0f
 #define F_DUCK_WALK_TIME_MIN_S 3.0f
 #define F_DUCK_WALK_TIME_MAX_S 14.0f
+#define F_DUCK_QUACK_TIME_MIN_S 10.0f
+#define F_DUCK_QUACK_TIME_MAX_S 80.0f
 
 class Ducky : public fge::Object
 {
@@ -42,4 +44,8 @@ private:
     float g_time = 0.0f;
     float g_timeBeforeWalk = 0.0f;
     std::vector<fge::Vector2f> g_walkPath;
+    bool g_handlingQuack = false;
+
+    static bool gQuackHandled;
+    static float gTimeBeforeQuack;
 };

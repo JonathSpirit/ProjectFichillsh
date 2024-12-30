@@ -18,6 +18,16 @@ FGE_OBJ_UPDATE_BODY(Ducky)
 
     auto const delta = fge::DurationToSecondFloat(deltaTime);
 
+    if (this->g_handlingQuack)
+    {
+        gTimeBeforeQuack -= delta;
+        if (gTimeBeforeQuack <= 0.0f)
+        {
+            gTimeBeforeQuack = fge::_random.range(F_DUCK_QUACK_TIME_MIN_S, F_DUCK_QUACK_TIME_MAX_S);
+            Mix_PlayChannel(-1, fge::audio::gManager.getElement("ducky")->_ptr.get(), 0);
+        }
+    }
+
     switch (this->g_state)
     {
     case States::IDLE: {
@@ -76,6 +86,13 @@ void Ducky::first(fge::Scene &scene)
     this->g_objAnim.centerOriginFromLocalBounds();
 
     this->g_timeBeforeWalk = fge::_random.range(F_DUCK_WALK_TIME_MIN_S, F_DUCK_WALK_TIME_MAX_S);
+
+    if (!gQuackHandled)
+    {
+        gTimeBeforeQuack = fge::_random.range(F_DUCK_QUACK_TIME_MIN_S, F_DUCK_QUACK_TIME_MAX_S);
+        gQuackHandled = true;
+        this->g_handlingQuack = true;
+    }
 }
 
 void Ducky::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)
@@ -165,3 +182,6 @@ void Ducky::computeRandomWalkPath()
         }
     }
 }
+
+bool Ducky::gQuackHandled = false;
+float Ducky::gTimeBeforeQuack = 0.0f;
