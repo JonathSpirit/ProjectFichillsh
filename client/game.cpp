@@ -172,6 +172,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         this->g_fishRemainingTime -= delta;
         if (this->g_fishRemainingTime <= 0.0f)
         {
+            Mix_PlayChannel(-1, fge::audio::gManager.getElement("victory_fish")->_ptr.get(), 0);
             scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, gFishManager.getRandomFishName());
             scene.delUpdatedObject();
             return;
