@@ -193,6 +193,12 @@ FGE_OBJ_UPDATE_BODY(Player)
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("swipe")->_ptr.get(), 0);
             this->g_state = States::THROWING;
             this->g_objAnim.getAnimation().setLoop(false);
+
+            if (this->g_audioWalking != -1)
+            {
+                Mix_HaltChannel(this->g_audioWalking);
+                this->g_audioWalking = -1;
+            }
             break;
         }
 
