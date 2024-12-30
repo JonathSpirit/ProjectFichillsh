@@ -2,6 +2,7 @@
 #include "game.hpp"
 #include "FastEngine/object/C_objTilemap.hpp"
 #include "FastEngine/manager/audio_manager.hpp"
+#include "FastEngine/C_random.hpp"
 
 //FishBait
 
@@ -33,12 +34,13 @@ FishBait::FishBait(fge::Vector2i const& throwDirection, fge::Vector2f const& pos
 
 FGE_OBJ_UPDATE_BODY(FishBait)
 {
+    auto const delta = fge::DurationToSecondFloat(deltaTime);
+    this->g_time += delta;
+
     switch (this->g_state)
     {
     case States::THROWING:
     {
-        auto const delta = fge::DurationToSecondFloat(deltaTime);
-        this->g_time += delta;
         auto sinusValue = std::sin(this->g_time * F_BAIT_SPEED);
 
         //y = sin(t * speed)
@@ -60,7 +62,6 @@ FGE_OBJ_UPDATE_BODY(FishBait)
                 auto const& waterTile = waterLayer->getTiles().get(*tileGrid);
                 auto const& collisionRects = waterTile.getTileData()->_collisionRects;
 
-                auto const bounds = this->getGlobalBounds();
                 bool isInside = false;
                 for (auto const& rect : collisionRects)
                 {
@@ -83,15 +84,29 @@ FGE_OBJ_UPDATE_BODY(FishBait)
 
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("splash")->_ptr.get(), 0);
             this->g_state = States::WAITING;
+            this->g_time = 0.0f;
             sinusValue = 1.0f;
         }
 
         auto const newPosition = this->g_startPosition + static_cast<fge::Vector2f>(this->g_throwDirection)
                 * (1.0f / glm::length(static_cast<fge::Vector2f>(this->g_throwDirection))) * F_BAIT_THROW_LENGTH * sinusValue;
         this->setPosition(newPosition);
+        this->g_staticPosition = this->getPosition();
     }
         break;
     case States::WAITING:
+    {
+        auto sinx = std::sin(this->g_time);
+        auto siny = std::sin(this->g_time * 1.7f);
+
+        this->setPosition(this->g_staticPosition + fge::Vector2f{sinx, siny});
+    }
+        break;
+    case States::CATCHING:
+    {
+        auto const posXeffect = fge::_random.range(-1.0f, 1.0f);
+        this->setPosition(this->g_staticPosition + fge::Vector2f{posXeffect, 0.0f});
+    }
         break;
     }
 }
@@ -108,6 +123,7 @@ void FishBait::first(fge::Scene &scene)
 {
     this->g_objSprite.setTexture("fishBait_1");
     this->g_objSprite.centerOriginFromLocalBounds();
+    this->g_objSprite.scale(0.9f);
     this->g_startPosition = this->getPosition();
 }
 
@@ -137,6 +153,17 @@ fge::RectFloat FishBait::getLocalBounds() const
 bool FishBait::isWaiting() const
 {
     return this->g_state == States::WAITING;
+}
+
+void FishBait::catchingFish()
+{
+    this->g_state = States::CATCHING;
+    this->g_time = 0.0f;
+}
+void FishBait::endCatchingFish()
+{
+    this->g_state = States::WAITING;
+    this->g_time = 0.0f;
 }
 
 //Player
@@ -331,6 +358,11 @@ void Player::catchingFish()
     if (this->g_state == States::FISHING)
     {
         this->g_state = States::CATCHING;
+
+        if (auto fishBait = this->g_fishBait.lock())
+        {
+            fishBait->getObject<FishBait>()->catchingFish();
+        }
     }
 }
 void Player::endCatchingFish()

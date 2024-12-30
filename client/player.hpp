@@ -40,16 +40,21 @@ public:
 
     [[nodiscard]] bool isWaiting() const;
 
+    void catchingFish();
+    void endCatchingFish();
+
 private:
     fge::ObjSprite g_objSprite;
     fge::Vector2i g_throwDirection;
     enum class States
     {
         THROWING,
-        WAITING
+        WAITING,
+        CATCHING
     } g_state = States::THROWING;
     float g_time = 0.0f;
     fge::Vector2f g_startPosition;
+    fge::Vector2f g_staticPosition;
 };
 
 class Player : public fge::Object

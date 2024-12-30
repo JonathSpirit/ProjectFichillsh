@@ -315,7 +315,7 @@ void FishAward::update(fge::RenderTarget &target, fge::Event &event, fge::DeltaT
     auto sinus = std::sin(this->g_currentTime * 2.0f);
     this->g_fish.setRotation(sinus * 10.0f);
 
-    this->setPosition(fge::ReachVector(this->getPosition(), this->g_positionGoal, 200.0f, delta));
+    this->setPosition(fge::ReachVector(this->getPosition(), this->g_positionGoal, 300.0f, delta));
 
     if (this->g_currentTime >= 5.0f)
     {//Start to fade out
