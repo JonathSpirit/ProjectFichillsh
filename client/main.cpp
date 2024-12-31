@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
     std::filesystem::remove_all(F_TEMP_DIR);
     if (auto const extractPath = updater::MakeAvailable(F_TAG, F_OWNER, F_REPO, F_TEMP_DIR, true))
     {
-        if (updater::RequestApplyUpdate(*extractPath))
+        if (updater::RequestApplyUpdate(*extractPath, std::filesystem::current_path() / argv[0]))
         {
             return 0;
         }

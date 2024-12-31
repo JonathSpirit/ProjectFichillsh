@@ -18,7 +18,7 @@
 #define F_TAG updater::Tag{F_TAG_MAJOR, F_TAG_MINOR, F_TAG_PATCH}
 #define F_OWNER "JonathSpirit"
 #define F_REPO "ProjectFichillsh"
-#define F_TEMP_DIR "./temp/"
+#define F_TEMP_DIR "temp/"
 
 #define F_GAME_CHECK_TIME_MS 200
 #define F_GAME_FISH_COUNTDOWN_MAX 200
