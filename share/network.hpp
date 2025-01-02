@@ -9,6 +9,8 @@
 #define F_NET_CLIENT_TIMEOUT_CONNECT_MS std::chrono::milliseconds{12000}
 #define F_NET_CLIENT_TIMEOUT_HELLO_MS std::chrono::milliseconds{5000}
 
+#define F_NET_CLIENT_TIMEOUT_RECEIVE std::chrono::milliseconds{1500}
+
 enum class ClientNetStats
 {
     SAY_HELLO,

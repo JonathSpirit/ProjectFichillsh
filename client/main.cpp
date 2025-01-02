@@ -13,6 +13,7 @@
 #include "game.hpp"
 #include "fish.hpp"
 #include "ducky.hpp"
+#include "../share/network.hpp"
 
 #include <iostream>
 #include <memory>
@@ -31,6 +32,88 @@ public:
 
     void run(fge::RenderWindow& renderWindow, fge::net::ClientSideNetUdp& network)
     {
+        nlohmann::json config;
+        if (!fge::LoadJsonFromFile("server.json", config))
+        {
+            std::cout << "Can't load server.json\n";
+            return;
+        }
+
+        fge::net::IpAddress serverIp = config["ip"].get<std::string>();
+        fge::net::Port port = config["port"].get<fge::net::Port>();
+        if (!network.start(0, fge::net::IpAddress::Ipv4Any,
+                port, serverIp,
+                fge::net::IpAddress::Types::Ipv4))
+        {
+            std::cout << "Can't start network\n";
+        }
+        else
+        {
+            bool helloReceived = false;
+
+            //Sending hello
+            auto packet = fge::net::TransmissionPacket::create(CLIENT_HELLO);
+            packet->doNotDiscard().doNotReorder().packet() << F_NET_CLIENT_HELLO << F_NET_STRING_SEQ;
+            network._client.pushPacket(std::move(packet));
+            network.notifyTransmission();
+            if (network.waitForPackets(F_NET_CLIENT_TIMEOUT_RECEIVE) > 0)
+            {
+                fge::net::FluxPacketPtr netPckFlux;
+                if (network.process(netPckFlux) == fge::net::FluxProcessResults::RETRIEVABLE)
+                {
+                    if (netPckFlux->retrieveHeaderId().value() == CLIENT_HELLO)
+                    {
+                        bool valid;
+                        std::string dataString;
+                        netPckFlux->packet() >> valid >> dataString;
+                        if (valid)
+                        {
+                            std::cout << "Hi from the server\n";
+                            helloReceived = true;
+                        }
+                        else
+                        {
+                            std::cout << "Server refused connection: " << dataString << std::endl;
+                            network.stop();
+                        }
+                    }
+                }
+            }
+
+            if (helloReceived)
+            {
+                //Asking for connection
+                packet = fge::net::TransmissionPacket::create(CLIENT_ASK_CONNECT);
+                packet->doNotDiscard().doNotReorder();
+                network._client.pushPacket(std::move(packet));
+                network.notifyTransmission();
+                if (network.waitForPackets(F_NET_CLIENT_TIMEOUT_RECEIVE) > 0)
+                {
+                    fge::net::FluxPacketPtr netPckFlux;
+                    if (network.process(netPckFlux) == fge::net::FluxProcessResults::RETRIEVABLE)
+                    {
+                        if (netPckFlux->retrieveHeaderId().value() == CLIENT_ASK_CONNECT)
+                        {
+                            bool valid;
+                            netPckFlux->packet() >> valid;
+                            if (valid)
+                            {
+                                std::cout << "Connected to the server\n";
+                                this->applyFullUpdate(netPckFlux->packet());
+                            }
+                            else
+                            {
+                                std::string dataString;
+                                netPckFlux->packet() >> dataString;
+                                std::cout << "Server refused connection: " << dataString << std::endl;
+                                network.stop();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         network._client.setCTOSLatency_ms(5);
 
         gGameHandler = std::make_unique<GameHandler>(*this);
@@ -121,6 +204,7 @@ public:
 
         // Creating objects
         auto* objPlayer = this->newObject<Player>();
+        objPlayer->_tags.add("player");
 
         auto* objTopMap = this->newObject<fge::ObjRenderMap>({FGE_SCENE_PLAN_HIGH_TOP});
         objTopMap->setClearColor(fge::Color{50, 50, 50, 140});
@@ -239,8 +323,17 @@ public:
             fge::net::FluxPacketPtr netPckFlux;
             while (network.process(netPckFlux) == fge::net::FluxProcessResults::RETRIEVABLE)
             {
-                switch (netPckFlux->retrieveHeaderId().value())
+                switch (static_cast<PacketHeaders>(netPckFlux->retrieveHeaderId().value()))
                 {
+                case SERVER_GOODBYE:
+                    network.stop();
+                    break;
+                case SERVER_UPDATE:
+                    this->applyUpdate(netPckFlux->packet());
+                    break;
+                case SERVER_FULL_UPDATE:
+                    this->applyFullUpdate(netPckFlux->packet());
+                    break;
                 default:
                     break;
                 }
@@ -253,23 +346,22 @@ public:
             }
 
             //Return packet
-            if ( returnPacketClock.reached(std::chrono::milliseconds(RETURN_PACKET_DELAYms)) )
+            if ( returnPacketClock.reached(std::chrono::milliseconds(RETURN_PACKET_DELAYms)) && network.isRunning() )
             {
-                /*if (sc::GameHandler().getReturnPacketCommandSize() > 0)
-                {
-                    std::cout << "test" << std::endl;
-                }
+                auto transmissionPacket = fge::net::TransmissionPacket::create(CLIENT_STATS);
 
-                auto transmissionPacket = sc::GetGameHandler().prepareAndRetrieveReturnPacket();
+                transmissionPacket->packet()
+                    << objPlayer->getPosition()
+                    << objPlayer->getDirection()
+                    << objPlayer->getStat() << 0;
 
                 //Packet latency planner
-                network._client._latencyPlanner.pack(transmissionPacket);
+                /*network._client._latencyPlanner.pack(transmissionPacket);
 
                 //Pack needed update
-                this->packNeededUpdate(transmissionPacket->packet());
+                this->packNeededUpdate(transmissionPacket->packet());*/
 
-                network._client.pushPacket(std::move(transmissionPacket));*/
-
+                network._client.pushPacket(std::move(transmissionPacket));
                 returnPacketClock.restart();
             }
         }
@@ -282,6 +374,74 @@ public:
         fge::anim::gManager.uninitialize();
 
         gGameHandler.reset();
+    }
+
+    void applyUpdate(fge::net::Packet& packet)
+    {
+        fge::net::SizeType playerCount;
+        packet >> playerCount;
+        for (fge::net::SizeType i = 0; i < playerCount; ++i)
+        {
+            std::string playerId;
+            packet >> playerId;
+
+            Player* objPlayer = nullptr;
+            if (auto ply = this->getFirstObj_ByTag("player_" + playerId))
+            {
+                objPlayer = ply->getObject<Player>();
+            }
+            else
+            {
+                objPlayer = this->newObject<Player>();
+                objPlayer->_tags.add("player_" + playerId);
+                objPlayer->_properties["playerId"] = playerId;
+            }
+
+            fge::Vector2f position;
+            fge::Vector2i direction;
+            uint8_t stat;
+            packet >> position >> direction >> stat;
+            objPlayer->boxMove(position);
+
+            fge::net::SizeType eventCount;
+            packet >> eventCount;
+        }
+    }
+    void applyFullUpdate(fge::net::Packet& packet)
+    {
+        std::string myPlayerId;
+        packet >> myPlayerId;
+
+        this->_properties["playerId"] = myPlayerId;
+
+        fge::net::SizeType playerCount;
+        packet >> playerCount;
+        for (fge::net::SizeType i = 0; i < playerCount; ++i)
+        {
+            std::string playerId;
+            packet >> playerId;
+
+            Player* objPlayer = nullptr;
+            if (auto ply = this->getFirstObj_ByTag("player_" + playerId))
+            {
+                objPlayer = ply->getObject<Player>();
+            }
+            else
+            {
+                objPlayer = this->newObject<Player>();
+                objPlayer->_tags.add("player_" + playerId);
+                objPlayer->_properties["playerId"] = playerId;
+            }
+
+            fge::Vector2f position;
+            fge::Vector2i direction;
+            uint8_t stat;
+            packet >> position >> direction >> stat;
+            objPlayer->boxMove(position);
+
+            fge::net::SizeType eventCount;
+            packet >> eventCount;
+        }
     }
 };
 

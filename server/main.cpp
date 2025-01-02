@@ -23,6 +23,21 @@ public:
     {
         auto& networkFlux = *network.getDefaultFlux();
 
+        nlohmann::json config;
+        if (!fge::LoadJsonFromFile("server.json", config))
+        {
+            std::cout << "Can't load server.json\n";
+            return;
+        }
+
+        fge::net::Port port = config["port"].get<fge::net::Port>();
+
+        if (!network.start(port, fge::net::IpAddress::Ipv4Any, fge::net::IpAddress::Types::Ipv4))
+        {
+            std::cout << "Can't start network\n";
+            return;
+        }
+
         fge::Event event;
 
         fge::Clock mainClock;
@@ -318,8 +333,9 @@ public:
 
                         transmissionPacket->packet().setHeader(SERVER_UPDATE);
 
-                        this->packModification(transmissionPacket->packet(), itClient->first);
-                        this->packWatchedEvent(transmissionPacket->packet(), itClient->first);
+                        this->packUpdate(networkFlux, itClient->first, *transmissionPacket);
+                        //this->packModification(transmissionPacket->packet(), itClient->first);
+                        //this->packWatchedEvent(transmissionPacket->packet(), itClient->first);
                         //itClient->second->_latencyPlanner.pack(transmissionPacket);
 
                         itClient->second->pushPacket(std::move(transmissionPacket));
@@ -349,6 +365,13 @@ public:
     {
         //TODO: only modified player stats, and events
 
+        auto const yourPlayerId = this->getPlayerId(identity);
+        if (yourPlayerId.empty())
+        {
+            //Should not really happen
+            return;
+        }
+
         fge::net::SizeType playerCount = 0;
         auto const playerCountRewritePos = packet.packet().getDataSize();
         packet.packet().append(sizeof playerCount);
@@ -363,6 +386,12 @@ public:
                 }
 
                 auto const playerId = this->getPlayerId(it->first);
+
+                if (playerId == yourPlayerId)
+                {
+                    continue;
+                }
+
                 packet.packet() << playerId;
 
                 auto const player = this->getFirstObj_ByTag("player_" + playerId);
@@ -405,6 +434,12 @@ public:
                 }
 
                 auto const playerId = this->getPlayerId(it->first);
+
+                if (playerId == yourPlayerId)
+                {
+                    continue;
+                }
+
                 packet.packet() << playerId;
 
                 auto const player = this->getFirstObj_ByTag("player_" + playerId);

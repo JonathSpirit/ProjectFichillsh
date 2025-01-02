@@ -37,9 +37,9 @@ FGE_OBJ_UPDATE_BODY(FishBait)
     auto const delta = fge::DurationToSecondFloat(deltaTime);
     this->g_time += delta;
 
-    switch (this->g_state)
+    switch (this->g_stat)
     {
-    case States::THROWING:
+    case Stats::THROWING:
     {
         auto sinusValue = std::sin(this->g_time * F_BAIT_SPEED);
 
@@ -83,7 +83,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
             }
 
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("splash")->_ptr.get(), 0);
-            this->g_state = States::WAITING;
+            this->g_stat = Stats::WAITING;
             this->g_time = 0.0f;
             sinusValue = 1.0f;
         }
@@ -94,7 +94,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
         this->g_staticPosition = this->getPosition();
     }
         break;
-    case States::WAITING:
+    case Stats::WAITING:
     {
         auto sinx = std::sin(this->g_time);
         auto siny = std::sin(this->g_time * 1.7f);
@@ -102,7 +102,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
         this->setPosition(this->g_staticPosition + fge::Vector2f{sinx, siny});
     }
         break;
-    case States::CATCHING:
+    case Stats::CATCHING:
     {
         auto const posXeffect = fge::_random.range(-1.0f, 1.0f);
         this->setPosition(this->g_staticPosition + fge::Vector2f{posXeffect, 0.0f});
@@ -113,10 +113,10 @@ FGE_OBJ_UPDATE_BODY(FishBait)
 
 FGE_OBJ_DRAW_BODY(FishBait)
 {
-    auto copyStates = states.copy();
-    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+    auto copyStats = states.copy();
+    copyStats._resTransform.set(target.requestGlobalTransform(*this, copyStats._resTransform));
 
-    this->g_objSprite.draw(target, copyStates);
+    this->g_objSprite.draw(target, copyStats);
 }
 
 void FishBait::first(fge::Scene &scene)
@@ -152,17 +152,17 @@ fge::RectFloat FishBait::getLocalBounds() const
 
 bool FishBait::isWaiting() const
 {
-    return this->g_state == States::WAITING;
+    return this->g_stat == Stats::WAITING;
 }
 
 void FishBait::catchingFish()
 {
-    this->g_state = States::CATCHING;
+    this->g_stat = Stats::CATCHING;
     this->g_time = 0.0f;
 }
 void FishBait::endCatchingFish()
 {
-    this->g_state = States::WAITING;
+    this->g_stat = Stats::WAITING;
     this->g_time = 0.0f;
 }
 
@@ -172,9 +172,9 @@ FGE_OBJ_UPDATE_BODY(Player)
 {
     FGE_OBJ_UPDATE_CALL(this->g_objAnim);
 
-    switch (this->g_state)
+    switch (this->g_stat)
     {
-    case States::WALKING: {
+    case Stats::WALKING: {
         //Player movement and animation
         std::string animationName;
 
@@ -191,7 +191,7 @@ FGE_OBJ_UPDATE_BODY(Player)
             b2Body_SetLinearVelocity(this->g_bodyId, {0.0f, 0.0f});
 
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("swipe")->_ptr.get(), 0);
-            this->g_state = States::THROWING;
+            this->g_stat = Stats::THROWING;
             this->g_objAnim.getAnimation().setLoop(false);
 
             if (this->g_audioWalking != -1)
@@ -255,23 +255,23 @@ FGE_OBJ_UPDATE_BODY(Player)
         });
         this->g_objAnim.getAnimation().setGroup(animationName);
         break;
-    } case States::IDLE:
+    } case Stats::IDLE:
         break;
-    case States::THROWING:
+    case Stats::THROWING:
         if (auto fishBait = this->g_fishBait.lock())
         {
             if (fishBait->getObject<FishBait>()->isWaiting())
             {
-                this->g_state = States::FISHING;
+                this->g_stat = Stats::FISHING;
             }
         }
         else
         {
-            this->g_state = States::WALKING;
+            this->g_stat = Stats::WALKING;
             this->g_objAnim.getAnimation().setLoop(true);
         }
         break;
-    case States::FISHING:
+    case Stats::FISHING:
         if (event.isKeyPressed(SDLK_w) || event.isKeyPressed(SDLK_s) || event.isKeyPressed(SDLK_a) || event.isKeyPressed(SDLK_d))
         {
             if (auto fishBait = this->g_fishBait.lock())
@@ -279,7 +279,7 @@ FGE_OBJ_UPDATE_BODY(Player)
                 scene.delObject(fishBait->getSid());
             }
 
-            this->g_state = States::WALKING;
+            this->g_stat = Stats::WALKING;
             this->g_objAnim.getAnimation().setLoop(true);
         }
         break;
@@ -296,10 +296,10 @@ FGE_OBJ_UPDATE_BODY(Player)
 }
 FGE_OBJ_DRAW_BODY(Player)
 {
-    auto copyStates = states.copy();
-    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+    auto copyStats = states.copy();
+    copyStats._resTransform.set(target.requestGlobalTransform(*this, copyStats._resTransform));
 
-    this->g_objAnim.draw(target, copyStates);
+    this->g_objAnim.draw(target, copyStats);
 }
 
 void Player::first(fge::Scene &scene)
@@ -347,6 +347,15 @@ fge::RectFloat Player::getLocalBounds() const
     return this->g_objAnim.getLocalBounds();
 }
 
+Player::Stats Player::getStat() const
+{
+    return this->g_stat;
+}
+fge::Vector2i const& Player::getDirection() const
+{
+    return this->g_direction;
+}
+
 void Player::boxMove(fge::Vector2f const& move)
 {
     b2Body_SetTransform(this->g_bodyId,
@@ -356,14 +365,14 @@ void Player::boxMove(fge::Vector2f const& move)
 }
 bool Player::isFishing() const
 {
-    return this->g_state == States::FISHING;
+    return this->g_stat == Stats::FISHING;
 }
 
 void Player::catchingFish()
 {
-    if (this->g_state == States::FISHING)
+    if (this->g_stat == Stats::FISHING)
     {
-        this->g_state = States::CATCHING;
+        this->g_stat = Stats::CATCHING;
 
         if (auto fishBait = this->g_fishBait.lock())
         {
@@ -373,13 +382,13 @@ void Player::catchingFish()
 }
 void Player::endCatchingFish()
 {
-    if (this->g_state == States::CATCHING)
+    if (this->g_stat == Stats::CATCHING)
     {
         if (auto fishBait = this->g_fishBait.lock())
         {
             this->_myObjectData.lock()->getScene()->delObject(fishBait->getSid());
         }
         this->g_objAnim.getAnimation().setLoop(true);
-        this->g_state = States::WALKING;
+        this->g_stat = Stats::WALKING;
     }
 }

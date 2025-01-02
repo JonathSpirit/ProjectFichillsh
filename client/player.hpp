@@ -46,12 +46,12 @@ public:
 private:
     fge::ObjSprite g_objSprite;
     fge::Vector2i g_throwDirection;
-    enum class States
+    enum class Stats
     {
         THROWING,
         WAITING,
         CATCHING
-    } g_state = States::THROWING;
+    } g_stat = Stats::THROWING;
     float g_time = 0.0f;
     fge::Vector2f g_startPosition;
     fge::Vector2f g_staticPosition;
@@ -60,6 +60,16 @@ private:
 class Player : public fge::Object
 {
 public:
+    enum class Stats : uint8_t
+    {
+        WALKING,
+        IDLE,
+        THROWING,
+        FISHING,
+        CATCHING
+    };
+    using Stats_t = std::underlying_type_t<Stats>;
+
     Player() = default;
     ~Player() override = default;
 
@@ -76,6 +86,9 @@ public:
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
 
+    [[nodiscard]] Stats getStat() const;
+    [[nodiscard]] fge::Vector2i const& getDirection() const;
+
     void boxMove(fge::Vector2f const& move);
     [[nodiscard]] bool isFishing() const;
 
@@ -85,14 +98,7 @@ public:
 private:
     fge::ObjAnimation g_objAnim;
     b2BodyId g_bodyId;
-    enum class States
-    {
-        WALKING,
-        IDLE,
-        THROWING,
-        FISHING,
-        CATCHING
-    } g_state = States::WALKING;
+    Stats g_stat = Stats::WALKING;
     fge::ObjectDataWeak g_fishBait;
     fge::Vector2i g_direction{0, 1};
     int g_audioWalking = -1;
