@@ -8,6 +8,7 @@
 
 #define F_NET_CLIENT_TIMEOUT_CONNECT_MS std::chrono::milliseconds{3000}
 #define F_NET_CLIENT_TIMEOUT_HELLO_MS std::chrono::milliseconds{3000}
+#define F_NET_SERVER_TIMEOUT_MS std::chrono::milliseconds{3000}
 
 #define F_NET_CLIENT_TIMEOUT_RECEIVE std::chrono::milliseconds{1200}
 
@@ -54,6 +55,7 @@ enum PacketHeaders : FGE_NET_HEADER_TYPE
      */
     CLIENT_STATS,
     /*
+     * - LATENCY_PLANNER
      * - PLAYER_POSITION
      * - PLAYER_DIRECTION
      * - PLAYER_STAT
@@ -75,6 +77,7 @@ enum PacketHeaders : FGE_NET_HEADER_TYPE
      */
     SERVER_UPDATE,
     /*
+     * - LATENCY_PLANNER
      * - PLAYER_COUNT:
      * - - PLAYER_ID
      * - - PLAYER_POSITION

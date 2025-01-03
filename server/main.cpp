@@ -260,6 +260,23 @@ public:
                         break;
                     }
 
+                    client->_latencyPlanner.unpack(netPckFlux.get(), *client);
+                    if (auto latency = client->_latencyPlanner.getLatency())
+                    {
+                        if (latency.value() > 200)
+                        {
+                            client->setSTOCLatency_ms(200);
+                        }
+                        else
+                        {
+                            client->setSTOCLatency_ms(latency.value());
+                        }
+                    }
+                    if (auto latency = client->_latencyPlanner.getOtherSideLatency())
+                    {
+                        client->setCTOSLatency_ms(latency.value());
+                    }
+
                     auto playerObj = this->getFirstObj_ByTag("player_" + this->getPlayerId(netPckFlux->getIdentity()))->getObject<Player>();
 
                     using namespace fge::net::rules;
@@ -339,10 +356,10 @@ public:
 
                         transmissionPacket->packet().setHeader(SERVER_UPDATE);
 
+                        itClient->second->_latencyPlanner.pack(transmissionPacket);
                         this->packUpdate(networkFlux, itClient->first, *transmissionPacket);
                         //this->packModification(transmissionPacket->packet(), itClient->first);
                         //this->packWatchedEvent(transmissionPacket->packet(), itClient->first);
-                        //itClient->second->_latencyPlanner.pack(transmissionPacket);
 
                         itClient->second->pushPacket(std::move(transmissionPacket));
                     }

@@ -250,7 +250,7 @@ public:
                         else
                         {
                             std::cout << "Server didn't say hello: " << dataString << std::endl;
-                            network.stop();
+                            this->stopNetwork(network);
                         }
                     }
                 }
@@ -258,7 +258,7 @@ public:
             else
             {
                 std::cout << "Server didn't say hello, timeout\n";
-                network.stop();
+                this->stopNetwork(network);
             }
 
             if (helloReceived)
@@ -299,6 +299,8 @@ public:
             }
         }
 
+        fge::Clock netServerTimeoutClock;
+
         bool running = true;
         while (running)
         {
@@ -336,9 +338,22 @@ public:
                 switch (static_cast<PacketHeaders>(netPckFlux->retrieveHeaderId().value()))
                 {
                 case SERVER_GOODBYE:
-                    network.stop();
+                    this->stopNetwork(network);
                     break;
                 case SERVER_UPDATE:
+                    //Unpack latency planner
+                    network._client._latencyPlanner.unpack(netPckFlux.get(), network._client);
+
+                    if (auto latency = network._client._latencyPlanner.getLatency())
+                    {
+                        network._client.setCTOSLatency_ms(latency.value());
+                    }
+                    if (auto latency = network._client._latencyPlanner.getOtherSideLatency())
+                    {
+                        network._client.setSTOCLatency_ms(latency.value());
+                    }
+
+                    //Unpack data
                     this->applyUpdate(netPckFlux->packet());
                     break;
                 case SERVER_FULL_UPDATE:
@@ -348,6 +363,8 @@ public:
                     break;
                 }
 
+                netServerTimeoutClock.restart();
+
                 if (badPacketUpdatesCount >= BAD_PACKET_LIMIT && !gAskForFullUpdate)
                 {
                     std::cout << "Too many bad packets" << std::endl;
@@ -355,21 +372,35 @@ public:
                 }
             }
 
+            if (!network.isRunning())
+            {
+                continue;
+            }
+
+            //Check for timeout
+            if (netServerTimeoutClock.reached(std::chrono::milliseconds(F_NET_SERVER_TIMEOUT_MS)))
+            {
+                std::cout << "Server timeout" << std::endl;
+                this->stopNetwork(network);
+                continue;
+            }
+
             //Return packet
-            if ( returnPacketClock.reached(std::chrono::milliseconds(RETURN_PACKET_DELAYms)) && network.isRunning() )
+            if ( returnPacketClock.reached(std::chrono::milliseconds(RETURN_PACKET_DELAYms)) )
             {
                 auto transmissionPacket = fge::net::TransmissionPacket::create(CLIENT_STATS);
 
+                //Packet latency planner
+                network._client._latencyPlanner.pack(transmissionPacket);
+
+                //Pack data
                 transmissionPacket->packet()
                     << objPlayer->getPosition()
                     << objPlayer->getDirection()
                     << objPlayer->getStat() << fge::net::SizeType{0};
 
-                //Packet latency planner
-                /*network._client._latencyPlanner.pack(transmissionPacket);
-
                 //Pack needed update
-                this->packNeededUpdate(transmissionPacket->packet());*/
+                //this->packNeededUpdate(transmissionPacket->packet());
 
                 network._client.pushPacket(std::move(transmissionPacket));
                 returnPacketClock.restart();
@@ -386,6 +417,20 @@ public:
         gGameHandler.reset();
     }
 
+    void removeNetworkElement()
+    {
+        fge::ObjectContainer container;
+        this->getAllObj_ByTag("multiplayer", container);
+        for (auto const& obj : container)
+        {
+            this->delObject(obj->getSid());
+        }
+    }
+    void stopNetwork(fge::net::ClientSideNetUdp& network)
+    {
+        network.stop();
+        this->removeNetworkElement();
+    }
     void applyUpdate(fge::net::Packet& packet)
     {
         fge::net::SizeType playerCount;
@@ -405,6 +450,7 @@ public:
                 objPlayer = this->newObject<Player>();
                 objPlayer->allowUserControl(false);
                 objPlayer->_tags.add("player_" + playerId);
+                objPlayer->_tags.add("multiplayer");
                 objPlayer->_properties["playerId"] = playerId;
             }
 
@@ -420,6 +466,8 @@ public:
     }
     void applyFullUpdate(fge::net::Packet& packet)
     {
+        this->removeNetworkElement(); //TODO: remove only the ones that are not in the server
+
         std::string myPlayerId;
         packet >> myPlayerId;
 
@@ -442,6 +490,7 @@ public:
                 objPlayer = this->newObject<Player>();
                 objPlayer->allowUserControl(false);
                 objPlayer->_tags.add("player_" + playerId);
+                objPlayer->_tags.add("multiplayer");
                 objPlayer->_properties["playerId"] = playerId;
             }
 
