@@ -8,11 +8,23 @@
 
 #include <iostream>
 #include <memory>
+#include <csignal>
 
 #include "../share/network.hpp"
 #include "player.hpp"
 
 #define F_TICK_TIME 50
+
+std::atomic_bool gRunning = true;
+
+void signalCallbackHandler(int signum)
+{
+    if (signum == SIGINT || signum == SIGTERM)
+    {
+        std::cout << "received external interrupt signal !" << std::endl;
+        gRunning = false;
+    }
+}
 
 class Scene : public fge::Scene
 {
@@ -86,14 +98,8 @@ public:
 
         std::chrono::microseconds tickTime{0};
 
-        bool running = true;
-        while (running)
+        while (gRunning)
         {
-            if (event.isKeyPressed(SDLK_ESCAPE))
-            {
-                running = false;
-            }
-
             std::chrono::microseconds tickDelay = std::chrono::milliseconds{F_TICK_TIME} - tickTime;
             if (tickDelay.count() <= 0)
             {
@@ -547,10 +553,9 @@ int main(int argc, char *argv[])
         }
     }*/
 
-    if (SDL_Init(SDL_INIT_EVENTS) != 0)
+    if (std::signal(SIGINT, signalCallbackHandler) == SIG_ERR)
     {
-        std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
-        return 1;
+        std::cout << "can't set the signal handler ! (continuing anyway)" << std::endl;
     }
 
     std::cout << "FastEngine version: " << FGE_VERSION_FULL_WITHTAG_STRING << std::endl;
