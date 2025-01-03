@@ -6,10 +6,10 @@
 #define F_NET_CLIENT_HELLO "Hello"
 #define F_NET_SERVER_HELLO "Hi"
 
-#define F_NET_CLIENT_TIMEOUT_CONNECT_MS std::chrono::milliseconds{12000}
-#define F_NET_CLIENT_TIMEOUT_HELLO_MS std::chrono::milliseconds{5000}
+#define F_NET_CLIENT_TIMEOUT_CONNECT_MS std::chrono::milliseconds{3000}
+#define F_NET_CLIENT_TIMEOUT_HELLO_MS std::chrono::milliseconds{3000}
 
-#define F_NET_CLIENT_TIMEOUT_RECEIVE std::chrono::milliseconds{1500}
+#define F_NET_CLIENT_TIMEOUT_RECEIVE std::chrono::milliseconds{1200}
 
 enum class ClientNetStats
 {
@@ -17,10 +17,10 @@ enum class ClientNetStats
     CONNECTED
 };
 
-enum PacketHeaders : fge::net::ProtocolPacket::Header
+enum PacketHeaders : FGE_NET_HEADER_TYPE
 {
     //Client to server
-    CLIENT_HELLO,
+    CLIENT_HELLO = FGE_NET_HEADERID_START,
     /*
      * - CLIENT_HELLO
      * - STRING_SEQ

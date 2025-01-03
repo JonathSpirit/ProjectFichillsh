@@ -95,6 +95,8 @@ public:
     void catchingFish();
     void endCatchingFish();
 
+    void allowUserControl(bool allow);
+
 private:
     fge::ObjAnimation g_objAnim;
     b2BodyId g_bodyId;
@@ -102,4 +104,5 @@ private:
     fge::ObjectDataWeak g_fishBait;
     fge::Vector2i g_direction{0, 1};
     int g_audioWalking = -1;
+    bool g_isUserControlled = true;
 };

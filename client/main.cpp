@@ -41,78 +41,6 @@ public:
 
         fge::net::IpAddress serverIp = config["ip"].get<std::string>();
         fge::net::Port port = config["port"].get<fge::net::Port>();
-        if (!network.start(0, fge::net::IpAddress::Ipv4Any,
-                port, serverIp,
-                fge::net::IpAddress::Types::Ipv4))
-        {
-            std::cout << "Can't start network\n";
-        }
-        else
-        {
-            bool helloReceived = false;
-
-            //Sending hello
-            auto packet = fge::net::TransmissionPacket::create(CLIENT_HELLO);
-            packet->doNotDiscard().doNotReorder().packet() << F_NET_CLIENT_HELLO << F_NET_STRING_SEQ;
-            network._client.pushPacket(std::move(packet));
-            network.notifyTransmission();
-            if (network.waitForPackets(F_NET_CLIENT_TIMEOUT_RECEIVE) > 0)
-            {
-                fge::net::FluxPacketPtr netPckFlux;
-                if (network.process(netPckFlux) == fge::net::FluxProcessResults::RETRIEVABLE)
-                {
-                    if (netPckFlux->retrieveHeaderId().value() == CLIENT_HELLO)
-                    {
-                        bool valid;
-                        std::string dataString;
-                        netPckFlux->packet() >> valid >> dataString;
-                        if (valid)
-                        {
-                            std::cout << "Hi from the server\n";
-                            helloReceived = true;
-                        }
-                        else
-                        {
-                            std::cout << "Server refused connection: " << dataString << std::endl;
-                            network.stop();
-                        }
-                    }
-                }
-            }
-
-            if (helloReceived)
-            {
-                //Asking for connection
-                packet = fge::net::TransmissionPacket::create(CLIENT_ASK_CONNECT);
-                packet->doNotDiscard().doNotReorder();
-                network._client.pushPacket(std::move(packet));
-                network.notifyTransmission();
-                if (network.waitForPackets(F_NET_CLIENT_TIMEOUT_RECEIVE) > 0)
-                {
-                    fge::net::FluxPacketPtr netPckFlux;
-                    if (network.process(netPckFlux) == fge::net::FluxProcessResults::RETRIEVABLE)
-                    {
-                        if (netPckFlux->retrieveHeaderId().value() == CLIENT_ASK_CONNECT)
-                        {
-                            bool valid;
-                            netPckFlux->packet() >> valid;
-                            if (valid)
-                            {
-                                std::cout << "Connected to the server\n";
-                                this->applyFullUpdate(netPckFlux->packet());
-                            }
-                            else
-                            {
-                                std::string dataString;
-                                netPckFlux->packet() >> dataString;
-                                std::cout << "Server refused connection: " << dataString << std::endl;
-                                network.stop();
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         network._client.setCTOSLatency_ms(5);
 
@@ -289,6 +217,88 @@ public:
             }
         }
 
+        //Connect to the server
+        if (!network.start(0, fge::net::IpAddress::Ipv4Any,
+                port, serverIp,
+                fge::net::IpAddress::Types::Ipv4))
+        {
+            std::cout << "Can't start network\n";
+        }
+        else
+        {
+            bool helloReceived = false;
+
+            //Sending hello
+            auto packet = fge::net::TransmissionPacket::create(CLIENT_HELLO);
+            packet->doNotDiscard().doNotReorder().packet() << F_NET_CLIENT_HELLO << F_NET_STRING_SEQ;
+            network._client.pushPacket(std::move(packet));
+            network.notifyTransmission();
+            if (network.waitForPackets(F_NET_CLIENT_TIMEOUT_RECEIVE) > 0)
+            {
+                if (auto netPckFlux = network.popNextPacket())
+                {
+                    if (netPckFlux->retrieveHeaderId().value() == CLIENT_HELLO)
+                    {
+                        bool valid;
+                        std::string dataString;
+                        netPckFlux->packet() >> valid >> dataString;
+                        if (valid)
+                        {
+                            std::cout << "Hi from the server\n";
+                            helloReceived = true;
+                        }
+                        else
+                        {
+                            std::cout << "Server didn't say hello: " << dataString << std::endl;
+                            network.stop();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                std::cout << "Server didn't say hello, timeout\n";
+                network.stop();
+            }
+
+            if (helloReceived)
+            {
+                //Asking for connection
+                packet = fge::net::TransmissionPacket::create(CLIENT_ASK_CONNECT);
+                packet->doNotDiscard().doNotReorder();
+                network._client.pushPacket(std::move(packet));
+                network.notifyTransmission();
+                if (network.waitForPackets(F_NET_CLIENT_TIMEOUT_RECEIVE) > 0)
+                {
+                    if (auto netPckFlux = network.popNextPacket())
+                    {
+                        if (netPckFlux->retrieveHeaderId().value() == CLIENT_ASK_CONNECT)
+                        {
+                            bool valid;
+                            netPckFlux->packet() >> valid;
+                            if (valid)
+                            {
+                                std::cout << "Connected to the server\n";
+                                this->applyFullUpdate(netPckFlux->packet());
+                            }
+                            else
+                            {
+                                std::string dataString;
+                                netPckFlux->packet() >> dataString;
+                                std::cout << "Server refused connection: " << dataString << std::endl;
+                                network.stop();
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                std::cout << "Can't connect to the server\n";
+                network.stop();
+            }
+        }
+
         bool running = true;
         while (running)
         {
@@ -353,7 +363,7 @@ public:
                 transmissionPacket->packet()
                     << objPlayer->getPosition()
                     << objPlayer->getDirection()
-                    << objPlayer->getStat() << 0;
+                    << objPlayer->getStat() << fge::net::SizeType{0};
 
                 //Packet latency planner
                 /*network._client._latencyPlanner.pack(transmissionPacket);
@@ -393,6 +403,7 @@ public:
             else
             {
                 objPlayer = this->newObject<Player>();
+                objPlayer->allowUserControl(false);
                 objPlayer->_tags.add("player_" + playerId);
                 objPlayer->_properties["playerId"] = playerId;
             }
@@ -401,7 +412,7 @@ public:
             fge::Vector2i direction;
             uint8_t stat;
             packet >> position >> direction >> stat;
-            objPlayer->boxMove(position);
+            objPlayer->setPosition(position);
 
             fge::net::SizeType eventCount;
             packet >> eventCount;
@@ -429,6 +440,7 @@ public:
             else
             {
                 objPlayer = this->newObject<Player>();
+                objPlayer->allowUserControl(false);
                 objPlayer->_tags.add("player_" + playerId);
                 objPlayer->_properties["playerId"] = playerId;
             }
@@ -437,7 +449,7 @@ public:
             fge::Vector2i direction;
             uint8_t stat;
             packet >> position >> direction >> stat;
-            objPlayer->boxMove(position);
+            objPlayer->setPosition(position);
 
             fge::net::SizeType eventCount;
             packet >> eventCount;

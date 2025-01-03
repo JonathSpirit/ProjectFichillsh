@@ -43,10 +43,10 @@ public:
         fge::Clock mainClock;
 
         //Init managers
-        //fge::texture::gManager.initialize();
+        fge::texture::gManager.initialize();
         //fge::font::gManager.initialize();
         //fge::shader::gManager.initialize();
-        //fge::anim::gManager.initialize();
+        fge::anim::gManager.initialize();
 
         //Load textures
         //fge::texture::gManager.loadFromFile("OutdoorsTileset", "resources/tilesets/OutdoorsTileset.png");
@@ -117,14 +117,15 @@ public:
 
                 for (auto client = networkFlux._clients.begin(lock); client != networkFlux._clients.end(lock);)
                 {
-                    auto timeout = fge::DeltaTime{std::chrono::milliseconds{client->second->_data["timeout"].get<std::chrono::milliseconds::rep>().value()}};
-
+                    auto timeout = std::chrono::duration_cast<fge::DeltaTime>(std::chrono::milliseconds{client->second->_data["timeout"].get<std::chrono::milliseconds::rep>().value()});
                     timeout -= deltaTime;
+                    client->second->_data["timeout"] = std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count();
+
                     if (timeout <= fge::DeltaTime{0})
                     {//Remove user
                         network.sendTo(pckTimeout, client->first);
 
-                        std::cout << "bad client "<< client->first._ip.toString().value_or("UNKOWN") <<" timeout !\n";
+                        std::cout << "bad client "<< client->first._ip.toString().value_or("UNKNOWN") <<" timeout !\n";
 
                         auto const playerId = this->getPlayerId(client->first);
                         if (auto player = this->getFirstObj_ByTag("player_" + playerId))
@@ -163,9 +164,9 @@ public:
                         using namespace fge::net::rules;
                         std::string dataHello;
                         std::string dataStringSeq;
-                        auto err = RValid(RSizeMustEqual<std::string>(sizeof F_NET_CLIENT_HELLO, {netPckFlux->packet(), &dataHello}))
+                        auto err = RValid(RSizeMustEqual<std::string>(sizeof(F_NET_CLIENT_HELLO) - 1, {netPckFlux->packet(), &dataHello}))
                             .and_then([&](auto& chain) {
-                                return RValid(RSizeMustEqual<std::string>(sizeof F_NET_STRING_SEQ, chain.newChain(&dataStringSeq)));
+                                return RValid(RSizeMustEqual<std::string>(sizeof(F_NET_STRING_SEQ) - 1, chain.newChain(&dataStringSeq)));
                             }).end();
 
                         if (err)
@@ -232,7 +233,7 @@ public:
 
                     auto player = this->newObject<Player>();
                     auto playerId = this->generatePlayerId(netPckFlux->getIdentity());
-                    player->_tags.add(playerId);
+                    player->_tags.add("player_" + playerId);
 
                     auto packet = fge::net::TransmissionPacket::create(CLIENT_ASK_CONNECT);
                     packet->doNotDiscard().doNotReorder().packet() << true;
@@ -250,6 +251,11 @@ public:
                     break;
                 }case CLIENT_STATS:{
                     if (!client)
+                    {
+                        break;
+                    }
+
+                    if (*client->_data["stat"].get<ClientNetStats>() != ClientNetStats::CONNECTED)
                     {
                         break;
                     }
@@ -355,10 +361,10 @@ public:
 
         network.stop();
 
-        //fge::texture::gManager.uninitialize();
+        fge::texture::gManager.uninitialize();
         //fge::font::gManager.uninitialize();
         //fge::shader::gManager.uninitialize();
-        //fge::anim::gManager.uninitialize();
+        fge::anim::gManager.uninitialize();
     }
 
     void packUpdate(fge::net::ServerNetFluxUdp& networkFlux, fge::net::Identity const& identity, fge::net::TransmissionPacket& packet)
@@ -471,7 +477,7 @@ public:
         {
             newPlayerId = fge::_random.randStr(32);
         }
-        while (!this->g_playerIdentities.contains(newPlayerId));
+        while (this->g_playerIdentities.contains(newPlayerId));
 
         this->g_playerIds[identity] = newPlayerId;
         this->g_playerIdentities[newPlayerId] = identity;

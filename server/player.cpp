@@ -125,6 +125,7 @@ FGE_OBJ_UPDATE_BODY(Player)
 {
     FGE_OBJ_UPDATE_CALL(this->g_objAnim);
 
+#ifndef FGE_DEF_SERVER
     switch (this->g_state)
     {
     case Stats::WALKING: {
@@ -198,6 +199,7 @@ FGE_OBJ_UPDATE_BODY(Player)
         }
         break;
     }
+#endif
 
     //Update position
     //auto const bpos = b2Body_GetPosition(this->g_bodyId);

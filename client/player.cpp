@@ -172,6 +172,11 @@ FGE_OBJ_UPDATE_BODY(Player)
 {
     FGE_OBJ_UPDATE_CALL(this->g_objAnim);
 
+    if (!this->g_isUserControlled)
+    {
+        return;
+    }
+
     switch (this->g_stat)
     {
     case Stats::WALKING: {
@@ -358,9 +363,12 @@ fge::Vector2i const& Player::getDirection() const
 
 void Player::boxMove(fge::Vector2f const& move)
 {
-    b2Body_SetTransform(this->g_bodyId,
+    if (this->g_isUserControlled)
+    {
+        b2Body_SetTransform(this->g_bodyId,
         {this->getPosition().x + move.x, this->getPosition().y + move.y},
         b2MakeRot(0.0f));
+    }
     this->move(move);
 }
 bool Player::isFishing() const
@@ -390,5 +398,14 @@ void Player::endCatchingFish()
         }
         this->g_objAnim.getAnimation().setLoop(true);
         this->g_stat = Stats::WALKING;
+    }
+}
+
+void Player::allowUserControl(bool allow)
+{
+    this->g_isUserControlled = allow;
+    if (!allow)
+    {
+        b2DestroyBody(this->g_bodyId);
     }
 }
