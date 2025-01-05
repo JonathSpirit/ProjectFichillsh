@@ -5,6 +5,7 @@
 #define F_NET_STRING_SEQ "ProjectFichillshGG"
 #define F_NET_CLIENT_HELLO "Hello"
 #define F_NET_SERVER_HELLO "Hi"
+#define F_NET_SERVER_COMPATIBILITY_VERSION uint32_t{1}
 
 #define F_NET_CLIENT_TIMEOUT_CONNECT_MS std::chrono::milliseconds{3000}
 #define F_NET_CLIENT_TIMEOUT_HELLO_MS std::chrono::milliseconds{3000}
@@ -25,6 +26,7 @@ enum PacketHeaders : FGE_NET_HEADER_TYPE
     /*
      * - CLIENT_HELLO
      * - STRING_SEQ
+     * - COMPATIBILITY_VERSION
      *
      * Response:
      * - BOOL_VALID

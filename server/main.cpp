@@ -173,6 +173,9 @@ public:
                         auto err = RValid(RSizeMustEqual<std::string>(sizeof(F_NET_CLIENT_HELLO) - 1, {netPckFlux->packet(), &dataHello}))
                             .and_then([&](auto& chain) {
                                 return RValid(RSizeMustEqual<std::string>(sizeof(F_NET_STRING_SEQ) - 1, chain.newChain(&dataStringSeq)));
+                            })
+                            .and_then([](auto& chain) {
+                                return RMustEqual<uint32_t>(F_NET_SERVER_COMPATIBILITY_VERSION, chain.template newChain<uint32_t>());
                             }).end();
 
                         if (err)

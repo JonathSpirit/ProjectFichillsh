@@ -230,7 +230,7 @@ public:
 
             //Sending hello
             auto packet = fge::net::TransmissionPacket::create(CLIENT_HELLO);
-            packet->doNotDiscard().doNotReorder().packet() << F_NET_CLIENT_HELLO << F_NET_STRING_SEQ;
+            packet->doNotDiscard().doNotReorder().packet() << F_NET_CLIENT_HELLO << F_NET_STRING_SEQ << F_NET_SERVER_COMPATIBILITY_VERSION;
             network._client.pushPacket(std::move(packet));
             network.notifyTransmission();
             if (network.waitForPackets(F_NET_CLIENT_TIMEOUT_RECEIVE) > 0)
