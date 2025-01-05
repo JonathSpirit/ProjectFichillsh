@@ -309,7 +309,24 @@ public:
                         }).and_then([&](auto& chain) {
                             playerObj->setStat(static_cast<Player::Stats>(chain.value()));
                             return RValid(chain.template newChain<fge::net::SizeType>());
-                        }).end(); //TODO: read events
+                        }).and_for_each([&](auto& chain, auto& index) {
+                            return RStrictLess<StatEvents>(StatEvents::EVENT_COUNT, chain.template newChain<StatEvents>())
+                            .and_then([&](auto& chain) {
+                                switch (chain.value())
+                                {
+                                case StatEvents::CAUGHT_FISH:{
+                                    std::string fishName;
+                                    chain.packet() >> fishName;
+                                    if (chain.packet().isValid())
+                                    {
+                                        std::cout << "Player " << this->getPlayerId(netPckFlux->getIdentity()) << " caught a fish " << fishName << "\n";
+                                        client->_data["caughtFish"] = fishName;
+                                    }
+                                    break;
+                                }}
+                                return chain;
+                            }).end();
+                        }).end();
 
                     if (err)
                     {
@@ -387,6 +404,14 @@ public:
                 {
                     network.notifyTransmission();
                 }
+                for (auto itClient = networkFlux._clients.begin(lock); itClient != networkFlux._clients.end(lock); ++itClient)
+                {
+                    if (itClient->second->_data["stat"].get<ClientNetStats>() != ClientNetStats::CONNECTED)
+                    {
+                        continue;
+                    }
+                    itClient->second->_data.delProperty("caughtFish");
+                }
             }
 
             networkFlux._clients.clearClientEvent();
@@ -443,7 +468,16 @@ public:
                     << playerObj->getStat();
 
                 //EVENT_COUNT
-                packet.packet() << fge::net::SizeType{0};
+                if (auto caughtFish = it->second->_data["caughtFish"].get<std::string>())
+                {
+                    packet.packet() << fge::net::SizeType{1}
+                        << StatEvents::CAUGHT_FISH
+                        << *caughtFish;
+                }
+                else
+                {
+                    packet.packet() << fge::net::SizeType{0};
+                }
 
                 ++playerCount;
             }

@@ -84,6 +84,25 @@ void GameHandler::update(fge::DeltaTime const &deltaTime)
     }
 }
 
+void GameHandler::pushEvent(std::shared_ptr<EventBase> event)
+{
+    this->g_events.push_back(std::move(event));
+}
+void GameHandler::packEvents(fge::net::Packet& packet)
+{
+    packet<< static_cast<fge::net::SizeType>(this->g_events.size());
+    for (auto const& event : this->g_events)
+    {
+        packet << event->getType();
+        event->pack(packet);
+    }
+    this->g_events.clear();
+}
+void GameHandler::clearEvents()
+{
+    this->g_events.clear();
+}
+
 std::unique_ptr<GameHandler> gGameHandler;
 
 //Minigame
@@ -175,7 +194,9 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         if (this->g_fishRemainingTime <= 0.0f)
         {
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("victory_fish")->_ptr.get(), 0);
-            scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, gFishManager.getRandomFishName());
+            auto const fishName = gFishManager.getRandomFishName();
+            scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, fishName);
+            gGameHandler->pushEvent(std::make_shared<EventCaughtFish>(fishName));
             scene.delUpdatedObject();
             return;
         }
@@ -399,6 +420,92 @@ fge::RectFloat FishAward::getGlobalBounds() const
 }
 
 fge::RectFloat FishAward::getLocalBounds() const
+{
+    return Object::getLocalBounds();
+}
+
+//MultiplayerFishAward
+
+MultiplayerFishAward::MultiplayerFishAward(std::string const &fishName, fge::Vector2f const& position)
+{
+    auto const fish = gFishManager.getElement(fishName);
+    this->g_fish.setTexture(fish->_ptr->_textureName);
+    this->g_fish.setTextureRect(fish->_ptr->_textureRect);
+    this->g_fish.scale(0.6f);
+    this->g_fish.centerOriginFromLocalBounds();
+
+    this->setPosition(position);
+}
+
+void MultiplayerFishAward::update(fge::RenderTarget &target, fge::Event &event, fge::DeltaTime const &deltaTime, fge::Scene &scene)
+{
+    auto const delta = fge::DurationToSecondFloat(deltaTime);
+    this->g_currentTime += delta;
+    auto sinus = std::sin(this->g_currentTime * 2.0f);
+    this->g_fish.setRotation(sinus * 10.0f);
+
+    this->setPosition(fge::ReachVector(this->getPosition(), this->g_positionGoal, 2.0f, delta));
+
+    if (this->g_currentTime >= 5.0f)
+    {//Start to fade out
+        auto const alpha = this->g_fish.getColor()._a - 0.5f * delta;
+
+        this->g_fish.setColor(fge::SetAlpha(this->g_fish.getColor(), alpha));
+        this->g_text.setFillColor(fge::SetAlpha(this->g_text.getFillColor(), alpha));
+        this->g_text.setOutlineColor(fge::SetAlpha(this->g_text.getOutlineColor(), alpha));
+        if (this->g_fish.getColor()._a <= 0.0f)
+        {
+            scene.delUpdatedObject();
+        }
+    }
+}
+
+void MultiplayerFishAward::draw(fge::RenderTarget &target, const fge::RenderStates &states) const
+{
+    auto copyStates = states.copy();
+    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+
+    this->g_fish.draw(target, copyStates);
+    this->g_text.draw(target, copyStates);
+}
+
+void MultiplayerFishAward::first(fge::Scene &scene)
+{
+    this->_drawMode = DrawModes::DRAW_ALWAYS_DRAWN;
+
+    this->g_positionGoal = this->getPosition() + fge::Vector2f{0.0f, -6.0f};
+
+    this->g_text.setFont("default");
+    this->g_text.setCharacterSize(40);
+    this->g_text.scale(0.3f);
+    this->g_text.setString(this->g_fish.getTexture().getName());
+    this->g_text.setFillColor(fge::Color::White);
+    this->g_text.setOutlineColor(fge::Color::Black);
+    this->g_text.setOutlineThickness(1.0f);
+    this->g_text.centerOriginFromLocalBounds();
+    this->g_text.setPosition({0.0f, 8.0f});
+}
+
+void MultiplayerFishAward::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)
+{
+}
+
+const char * MultiplayerFishAward::getClassName() const
+{
+    return "MFISH_AWARD";
+}
+
+const char * MultiplayerFishAward::getReadableClassName() const
+{
+    return "multiplayer fish award";
+}
+
+fge::RectFloat MultiplayerFishAward::getGlobalBounds() const
+{
+    return Object::getGlobalBounds();
+}
+
+fge::RectFloat MultiplayerFishAward::getLocalBounds() const
 {
     return Object::getLocalBounds();
 }

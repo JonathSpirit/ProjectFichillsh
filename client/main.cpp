@@ -374,6 +374,7 @@ public:
 
             if (!network.isRunning())
             {
+                gGameHandler->clearEvents();
                 continue;
             }
 
@@ -386,7 +387,7 @@ public:
             }
 
             //Return packet
-            if ( returnPacketClock.reached(std::chrono::milliseconds(RETURN_PACKET_DELAYms)) )
+            if ( returnPacketClock.reached(std::chrono::milliseconds(RETURN_PACKET_DELAYms)) && network._client.isPendingPacketsEmpty() )
             {
                 auto transmissionPacket = fge::net::TransmissionPacket::create(CLIENT_STATS);
 
@@ -397,7 +398,9 @@ public:
                 transmissionPacket->packet()
                     << objPlayer->getPosition()
                     << objPlayer->getDirection()
-                    << objPlayer->getStat() << fge::net::SizeType{0};
+                    << objPlayer->getStat();
+
+                gGameHandler->packEvents(transmissionPacket->packet());
 
                 //Pack needed update
                 //this->packNeededUpdate(transmissionPacket->packet());
@@ -466,6 +469,23 @@ public:
 
             fge::net::SizeType eventCount;
             packet >> eventCount;
+
+            for (fge::net::SizeType j = 0; j < eventCount; ++j)
+            {
+                StatEvents eventType;
+                packet >> eventType;
+
+                switch (eventType)
+                {
+                case StatEvents::CAUGHT_FISH:{
+                    std::string fishName;
+                    packet >> fishName;
+                    this->newObject<MultiplayerFishAward>({FGE_SCENE_PLAN_TOP}, fishName, objPlayer->getPosition());
+                    break;
+                }default:
+                    break;
+                }
+            }
         }
     }
     void applyFullUpdate(fge::net::Packet& packet)

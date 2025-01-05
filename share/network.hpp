@@ -13,6 +13,37 @@
 
 #define F_NET_CLIENT_TIMEOUT_RECEIVE std::chrono::milliseconds{1200}
 
+enum class StatEvents : uint8_t
+{
+    CAUGHT_FISH,
+    EVENT_COUNT
+};
+using StatEvents_t = std::underlying_type_t<StatEvents>;
+struct EventBase
+{
+    virtual ~EventBase() = default;
+
+    [[nodiscard]] virtual StatEvents getType() const = 0;
+    virtual void pack(fge::net::Packet& packet) const = 0;
+};
+struct EventCaughtFish : EventBase
+{
+    EventCaughtFish(std::string const& fishName)
+            : _fishName(fishName)
+    {}
+
+    [[nodiscard]] StatEvents getType() const override
+    {
+        return StatEvents::CAUGHT_FISH;
+    }
+    void pack(fge::net::Packet& packet) const override
+    {
+        packet << this->_fishName;
+    }
+
+    std::string _fishName;
+};
+
 enum class ClientNetStats
 {
     SAY_HELLO,

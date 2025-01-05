@@ -8,6 +8,7 @@
 #include "FastEngine/object/C_objText.hpp"
 
 #include "updater.hpp"
+#include "../share/network.hpp"
 #include "box2d/box2d.h"
 #include <memory>
 
@@ -54,11 +55,16 @@ public:
 
     void update(fge::DeltaTime const& deltaTime);
 
+    void pushEvent(std::shared_ptr<EventBase> event);
+    void packEvents(fge::net::Packet& packet);
+    void clearEvents();
+
 private:
     b2WorldId g_bworld{};
     fge::DeltaTime g_checkTime{0};
     fge::Scene* g_scene;
     unsigned int g_fishCountDown = 0;
+    std::vector<std::shared_ptr<EventBase>> g_events;
 };
 
 extern std::unique_ptr<GameHandler> gGameHandler;
@@ -122,6 +128,33 @@ public:
 private:
     fge::ObjSprite g_fish;
     fge::ObjSpriteBatches g_stars;
+    fge::ObjText g_text;
+    float g_currentTime = 0.0f;
+    fge::Vector2f g_positionGoal;
+};
+
+class MultiplayerFishAward : public fge::Object
+{
+public:
+    MultiplayerFishAward() = default;
+    MultiplayerFishAward(std::string const& fishName, fge::Vector2f const& position);
+    ~MultiplayerFishAward() override = default;
+
+    FGE_OBJ_UPDATE_DECLARE
+    FGE_OBJ_DRAW_DECLARE
+
+    void first(fge::Scene &scene) override;
+
+    void callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr) override;
+
+    const char * getClassName() const override;
+    const char * getReadableClassName() const override;
+
+    [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
+    [[nodiscard]] fge::RectFloat getLocalBounds() const override;
+
+private:
+    fge::ObjSprite g_fish;
     fge::ObjText g_text;
     float g_currentTime = 0.0f;
     fge::Vector2f g_positionGoal;
