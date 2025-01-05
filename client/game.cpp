@@ -51,7 +51,7 @@ void GameHandler::updateWorld()
 
 Player* GameHandler::getPlayer() const
 {
-    if (auto player = this->g_scene->getFirstObj_ByClass("FISH_PLAYER"))
+    if (auto player = this->g_scene->getFirstObj_ByTag("player"))
     {//Should be always valid
         return player->getObject<Player>();
     }
@@ -260,10 +260,8 @@ void Minigame::first(fge::Scene &scene)
     {
         obj->getObject()->_drawMode = DrawModes::DRAW_ALWAYS_DRAWN;
     }
-    if (auto obj = scene.getFirstObj_ByClass("FISH_PLAYER"))
-    {
-        obj->getObject<Player>()->catchingFish();
-    }
+    auto player = gGameHandler->getPlayer();
+    player->catchingFish();
 }
 void Minigame::removed(fge::Scene &scene)
 {
@@ -271,10 +269,8 @@ void Minigame::removed(fge::Scene &scene)
     {
         obj->getObject()->_drawMode = DrawModes::DRAW_ALWAYS_HIDDEN;
     }
-    if (auto obj = scene.getFirstObj_ByClass("FISH_PLAYER"))
-    {
-        obj->getObject<Player>()->endCatchingFish();
-    }
+    auto player = gGameHandler->getPlayer();
+    player->endCatchingFish();
 }
 
 void Minigame::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)

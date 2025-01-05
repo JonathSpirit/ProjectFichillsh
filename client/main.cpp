@@ -462,6 +462,7 @@ public:
 
             objPlayer->setServerPosition(position);
             objPlayer->setServerDirection(direction);
+            objPlayer->setServerStat(static_cast<Player::Stats>(stat));
 
             fge::net::SizeType eventCount;
             packet >> eventCount;
@@ -505,6 +506,7 @@ public:
             objPlayer->setPosition(position);
             objPlayer->setServerPosition(position);
             objPlayer->setServerDirection(direction);
+            objPlayer->setServerStat(static_cast<Player::Stats>(stat));
 
             fge::net::SizeType eventCount;
             packet >> eventCount;

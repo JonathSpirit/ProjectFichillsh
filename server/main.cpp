@@ -304,7 +304,7 @@ public:
                             playerObj->setDirection(chain.value());
                             return RValid(chain.template newChain<Player::Stats_t>());
                         }).and_then([&](auto& chain) {
-                            //TODO: set stat
+                            playerObj->setStat(static_cast<Player::Stats>(chain.value()));
                             return RValid(chain.template newChain<fge::net::SizeType>());
                         }).end(); //TODO: read events
 

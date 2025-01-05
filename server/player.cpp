@@ -239,6 +239,10 @@ void Player::setDirection(fge::Vector2i const& direction)
 {
     this->g_direction = direction;
 }
+void Player::setStat(Stats stat)
+{
+    this->g_state = stat;
+}
 fge::Vector2i Player::getDirection() const
 {
     return this->g_direction;

@@ -91,6 +91,7 @@ public:
 
     void setServerPosition(fge::Vector2f const& position);
     void setServerDirection(fge::Vector2i const& direction);
+    void setServerStat(Stats stat);
 
     void boxMove(fge::Vector2f const& move);
     [[nodiscard]] bool isFishing() const;
@@ -104,6 +105,7 @@ private:
     fge::ObjAnimation g_objAnim;
     b2BodyId g_bodyId;
     Stats g_stat = Stats::WALKING;
+    Stats g_serverStat = Stats::WALKING;
     fge::ObjectDataWeak g_fishBait;
     fge::Vector2i g_direction{0, 1};
     fge::Vector2f g_serverPosition;

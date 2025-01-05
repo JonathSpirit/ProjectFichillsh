@@ -174,62 +174,78 @@ FGE_OBJ_UPDATE_BODY(Player)
 
     if (!this->g_isUserControlled)
     {
-        //Player movement and animation
-        fge::Vector2i moveDirection{0, 0};
-        auto const positionDiff = this->g_serverPosition - this->getPosition();
+        switch (this->g_stat)
+        {
+        case Stats::WALKING:
+        {
+            //Player movement and animation
+            fge::Vector2i moveDirection{0, 0};
+            auto const positionDiff = this->g_serverPosition - this->getPosition();
 
-        std::string animationName;
-        if (positionDiff.y <= -0.1f)
-        {
-            moveDirection.y = -1;
-            animationName += "_up";
-        }
-        else if (positionDiff.y >= 0.1f)
-        {
-            moveDirection.y = 1;
-            animationName += "_down";
-        }
-
-        if (positionDiff.x <= -0.1f)
-        {
-            moveDirection.x = -1;
-            animationName += "_left";
-        }
-        else if (positionDiff.x >= 0.1f)
-        {
-            moveDirection.x = 1;
-            animationName += "_right";
-        }
-
-        if (animationName.empty())
-        {//Idle
-            if (this->g_direction.y == -1)
+            std::string animationName;
+            if (positionDiff.y <= -0.1f)
             {
+                moveDirection.y = -1;
                 animationName += "_up";
             }
-            else if (this->g_direction.y == 1)
+            else if (positionDiff.y >= 0.1f)
             {
+                moveDirection.y = 1;
                 animationName += "_down";
             }
 
-            if (this->g_direction.x == -1)
+            if (positionDiff.x <= -0.1f)
             {
+                moveDirection.x = -1;
                 animationName += "_left";
             }
-            else if (this->g_direction.x == 1)
+            else if (positionDiff.x >= 0.1f)
             {
+                moveDirection.x = 1;
                 animationName += "_right";
             }
 
-            animationName = "idle" + animationName;
-        }
-        else
-        {//Walking
-            animationName = "walk" + animationName;
-            //this->g_direction = moveDirection;
-        }
+            if (animationName.empty())
+            {//Idle
+                if (this->g_direction.y == -1)
+                {
+                    animationName += "_up";
+                }
+                else if (this->g_direction.y == 1)
+                {
+                    animationName += "_down";
+                }
 
-        this->g_objAnim.getAnimation().setGroup(animationName);
+                if (this->g_direction.x == -1)
+                {
+                    animationName += "_left";
+                }
+                else if (this->g_direction.x == 1)
+                {
+                    animationName += "_right";
+                }
+
+                animationName = "idle" + animationName;
+            }
+            else
+            {//Walking
+                animationName = "walk" + animationName;
+                //this->g_direction = moveDirection;
+            }
+
+            this->g_objAnim.getAnimation().setGroup(animationName);
+            break;
+        }case Stats::IDLE:
+            break;
+        case Stats::THROWING:
+        {
+            break;
+        }case Stats::FISHING:
+        {
+            break;
+        }case Stats::CATCHING:
+            break;
+        }
 
         auto const delta = fge::DurationToSecondFloat(deltaTime);
         this->setPosition(fge::ReachVector(this->getPosition(), this->g_serverPosition, F_PLAYER_SPEED*2.0f, delta));
@@ -427,6 +443,42 @@ void Player::setServerPosition(fge::Vector2f const& position)
 void Player::setServerDirection(fge::Vector2i const& direction)
 {
     this->g_direction = direction;
+}
+void Player::setServerStat(Stats stat)
+{
+    auto& scene = *this->_myObjectData.lock()->getScene();
+
+    if (this->g_serverStat == Stats::WALKING && (stat == Stats::FISHING || stat == Stats::THROWING))
+    {
+        std::string animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
+        animationName = animationName.substr(animationName.find('_'));
+        animationName = "rod" + animationName;
+
+        this->g_objAnim.getAnimation().setGroup(animationName);
+        this->g_objAnim.getAnimation().setFrame(0);
+        this->g_fishBait = scene.newObject(FGE_NEWOBJECT(FishBait, this->g_direction, this->getPosition()));
+
+        this->g_stat = Stats::THROWING;
+        this->g_objAnim.getAnimation().setLoop(false);
+    }
+    else if ((this->g_serverStat == Stats::CATCHING ||this->g_serverStat == Stats::FISHING || this->g_serverStat == Stats::THROWING) && stat == Stats::WALKING)
+    {
+        if (auto fishBait = this->g_fishBait.lock())
+        {
+            scene.delObject(fishBait->getSid());
+        }
+        this->g_objAnim.getAnimation().setLoop(true);
+    }
+    else if (this->g_serverStat == Stats::FISHING && stat == Stats::CATCHING)
+    {
+        if (auto fishBait = this->g_fishBait.lock())
+        {
+            fishBait->getObject<FishBait>()->catchingFish();
+        }
+    }
+
+    this->g_serverStat = stat;
+    this->g_stat = this->g_serverStat;
 }
 
 void Player::boxMove(fge::Vector2f const& move)

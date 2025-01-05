@@ -84,6 +84,7 @@ public:
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
 
     void setDirection(fge::Vector2i const& direction);
+    void setStat(Stats stat);
     [[nodiscard]] fge::Vector2i getDirection() const;
     [[nodiscard]] Stats getStat() const;
 
