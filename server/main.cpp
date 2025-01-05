@@ -44,7 +44,7 @@ public:
 
         fge::net::Port port = config["port"].get<fge::net::Port>();
 
-        if (!network.start(port, fge::net::IpAddress::Ipv4Any, fge::net::IpAddress::Types::Ipv4))
+        if (!network.start<fge::net::PacketLZ4>(port, fge::net::IpAddress::Ipv4Any, fge::net::IpAddress::Types::Ipv4))
         {
             std::cout << "Can't start network\n";
             return;

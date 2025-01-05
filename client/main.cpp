@@ -218,7 +218,7 @@ public:
         }
 
         //Connect to the server
-        if (!network.start(0, fge::net::IpAddress::Ipv4Any,
+        if (!network.start<fge::net::PacketLZ4>(0, fge::net::IpAddress::Ipv4Any,
                 port, serverIp,
                 fge::net::IpAddress::Types::Ipv4))
         {
