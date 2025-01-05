@@ -264,8 +264,14 @@ public:
                 }case CLIENT_GOODBYE:{
                     if (client)
                     {
+                        std::cout << "Client say goodbye " << netPckFlux->getIdentity()._ip.toString().value_or("UNKNOWN") << " " << netPckFlux->getIdentity()._port << "\n";
                         networkFlux._clients.remove(netPckFlux->getIdentity());
-                        this->removePlayerId(netPckFlux->getIdentity());
+                        auto const playerId = this->getPlayerId(netPckFlux->getIdentity());
+                        if (auto player = this->getFirstObj_ByTag("player_" + playerId))
+                        {
+                            this->delObject(player->getSid());
+                        }
+                        this->removePlayerId(playerId);
                     }
                     break;
                 }case CLIENT_STATS:{

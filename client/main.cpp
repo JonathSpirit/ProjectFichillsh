@@ -410,6 +410,11 @@ public:
             }
         }
 
+        {
+            auto transmissionPacket = fge::net::TransmissionPacket::create(CLIENT_GOODBYE);
+            network.sendTo<fge::net::PacketLZ4>(transmissionPacket, network.getClientIdentity());
+        }
+
         network.stop();
 
         fge::texture::gManager.uninitialize();
