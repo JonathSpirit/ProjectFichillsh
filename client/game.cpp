@@ -139,7 +139,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
     bool caughting = false;
     if (auto rect = sliderBounds.findIntersection(fishBounds))
     {
-        if (rect->getSize().y >= fishBounds.getSize().y)
+        if (rect->getSize().y >= fishBounds.getSize().y-0.02f)
         {//Fish is inside the slider
             posXeffect = fge::_random.range(-2.0f, 2.0f);
             caughting = true;
