@@ -286,7 +286,7 @@ public:
                                 std::string dataString;
                                 netPckFlux->packet() >> dataString;
                                 std::cout << "Server refused connection: " << dataString << std::endl;
-                                network.stop();
+                                this->stopNetwork(network);
                             }
                         }
                     }
@@ -295,7 +295,7 @@ public:
             else
             {
                 std::cout << "Can't connect to the server\n";
-                network.stop();
+                this->stopNetwork(network);
             }
         }
 
