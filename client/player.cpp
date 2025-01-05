@@ -174,6 +174,65 @@ FGE_OBJ_UPDATE_BODY(Player)
 
     if (!this->g_isUserControlled)
     {
+        //Player movement and animation
+        fge::Vector2i moveDirection{0, 0};
+        auto const positionDiff = this->g_serverPosition - this->getPosition();
+
+        std::string animationName;
+        if (positionDiff.y <= -0.1f)
+        {
+            moveDirection.y = -1;
+            animationName += "_up";
+        }
+        else if (positionDiff.y >= 0.1f)
+        {
+            moveDirection.y = 1;
+            animationName += "_down";
+        }
+
+        if (positionDiff.x <= -0.1f)
+        {
+            moveDirection.x = -1;
+            animationName += "_left";
+        }
+        else if (positionDiff.x >= 0.1f)
+        {
+            moveDirection.x = 1;
+            animationName += "_right";
+        }
+
+        if (animationName.empty())
+        {//Idle
+            if (this->g_direction.y == -1)
+            {
+                animationName += "_up";
+            }
+            else if (this->g_direction.y == 1)
+            {
+                animationName += "_down";
+            }
+
+            if (this->g_direction.x == -1)
+            {
+                animationName += "_left";
+            }
+            else if (this->g_direction.x == 1)
+            {
+                animationName += "_right";
+            }
+
+            animationName = "idle" + animationName;
+        }
+        else
+        {//Walking
+            animationName = "walk" + animationName;
+            //this->g_direction = moveDirection;
+        }
+
+        this->g_objAnim.getAnimation().setGroup(animationName);
+
+        auto const delta = fge::DurationToSecondFloat(deltaTime);
+        this->setPosition(fge::ReachVector(this->getPosition(), this->g_serverPosition, F_PLAYER_SPEED*2.0f, delta));
         return;
     }
 
@@ -359,6 +418,15 @@ Player::Stats Player::getStat() const
 fge::Vector2i const& Player::getDirection() const
 {
     return this->g_direction;
+}
+
+void Player::setServerPosition(fge::Vector2f const& position)
+{
+    this->g_serverPosition = position;
+}
+void Player::setServerDirection(fge::Vector2i const& direction)
+{
+    this->g_direction = direction;
 }
 
 void Player::boxMove(fge::Vector2f const& move)

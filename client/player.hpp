@@ -89,6 +89,9 @@ public:
     [[nodiscard]] Stats getStat() const;
     [[nodiscard]] fge::Vector2i const& getDirection() const;
 
+    void setServerPosition(fge::Vector2f const& position);
+    void setServerDirection(fge::Vector2i const& direction);
+
     void boxMove(fge::Vector2f const& move);
     [[nodiscard]] bool isFishing() const;
 
@@ -103,6 +106,7 @@ private:
     Stats g_stat = Stats::WALKING;
     fge::ObjectDataWeak g_fishBait;
     fge::Vector2i g_direction{0, 1};
+    fge::Vector2f g_serverPosition;
     int g_audioWalking = -1;
     bool g_isUserControlled = true;
 };

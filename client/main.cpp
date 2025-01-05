@@ -265,7 +265,7 @@ public:
             {
                 //Asking for connection
                 packet = fge::net::TransmissionPacket::create(CLIENT_ASK_CONNECT);
-                packet->doNotDiscard().doNotReorder();
+                packet->doNotDiscard().doNotReorder().packet() << objPlayer->getPosition();
                 network._client.pushPacket(std::move(packet));
                 network.notifyTransmission();
                 if (network.waitForPackets(F_NET_CLIENT_TIMEOUT_RECEIVE) > 0)
@@ -440,6 +440,11 @@ public:
             std::string playerId;
             packet >> playerId;
 
+            fge::Vector2f position;
+            fge::Vector2i direction;
+            uint8_t stat;
+            packet >> position >> direction >> stat;
+
             Player* objPlayer = nullptr;
             if (auto ply = this->getFirstObj_ByTag("player_" + playerId))
             {
@@ -452,13 +457,11 @@ public:
                 objPlayer->_tags.add("player_" + playerId);
                 objPlayer->_tags.add("multiplayer");
                 objPlayer->_properties["playerId"] = playerId;
+                objPlayer->setPosition(position);
             }
 
-            fge::Vector2f position;
-            fge::Vector2i direction;
-            uint8_t stat;
-            packet >> position >> direction >> stat;
-            objPlayer->setPosition(position);
+            objPlayer->setServerPosition(position);
+            objPlayer->setServerDirection(direction);
 
             fge::net::SizeType eventCount;
             packet >> eventCount;
@@ -480,6 +483,11 @@ public:
             std::string playerId;
             packet >> playerId;
 
+            fge::Vector2f position;
+            fge::Vector2i direction;
+            uint8_t stat;
+            packet >> position >> direction >> stat;
+
             Player* objPlayer = nullptr;
             if (auto ply = this->getFirstObj_ByTag("player_" + playerId))
             {
@@ -494,11 +502,9 @@ public:
                 objPlayer->_properties["playerId"] = playerId;
             }
 
-            fge::Vector2f position;
-            fge::Vector2i direction;
-            uint8_t stat;
-            packet >> position >> direction >> stat;
             objPlayer->setPosition(position);
+            objPlayer->setServerPosition(position);
+            objPlayer->setServerDirection(direction);
 
             fge::net::SizeType eventCount;
             packet >> eventCount;

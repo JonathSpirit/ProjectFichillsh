@@ -235,6 +235,10 @@ fge::RectFloat Player::getLocalBounds() const
     return this->g_objAnim.getLocalBounds();
 }
 
+void Player::setDirection(fge::Vector2i const& direction)
+{
+    this->g_direction = direction;
+}
 fge::Vector2i Player::getDirection() const
 {
     return this->g_direction;

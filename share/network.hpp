@@ -37,7 +37,7 @@ enum PacketHeaders : FGE_NET_HEADER_TYPE
      */
     CLIENT_ASK_CONNECT,
     /*
-     * N/A
+     * - PLAYER_POSITION
      *
      * Response:
      * - BOOL_VALID

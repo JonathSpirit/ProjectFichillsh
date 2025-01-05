@@ -228,6 +228,15 @@ public:
                         break;
                     }
 
+                    fge::Vector2f position;
+                    netPckFlux->packet() >> position;
+
+                    if (!netPckFlux->isValid())
+                    {
+                        std::cout << "Error in CLIENT_ASK_CONNECT: Invalid data\n";
+                        break;
+                    }
+
                     if (!netPckFlux->endReached())
                     {
                         std::cout << "Error in CLIENT_ASK_CONNECT: Remaining data at the end of the packet\n";
@@ -240,6 +249,7 @@ public:
                     auto player = this->newObject<Player>();
                     auto playerId = this->generatePlayerId(netPckFlux->getIdentity());
                     player->_tags.add("player_" + playerId);
+                    player->setPosition(position);
 
                     auto packet = fge::net::TransmissionPacket::create(CLIENT_ASK_CONNECT);
                     packet->doNotDiscard().doNotReorder().packet() << true;
@@ -291,7 +301,7 @@ public:
                             playerObj->setPosition(chain.value());
                             return RValid(chain.template newChain<fge::Vector2i>());
                         }).and_then([&](auto& chain) {
-                            //TODO: set direction
+                            playerObj->setDirection(chain.value());
                             return RValid(chain.template newChain<Player::Stats_t>());
                         }).and_then([&](auto& chain) {
                             //TODO: set stat
