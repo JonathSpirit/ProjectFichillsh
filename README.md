@@ -8,7 +8,7 @@ This project is licensed under the GNU General Public License v3.0. See the LICE
 
 **Project Fichillsh** is a fully open-source 2D pixel art fishing game designed to test the capabilities of a custom-built game engine, [FastEngine](https://github.com/JonathSpirit/FastEngine), which uses Vulkan and SDL.
 
-The game aims to provide a simple, relaxing experience with a focus on fun and ease of use. Future updates will include a **multiplayer experience**, adding new ways to enjoy the game with others.
+The game aims to provide a simple, relaxing experience with a focus on fun and ease of use. This include a **multiplayer experience**, adding new ways to enjoy the game with others.
 
 ---
 
@@ -17,7 +17,7 @@ The game aims to provide a simple, relaxing experience with a focus on fun and e
 - **Relaxing Gameplay**: Fish for a variety of creatures and goodies, building your collection with a rarity system.
 - **Simple & Accessible**: No unnecessary complexity—launch the game and start fishing right away.
 - **Single-Player Experience**: Play solo and enjoy the peaceful atmosphere.
-- **Multiplayer (Upcoming)**: A multiplayer mode will be introduced in the next version, allowing interaction with other players.
+- **Multiplayer**: A multiplayer mode, allowing interaction with other players.
 - **Open-Source Contribution**: Fully open-source for collaboration and improvements.
 
 ---
@@ -25,8 +25,8 @@ The game aims to provide a simple, relaxing experience with a focus on fun and e
 ## Current Status
 
 - **Development Stage**: Public, in development.
-- **Version**: 0.1.1
-- **WIP**: There is a lot todo, like the rarity system, collection, multiplayer, better gameplay etc...
+- **Version**: 0.2.0
+- **WIP**: There is a lot todo, like the rarity system, collection, better gameplay etc...
 
 ---
 
