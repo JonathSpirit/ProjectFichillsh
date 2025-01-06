@@ -37,9 +37,9 @@ FGE_OBJ_UPDATE_BODY(FishBait)
     auto const delta = fge::DurationToSecondFloat(deltaTime);
     this->g_time += delta;
 
-    switch (this->g_state)
+    switch (this->g_stat)
     {
-    case States::THROWING:
+    case Stats::THROWING:
     {
         auto sinusValue = std::sin(this->g_time * F_BAIT_SPEED);
 
@@ -83,7 +83,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
             }
 
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("splash")->_ptr.get(), 0);
-            this->g_state = States::WAITING;
+            this->g_stat = Stats::WAITING;
             this->g_time = 0.0f;
             sinusValue = 1.0f;
         }
@@ -94,7 +94,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
         this->g_staticPosition = this->getPosition();
     }
         break;
-    case States::WAITING:
+    case Stats::WAITING:
     {
         auto sinx = std::sin(this->g_time);
         auto siny = std::sin(this->g_time * 1.7f);
@@ -102,7 +102,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
         this->setPosition(this->g_staticPosition + fge::Vector2f{sinx, siny});
     }
         break;
-    case States::CATCHING:
+    case Stats::CATCHING:
     {
         auto const posXeffect = fge::_random.range(-1.0f, 1.0f);
         this->setPosition(this->g_staticPosition + fge::Vector2f{posXeffect, 0.0f});
@@ -113,10 +113,10 @@ FGE_OBJ_UPDATE_BODY(FishBait)
 
 FGE_OBJ_DRAW_BODY(FishBait)
 {
-    auto copyStates = states.copy();
-    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+    auto copyStats = states.copy();
+    copyStats._resTransform.set(target.requestGlobalTransform(*this, copyStats._resTransform));
 
-    this->g_objSprite.draw(target, copyStates);
+    this->g_objSprite.draw(target, copyStats);
 }
 
 void FishBait::first(fge::Scene &scene)
@@ -152,17 +152,17 @@ fge::RectFloat FishBait::getLocalBounds() const
 
 bool FishBait::isWaiting() const
 {
-    return this->g_state == States::WAITING;
+    return this->g_stat == Stats::WAITING;
 }
 
 void FishBait::catchingFish()
 {
-    this->g_state = States::CATCHING;
+    this->g_stat = Stats::CATCHING;
     this->g_time = 0.0f;
 }
 void FishBait::endCatchingFish()
 {
-    this->g_state = States::WAITING;
+    this->g_stat = Stats::WAITING;
     this->g_time = 0.0f;
 }
 
@@ -172,9 +172,89 @@ FGE_OBJ_UPDATE_BODY(Player)
 {
     FGE_OBJ_UPDATE_CALL(this->g_objAnim);
 
-    switch (this->g_state)
+    if (!this->g_isUserControlled)
     {
-    case States::WALKING: {
+        switch (this->g_stat)
+        {
+        case Stats::WALKING:
+        {
+            //Player movement and animation
+            fge::Vector2i moveDirection{0, 0};
+            auto const positionDiff = this->g_serverPosition - this->getPosition();
+
+            std::string animationName;
+            if (positionDiff.y <= -0.1f)
+            {
+                moveDirection.y = -1;
+                animationName += "_up";
+            }
+            else if (positionDiff.y >= 0.1f)
+            {
+                moveDirection.y = 1;
+                animationName += "_down";
+            }
+
+            if (positionDiff.x <= -0.1f)
+            {
+                moveDirection.x = -1;
+                animationName += "_left";
+            }
+            else if (positionDiff.x >= 0.1f)
+            {
+                moveDirection.x = 1;
+                animationName += "_right";
+            }
+
+            if (animationName.empty())
+            {//Idle
+                if (this->g_direction.y == -1)
+                {
+                    animationName += "_up";
+                }
+                else if (this->g_direction.y == 1)
+                {
+                    animationName += "_down";
+                }
+
+                if (this->g_direction.x == -1)
+                {
+                    animationName += "_left";
+                }
+                else if (this->g_direction.x == 1)
+                {
+                    animationName += "_right";
+                }
+
+                animationName = "idle" + animationName;
+            }
+            else
+            {//Walking
+                animationName = "walk" + animationName;
+                //this->g_direction = moveDirection;
+            }
+
+            this->g_objAnim.getAnimation().setGroup(animationName);
+            break;
+        }case Stats::IDLE:
+            break;
+        case Stats::THROWING:
+        {
+            break;
+        }case Stats::FISHING:
+        {
+            break;
+        }case Stats::CATCHING:
+            break;
+        }
+
+        auto const delta = fge::DurationToSecondFloat(deltaTime);
+        this->setPosition(fge::ReachVector(this->getPosition(), this->g_serverPosition, F_PLAYER_SPEED*2.0f, delta));
+        return;
+    }
+
+    switch (this->g_stat)
+    {
+    case Stats::WALKING: {
         //Player movement and animation
         std::string animationName;
 
@@ -191,7 +271,7 @@ FGE_OBJ_UPDATE_BODY(Player)
             b2Body_SetLinearVelocity(this->g_bodyId, {0.0f, 0.0f});
 
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("swipe")->_ptr.get(), 0);
-            this->g_state = States::THROWING;
+            this->g_stat = Stats::THROWING;
             this->g_objAnim.getAnimation().setLoop(false);
 
             if (this->g_audioWalking != -1)
@@ -255,23 +335,23 @@ FGE_OBJ_UPDATE_BODY(Player)
         });
         this->g_objAnim.getAnimation().setGroup(animationName);
         break;
-    } case States::IDLE:
+    } case Stats::IDLE:
         break;
-    case States::THROWING:
+    case Stats::THROWING:
         if (auto fishBait = this->g_fishBait.lock())
         {
             if (fishBait->getObject<FishBait>()->isWaiting())
             {
-                this->g_state = States::FISHING;
+                this->g_stat = Stats::FISHING;
             }
         }
         else
         {
-            this->g_state = States::WALKING;
+            this->g_stat = Stats::WALKING;
             this->g_objAnim.getAnimation().setLoop(true);
         }
         break;
-    case States::FISHING:
+    case Stats::FISHING:
         if (event.isKeyPressed(SDLK_w) || event.isKeyPressed(SDLK_s) || event.isKeyPressed(SDLK_a) || event.isKeyPressed(SDLK_d))
         {
             if (auto fishBait = this->g_fishBait.lock())
@@ -279,7 +359,7 @@ FGE_OBJ_UPDATE_BODY(Player)
                 scene.delObject(fishBait->getSid());
             }
 
-            this->g_state = States::WALKING;
+            this->g_stat = Stats::WALKING;
             this->g_objAnim.getAnimation().setLoop(true);
         }
         break;
@@ -296,10 +376,10 @@ FGE_OBJ_UPDATE_BODY(Player)
 }
 FGE_OBJ_DRAW_BODY(Player)
 {
-    auto copyStates = states.copy();
-    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+    auto copyStats = states.copy();
+    copyStats._resTransform.set(target.requestGlobalTransform(*this, copyStats._resTransform));
 
-    this->g_objAnim.draw(target, copyStates);
+    this->g_objAnim.draw(target, copyStats);
 }
 
 void Player::first(fge::Scene &scene)
@@ -347,23 +427,80 @@ fge::RectFloat Player::getLocalBounds() const
     return this->g_objAnim.getLocalBounds();
 }
 
+Player::Stats Player::getStat() const
+{
+    return this->g_stat;
+}
+fge::Vector2i const& Player::getDirection() const
+{
+    return this->g_direction;
+}
+
+void Player::setServerPosition(fge::Vector2f const& position)
+{
+    this->g_serverPosition = position;
+}
+void Player::setServerDirection(fge::Vector2i const& direction)
+{
+    this->g_direction = direction;
+}
+void Player::setServerStat(Stats stat)
+{
+    auto& scene = *this->_myObjectData.lock()->getScene();
+
+    if (this->g_serverStat == Stats::WALKING && (stat == Stats::FISHING || stat == Stats::THROWING))
+    {
+        std::string animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
+        animationName = animationName.substr(animationName.find('_'));
+        animationName = "rod" + animationName;
+
+        this->g_objAnim.getAnimation().setGroup(animationName);
+        this->g_objAnim.getAnimation().setFrame(0);
+        this->g_fishBait = scene.newObject(FGE_NEWOBJECT(FishBait, this->g_direction, this->getPosition()));
+
+        this->g_stat = Stats::THROWING;
+        this->g_objAnim.getAnimation().setLoop(false);
+    }
+    else if ((this->g_serverStat == Stats::CATCHING ||this->g_serverStat == Stats::FISHING || this->g_serverStat == Stats::THROWING) && stat == Stats::WALKING)
+    {
+        if (auto fishBait = this->g_fishBait.lock())
+        {
+            scene.delObject(fishBait->getSid());
+        }
+        this->g_objAnim.getAnimation().setLoop(true);
+    }
+    else if (this->g_serverStat == Stats::FISHING && stat == Stats::CATCHING)
+    {
+        if (auto fishBait = this->g_fishBait.lock())
+        {
+            fishBait->getObject<FishBait>()->catchingFish();
+        }
+    }
+
+    this->g_serverStat = stat;
+    this->g_stat = this->g_serverStat;
+}
+
 void Player::boxMove(fge::Vector2f const& move)
 {
-    b2Body_SetTransform(this->g_bodyId,
+    if (this->g_isUserControlled)
+    {
+        b2Body_SetTransform(this->g_bodyId,
         {this->getPosition().x + move.x, this->getPosition().y + move.y},
         b2MakeRot(0.0f));
+    }
     this->move(move);
 }
 bool Player::isFishing() const
 {
-    return this->g_state == States::FISHING;
+    return this->g_stat == Stats::FISHING;
 }
 
 void Player::catchingFish()
 {
-    if (this->g_state == States::FISHING)
+    if (this->g_stat == Stats::FISHING)
     {
-        this->g_state = States::CATCHING;
+        this->g_stat = Stats::CATCHING;
 
         if (auto fishBait = this->g_fishBait.lock())
         {
@@ -373,13 +510,22 @@ void Player::catchingFish()
 }
 void Player::endCatchingFish()
 {
-    if (this->g_state == States::CATCHING)
+    if (this->g_stat == Stats::CATCHING)
     {
         if (auto fishBait = this->g_fishBait.lock())
         {
             this->_myObjectData.lock()->getScene()->delObject(fishBait->getSid());
         }
         this->g_objAnim.getAnimation().setLoop(true);
-        this->g_state = States::WALKING;
+        this->g_stat = Stats::WALKING;
+    }
+}
+
+void Player::allowUserControl(bool allow)
+{
+    this->g_isUserControlled = allow;
+    if (!allow)
+    {
+        b2DestroyBody(this->g_bodyId);
     }
 }

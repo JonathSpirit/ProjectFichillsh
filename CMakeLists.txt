@@ -55,6 +55,14 @@ target_sources(${PROJECT_CLIENT} PRIVATE client/game.cpp client/game.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/fish.cpp client/fish.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/ducky.cpp client/ducky.hpp)
 
+add_executable(${PROJECT_SERVER})
+target_sources(${PROJECT_SERVER} PRIVATE server/main.cpp)
+target_sources(${PROJECT_SERVER} PRIVATE server/player.cpp server/player.hpp)
+
+target_sources(${PROJECT_SERVER} PRIVATE share/network.hpp)
+
+target_sources(${PROJECT_CLIENT} PRIVATE share/network.hpp)
+
 #Dependencies
 add_dependencies(${PROJECT_CLIENT} box2d GRUpdater)
 
@@ -62,6 +70,8 @@ target_link_libraries(${PROJECT_CLIENT} PRIVATE SDL2::SDL2main FastEngine::FastE
 target_link_libraries(${PROJECT_CLIENT} PRIVATE box2d GRUpdater)
 
 target_include_directories(${PROJECT_CLIENT} PRIVATE ${GRUpdater_SOURCE_DIR})
+
+target_link_libraries(${PROJECT_SERVER} PRIVATE SDL2::SDL2main FastEngine::FastEngineServer)
 
 #Resources
 add_custom_command(TARGET ${PROJECT_CLIENT} PRE_BUILD
@@ -80,5 +90,12 @@ if(WIN32)
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 $<TARGET_FILE:${FGE_LINK_LIBRARY}>
                 $<TARGET_FILE_DIR:${PROJECT_CLIENT}>)
+    endforeach()
+
+    foreach (FGE_LINK_LIBRARY ${FGE_LINK_SERVER_LIBRARIES})
+        add_custom_command(TARGET ${PROJECT_SERVER} PRE_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:${FGE_LINK_LIBRARY}>
+                $<TARGET_FILE_DIR:${PROJECT_SERVER}>)
     endforeach()
 endif()
