@@ -73,6 +73,11 @@ target_include_directories(${PROJECT_CLIENT} PRIVATE ${GRUpdater_SOURCE_DIR})
 
 target_link_libraries(${PROJECT_SERVER} PRIVATE SDL2::SDL2main FastEngine::FastEngineServer)
 
+#Check for release
+if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_link_options(${PROJECT_CLIENT} PRIVATE "-mwindows")
+endif()
+
 #Resources
 add_custom_command(TARGET ${PROJECT_CLIENT} PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
