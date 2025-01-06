@@ -13,8 +13,8 @@
 #include <memory>
 
 #define F_TAG_MAJOR 0
-#define F_TAG_MINOR 1
-#define F_TAG_PATCH 1
+#define F_TAG_MINOR 2
+#define F_TAG_PATCH 0
 #define F_TAG_STR "v" GRUPDATER_TOSTRING(F_TAG_MAJOR) "." GRUPDATER_TOSTRING(F_TAG_MINOR) "." GRUPDATER_TOSTRING(F_TAG_PATCH)
 #define F_TAG updater::Tag{F_TAG_MAJOR, F_TAG_MINOR, F_TAG_PATCH}
 #define F_OWNER "JonathSpirit"
