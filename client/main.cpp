@@ -42,9 +42,11 @@ public:
         fge::net::IpAddress serverIp = config["ip"].get<std::string>();
         fge::net::Port port = config["port"].get<fge::net::Port>();
 
+        std::string const versioningString = F_NET_STRING_SEQ + fge::string::ToStr(F_NET_SERVER_COMPATIBILITY_VERSION);
+
         network._client.setCTOSLatency_ms(5);
 
-        gGameHandler = std::make_unique<GameHandler>(*this);
+        gGameHandler = std::make_unique<GameHandler>(*this, network);
         gGameHandler->createWorld();
 
         fge::Event event;
@@ -56,7 +58,6 @@ public:
         this->setCallbackContext({&event, &guiElementHandler});
         this->setLinkedRenderTarget(&renderWindow);
 
-        fge::Clock returnPacketClock;
         fge::Clock mainClock;
 
         //Init managers
@@ -217,8 +218,27 @@ public:
             }
         }
 
+        network._onClientDisconnected.addLambda([&](fge::net::ClientSideNetUdp& net) {
+            std::cout << "Connection lost ! (disconnected from server)" << std::endl;
+            this->stopNetwork(network);
+        });
+        network._onClientTimeout.addLambda([&](fge::net::ClientSideNetUdp& net) {
+            std::cout << "Connection lost ! (timeout)" << std::endl;
+            this->stopNetwork(network);
+        });
+        network._onTransmitReturnPacket.addLambda([&](fge::net::ClientSideNetUdp& net, fge::net::TransmitPacketPtr& packet) {
+            //Pack data
+            packet->packet()
+                << objPlayer->getPosition()
+                << objPlayer->getDirection()
+                << objPlayer->getStat();
+
+            //Pack needed update
+            //this->packNeededUpdate(transmissionPacket->packet());
+        });
+
         //Connect to the server
-        if (!network.start<fge::net::PacketLZ4>(0, fge::net::IpAddress::Ipv4Any,
+        if (!network.start(0, fge::net::IpAddress::Ipv4Any,
                 port, serverIp,
                 fge::net::IpAddress::Types::Ipv4))
         {
@@ -226,65 +246,58 @@ public:
         }
         else
         {
-            bool helloReceived = false;
+            //Start connection process
+            auto connectResult = network.connect(versioningString);
 
-            //Sending hello
-            auto packet = fge::net::TransmissionPacket::create(CLIENT_HELLO);
-            packet->doNotDiscard().doNotReorder().packet() << F_NET_CLIENT_HELLO << F_NET_STRING_SEQ << F_NET_SERVER_COMPATIBILITY_VERSION;
-            network._client.pushPacket(std::move(packet));
-            network.notifyTransmission();
-            if (network.waitForPackets(F_NET_CLIENT_TIMEOUT_RECEIVE) > 0)
+            connectResult.wait();
+            if (!connectResult.get())
             {
-                if (auto netPckFlux = network.popNextPacket())
-                {
-                    if (netPckFlux->retrieveHeaderId().value() == CLIENT_HELLO)
-                    {
-                        bool valid;
-                        std::string dataString;
-                        netPckFlux->packet() >> valid >> dataString;
-                        if (valid)
-                        {
-                            std::cout << "Hi from the server\n";
-                            helloReceived = true;
-                        }
-                        else
-                        {
-                            std::cout << "Server didn't say hello: " << dataString << std::endl;
-                            this->stopNetwork(network);
-                        }
-                    }
-                }
+                std::cout << "Can't connect to the server\n";
+                this->stopNetwork(network);
             }
             else
             {
-                std::cout << "Server didn't say hello, timeout\n";
-                this->stopNetwork(network);
-            }
-
-            if (helloReceived)
-            {
                 //Asking for connection
-                packet = fge::net::TransmissionPacket::create(CLIENT_ASK_CONNECT);
-                packet->doNotDiscard().doNotReorder().packet() << objPlayer->getPosition();
+                auto packet = fge::net::CreatePacket(CLIENT_ASK_CONNECT);
+                packet->doNotDiscard().doNotReorder().packet() << F_NET_CLIENT_HELLO << objPlayer->getPosition();
                 network._client.pushPacket(std::move(packet));
                 network.notifyTransmission();
                 if (network.waitForPackets(F_NET_CLIENT_TIMEOUT_RECEIVE) > 0)
                 {
-                    if (auto netPckFlux = network.popNextPacket())
+                    if (auto netPacket = network.popNextPacket())
                     {
-                        if (netPckFlux->retrieveHeaderId().value() == CLIENT_ASK_CONNECT)
+                        if (netPacket->retrieveHeaderId().value() == CLIENT_ASK_CONNECT)
                         {
+                            network._client.getStatus().resetTimeout();
+
                             bool valid;
-                            netPckFlux->packet() >> valid;
+                            netPacket->packet() >> valid;
                             if (valid)
                             {
-                                std::cout << "Connected to the server\n";
-                                this->applyFullUpdate(netPckFlux->packet());
+                                using namespace fge::net::rules;
+                                std::string dataHello;
+                                auto err = RValid(RSizeMustEqual<std::string>(sizeof(F_NET_SERVER_HELLO) - 1, {netPacket->packet(), &dataHello})).end();
+
+                                if (err || dataHello != F_NET_SERVER_HELLO)
+                                {
+                                    std::cout << "Error, bad server hello: \n";
+                                    err->dump(std::cout);
+                                    this->stopNetwork(network);
+                                }
+                                else
+                                {
+                                    std::cout << "Connected to the server\n";
+                                    this->applyFullUpdate(netPacket->packet());
+                                    network.enableReturnPacket(true);
+                                    network._client.setPacketReturnRate(std::chrono::milliseconds(RETURN_PACKET_DELAYms));
+                                    network._client.getPacketReorderer().setMaximumSize(FGE_NET_PACKET_REORDERER_CACHE_COMPUTE(
+                                            RETURN_PACKET_DELAYms, F_TICK_TIME));
+                                }
                             }
                             else
                             {
                                 std::string dataString;
-                                netPckFlux->packet() >> dataString;
+                                netPacket->packet() >> dataString;
                                 std::cout << "Server refused connection: " << dataString << std::endl;
                                 this->stopNetwork(network);
                             }
@@ -292,14 +305,7 @@ public:
                     }
                 }
             }
-            else
-            {
-                std::cout << "Can't connect to the server\n";
-                this->stopNetwork(network);
-            }
         }
-
-        fge::Clock netServerTimeoutClock;
 
         bool running = true;
         while (running)
@@ -332,17 +338,21 @@ public:
             }
 
             //Receive packets
-            fge::net::FluxPacketPtr netPckFlux;
-            while (network.process(netPckFlux) == fge::net::FluxProcessResults::RETRIEVABLE)
+            fge::net::ReceivedPacketPtr netPacket;
+            fge::net::FluxProcessResults processResult;
+            do
             {
-                switch (static_cast<PacketHeaders>(netPckFlux->retrieveHeaderId().value()))
+                processResult = network.process(netPacket);
+                if (processResult != fge::net::FluxProcessResults::USER_RETRIEVABLE)
                 {
-                case SERVER_GOODBYE:
-                    this->stopNetwork(network);
-                    break;
+                    continue;
+                }
+
+                switch (static_cast<PacketHeaders>(netPacket->retrieveHeaderId().value()))
+                {
                 case SERVER_UPDATE:
                     //Unpack latency planner
-                    network._client._latencyPlanner.unpack(netPckFlux.get(), network._client);
+                    network._client._latencyPlanner.unpack(netPacket.get(), network._client);
 
                     if (auto latency = network._client._latencyPlanner.getLatency())
                     {
@@ -354,16 +364,16 @@ public:
                     }
 
                     //Unpack data
-                    this->applyUpdate(netPckFlux->packet());
+                    this->applyUpdate(netPacket->packet());
+                    network._client.getStatus().resetTimeout();
                     break;
                 case SERVER_FULL_UPDATE:
-                    this->applyFullUpdate(netPckFlux->packet());
+                    this->applyFullUpdate(netPacket->packet());
+                    network._client.getStatus().resetTimeout();
                     break;
                 default:
                     break;
                 }
-
-                netServerTimeoutClock.restart();
 
                 if (badPacketUpdatesCount >= BAD_PACKET_LIMIT && !gAskForFullUpdate)
                 {
@@ -371,50 +381,15 @@ public:
                     gAskForFullUpdate = true;
                 }
             }
+            while (processResult != fge::net::FluxProcessResults::NONE_AVAILABLE);
 
             if (!network.isRunning())
             {
-                gGameHandler->clearEvents();
                 continue;
-            }
-
-            //Check for timeout
-            if (netServerTimeoutClock.reached(std::chrono::milliseconds(F_NET_SERVER_TIMEOUT_MS)))
-            {
-                std::cout << "Server timeout" << std::endl;
-                this->stopNetwork(network);
-                continue;
-            }
-
-            //Return packet
-            if ( returnPacketClock.reached(std::chrono::milliseconds(RETURN_PACKET_DELAYms)) && network._client.isPendingPacketsEmpty() )
-            {
-                auto transmissionPacket = fge::net::TransmissionPacket::create(CLIENT_STATS);
-
-                //Packet latency planner
-                network._client._latencyPlanner.pack(transmissionPacket);
-
-                //Pack data
-                transmissionPacket->packet()
-                    << objPlayer->getPosition()
-                    << objPlayer->getDirection()
-                    << objPlayer->getStat();
-
-                gGameHandler->packEvents(transmissionPacket->packet());
-
-                //Pack needed update
-                //this->packNeededUpdate(transmissionPacket->packet());
-
-                network._client.pushPacket(std::move(transmissionPacket));
-                returnPacketClock.restart();
             }
         }
 
-        {
-            auto transmissionPacket = fge::net::TransmissionPacket::create(CLIENT_GOODBYE);
-            network.sendTo<fge::net::PacketLZ4>(transmissionPacket, network.getClientIdentity());
-        }
-
+        network.disconnect().wait();
         network.stop();
 
         fge::texture::gManager.uninitialize();

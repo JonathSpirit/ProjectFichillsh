@@ -6,8 +6,9 @@
 
 //GameHandler
 
-GameHandler::GameHandler(fge::Scene& scene) :
-    g_scene(&scene)
+GameHandler::GameHandler(fge::Scene& scene, fge::net::ClientSideNetUdp& network) :
+    g_scene(&scene),
+    g_network(&network)
 {
     this->g_fishCountDown = fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
 }
@@ -84,23 +85,11 @@ void GameHandler::update(fge::DeltaTime const &deltaTime)
     }
 }
 
-void GameHandler::pushEvent(std::shared_ptr<EventBase> event)
+void GameHandler::pushCaughtFishEvent(std::string const& fishName) const
 {
-    this->g_events.push_back(std::move(event));
-}
-void GameHandler::packEvents(fge::net::Packet& packet)
-{
-    packet<< static_cast<fge::net::SizeType>(this->g_events.size());
-    for (auto const& event : this->g_events)
-    {
-        packet << event->getType();
-        event->pack(packet);
-    }
-    this->g_events.clear();
-}
-void GameHandler::clearEvents()
-{
-    this->g_events.clear();
+    auto& packet = this->g_network->startReturnEvent(fge::net::ReturnEvents::REVT_CUSTOM);
+    packet->packet() << StatEvents::CAUGHT_FISH << fishName;
+    this->g_network->endReturnEvent();
 }
 
 std::unique_ptr<GameHandler> gGameHandler;
@@ -196,7 +185,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("victory_fish")->_ptr.get(), 0);
             auto const fishName = gFishManager.getRandomFishName();
             scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, fishName);
-            gGameHandler->pushEvent(std::make_shared<EventCaughtFish>(fishName));
+            gGameHandler->pushCaughtFishEvent(fishName);
             scene.delUpdatedObject();
             return;
         }

@@ -6,6 +6,7 @@
 #include "FastEngine/object/C_objRectangleShape.hpp"
 #include "FastEngine/object/C_objSpriteBatches.hpp"
 #include "FastEngine/object/C_objText.hpp"
+#include "FastEngine/network/C_server.hpp"
 
 #include "updater.hpp"
 #include "../share/network.hpp"
@@ -42,7 +43,7 @@ class Player;
 class GameHandler
 {
 public:
-    GameHandler(fge::Scene& scene);
+    GameHandler(fge::Scene& scene, fge::net::ClientSideNetUdp& network);
     ~GameHandler();
 
     void createWorld();
@@ -55,16 +56,14 @@ public:
 
     void update(fge::DeltaTime const& deltaTime);
 
-    void pushEvent(std::shared_ptr<EventBase> event);
-    void packEvents(fge::net::Packet& packet);
-    void clearEvents();
+    void pushCaughtFishEvent(std::string const& fishName) const;
 
 private:
     b2WorldId g_bworld{};
     fge::DeltaTime g_checkTime{0};
     fge::Scene* g_scene;
+    fge::net::ClientSideNetUdp* g_network;
     unsigned int g_fishCountDown = 0;
-    std::vector<std::shared_ptr<EventBase>> g_events;
 };
 
 extern std::unique_ptr<GameHandler> gGameHandler;
