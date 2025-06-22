@@ -544,9 +544,37 @@ int main(int argc, char *argv[])
     std::filesystem::remove_all(F_TEMP_DIR);
     if (auto const extractPath = updater::MakeAvailable(F_TAG, F_OWNER, F_REPO, F_TEMP_DIR, true))
     {
-        if (updater::RequestApplyUpdate(*extractPath, std::filesystem::current_path() / argv[0]))
+        SDL_MessageBoxData messageBoxData;
+        messageBoxData.flags = SDL_MESSAGEBOX_INFORMATION;
+        messageBoxData.window = nullptr;
+        messageBoxData.title = "Game update";
+        messageBoxData.message = "A new version of the game is available, do you want to update now? (from Github)";
+        SDL_MessageBoxButtonData buttons[] = {
+            {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "Yes"},
+            {SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "No"},
+        };
+        messageBoxData.numbuttons = std::size(buttons);
+        messageBoxData.buttons = buttons;
+        int buttonId = 1; // Default to "No"
+        if (SDL_ShowMessageBox(&messageBoxData, &buttonId) < 0)
         {
-            return 0;
+            std::cout << "Error displaying message box: " << SDL_GetError() << std::endl;
+            std::cout << "Can't ask for update, if you want to update it, please go to the game main website" << std::endl;
+        }
+        else
+        {
+            if (buttonId == 1)
+            {
+                std::cout << "Update cancelled" << std::endl;
+            }
+            else
+            {
+                std::cout << "Updating game..." << std::endl;
+                if (updater::RequestApplyUpdate(*extractPath, std::filesystem::current_path() / argv[0]))
+                {
+                    return 0;
+                }
+            }
         }
     }
 
