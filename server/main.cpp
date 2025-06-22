@@ -106,23 +106,11 @@ public:
         //Handling clients timeout
         networkFlux._onClientTimeout.addLambda([&](fge::net::ClientSharedPtr client, fge::net::Identity const& id) {
             std::cout << "client "<< id.toString() << " timeout !\n";
-
-            auto const playerId = this->getPlayerId(id);
-            if (auto player = this->getFirstObj_ByTag("player_" + playerId))
-            {
-                this->delObject(player->getSid());
-            }
-            this->removePlayerId(playerId);
+            this->disconnectPlayer(id);
         });
         networkFlux._onClientDisconnected.addLambda([&](fge::net::ClientSharedPtr client, fge::net::Identity const& id) {
             std::cout << "client "<< id.toString() << " disconnected !\n";
-
-            auto const playerId = this->getPlayerId(id);
-            if (auto player = this->getFirstObj_ByTag("player_" + playerId))
-            {
-                this->delObject(player->getSid());
-            }
-            this->removePlayerId(playerId);
+            this->disconnectPlayer(id);
         });
 
         //Handling clients connection
@@ -469,6 +457,22 @@ public:
         }
 
         packet->pack(playerCountRewritePos, &playerCount, sizeof playerCount);
+    }
+
+    void disconnectPlayer(fge::net::Identity const& id)
+    {
+        auto const playerId = this->getPlayerId(id);
+        if (playerId.empty())
+        {
+            return;
+        }
+
+        if (auto player = this->getFirstObj_ByTag("player_" + playerId))
+        {
+            this->delObject(player->getSid());
+        }
+        this->removePlayerId(playerId);
+        this->g_playerEvents->pushEventIgnore(std::make_pair(StatEvents::PLAYER_DISCONNECTED, PlayerEventData{playerId, ""}), id);
     }
 
     std::string const& generatePlayerId(fge::net::Identity const& identity)

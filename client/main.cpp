@@ -258,6 +258,9 @@ public:
             case StatEvents::CAUGHT_FISH:
                 this->newObject<MultiplayerFishAward>({FGE_SCENE_PLAN_TOP}, event.second._data, player->getPosition());
                 break;
+            case StatEvents::PLAYER_DISCONNECTED:
+                this->removeNetworkPlayer(event.second._playerId);
+                break;
             default:
                 break;
             }
@@ -430,6 +433,15 @@ public:
         gGameHandler.reset();
     }
 
+    void removeNetworkPlayer(std::string const& playerId)
+    {
+        fge::ObjectContainer container;
+        this->getAllObj_ByTag("player_" + playerId, container);
+        for (auto const& obj : container)
+        {
+            this->delObject(obj->getSid());
+        }
+    }
     void removeNetworkElement()
     {
         fge::ObjectContainer container;

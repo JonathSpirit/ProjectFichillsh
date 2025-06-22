@@ -18,6 +18,7 @@
 enum class StatEvents : uint8_t
 {
     CAUGHT_FISH,
+    PLAYER_DISCONNECTED,
     EVENT_COUNT
 };
 using StatEvents_t = std::underlying_type_t<StatEvents>;
