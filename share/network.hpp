@@ -22,6 +22,25 @@ enum class StatEvents : uint8_t
 };
 using StatEvents_t = std::underlying_type_t<StatEvents>;
 
+struct PlayerEventData
+{
+    std::string _playerId;
+    std::string _data;
+};
+
+inline fge::net::Packet& operator<<(fge::net::Packet& pck, PlayerEventData const& event)
+{
+    pck << event._playerId;
+    pck << event._data;
+    return pck;
+}
+inline fge::net::Packet const& operator>>(fge::net::Packet const& pck, PlayerEventData& event)
+{
+    pck >> event._playerId;
+    pck >> event._data;
+    return pck;
+}
+
 enum PacketHeaders : fge::net::ProtocolPacket::IdType
 {
     //Client to server

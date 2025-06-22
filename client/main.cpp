@@ -237,6 +237,32 @@ public:
             //this->packNeededUpdate(transmissionPacket->packet());
         });
 
+        this->g_playerEvents = this->_netList.push<std::remove_pointer_t<decltype(this->g_playerEvents)> >();
+        this->g_playerEvents->_onEvent.addLambda([&](auto const& event) {
+            Player* player = nullptr;
+            if (auto ply = this->getFirstObj_ByTag("player_" + event.second._playerId))
+            {
+                player = ply->template getObject<Player>();
+            }
+            else
+            {
+                player = this->newObject<Player>();
+                player->allowUserControl(false);
+                player->_tags.add("player_" + event.second._playerId);
+                player->_tags.add("multiplayer");
+                player->_properties["playerId"] = event.second._playerId;
+            }
+
+            switch (event.first)
+            {
+            case StatEvents::CAUGHT_FISH:
+                this->newObject<MultiplayerFishAward>({FGE_SCENE_PLAN_TOP}, event.second._data, player->getPosition());
+                break;
+            default:
+                break;
+            }
+        });
+
         //Connect to the server
         if (!network.start(0, fge::net::IpAddress::Ipv4Any,
                 port, serverIp,
@@ -365,6 +391,10 @@ public:
 
                     //Unpack data
                     this->applyUpdate(netPacket->packet());
+                    {
+                        fge::Scene::UpdateCountRange updateCountRange{};
+                        this->unpackModification(netPacket->packet(), updateCountRange, true);
+                    }
                     network._client.getStatus().resetTimeout();
                     break;
                 case SERVER_FULL_UPDATE:
@@ -446,26 +476,6 @@ public:
             objPlayer->setServerPosition(position);
             objPlayer->setServerDirection(direction);
             objPlayer->setServerStat(static_cast<Player::Stats>(stat));
-
-            fge::net::SizeType eventCount;
-            packet >> eventCount;
-
-            for (fge::net::SizeType j = 0; j < eventCount; ++j)
-            {
-                StatEvents eventType;
-                packet >> eventType;
-
-                switch (eventType)
-                {
-                case StatEvents::CAUGHT_FISH:{
-                    std::string fishName;
-                    packet >> fishName;
-                    this->newObject<MultiplayerFishAward>({FGE_SCENE_PLAN_TOP}, fishName, objPlayer->getPosition());
-                    break;
-                }default:
-                    break;
-                }
-            }
         }
     }
     void applyFullUpdate(fge::net::Packet& packet)
@@ -507,11 +517,11 @@ public:
             objPlayer->setServerPosition(position);
             objPlayer->setServerDirection(direction);
             objPlayer->setServerStat(static_cast<Player::Stats>(stat));
-
-            fge::net::SizeType eventCount;
-            packet >> eventCount;
         }
     }
+
+private:
+    fge::net::NetworkTypeEvents<StatEvents, PlayerEventData>* g_playerEvents{nullptr};
 };
 
 int main(int argc, char *argv[])

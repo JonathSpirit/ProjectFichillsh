@@ -78,6 +78,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
 void FishBait::first(fge::Scene &scene)
 {
     this->g_startPosition = this->getPosition();
+    this->_netSyncMode = NetSyncModes::NO_SYNC;
 }
 
 void FishBait::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)
@@ -211,6 +212,7 @@ void Player::first(fge::Scene &scene)
     this->g_objAnim.setAnimation(fge::Animation{"human_1", "idle_down"});
     this->g_objAnim.getAnimation().setLoop(true);
     this->g_objAnim.centerOriginFromLocalBounds();
+    this->_netSyncMode = NetSyncModes::NO_SYNC;
 }
 
 void Player::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)

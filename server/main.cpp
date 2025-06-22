@@ -51,6 +51,8 @@ public:
             return;
         }
 
+        this->g_playerEvents = this->_netList.push<std::remove_pointer_t<decltype(this->g_playerEvents)> >();
+
         fge::Event event;
 
         fge::Clock mainClock;
@@ -99,6 +101,8 @@ public:
 
         std::chrono::microseconds tickTime{0};
 
+        networkFlux._clients.watchEvent(true);
+
         //Handling clients timeout
         networkFlux._onClientTimeout.addLambda([&](fge::net::ClientSharedPtr client, fge::net::Identity const& id) {
             std::cout << "client "<< id.toString() << " timeout !\n";
@@ -139,8 +143,9 @@ public:
                            chain.packet() >> fishName;
                            if (chain.packet().isValid())
                            {
-                               std::cout << "Player " << this->getPlayerId(id) << " caught a fish " << fishName << "\n";
-                               client->_data["caughtFish"] = fishName;
+                               auto const playerId = this->getPlayerId(id);
+                               std::cout << "Player " << playerId << " caught a fish " << fishName << "\n";
+                               this->g_playerEvents->pushEventIgnore(std::make_pair(StatEvents::CAUGHT_FISH, PlayerEventData{playerId, fishName}), id);
                            }
                            break;
                        }}
@@ -336,7 +341,7 @@ public:
 
                         currentClient->_latencyPlanner.pack(packet);
                         this->packUpdate(networkFlux, itClient->first, packet);
-                        //this->packModification(packet->packet(), itClient->first);
+                        this->packModification(packet->packet(), itClient->first);
                         //this->packWatchedEvent(packet->packet(), itClient->first);
 
                         currentClient->pushPacket(std::move(packet));
@@ -412,18 +417,6 @@ public:
                     << playerObj->getDirection()
                     << playerObj->getStat();
 
-                //EVENT_COUNT
-                if (auto caughtFish = currentClient->_data["caughtFish"].get<std::string>())
-                {
-                    packet->packet() << fge::net::SizeType{1}
-                        << StatEvents::CAUGHT_FISH
-                        << *caughtFish;
-                }
-                else
-                {
-                    packet->packet() << fge::net::SizeType{0};
-                }
-
                 ++playerCount;
             }
         }
@@ -470,9 +463,6 @@ public:
                 packet->packet() << playerObj->getPosition()
                     << playerObj->getDirection()
                     << playerObj->getStat();
-
-                //EVENT_COUNT
-                packet->packet() << fge::net::SizeType{0};
 
                 ++playerCount;
             }
@@ -531,6 +521,7 @@ public:
 private:
     std::unordered_map<fge::net::Identity, std::string, fge::net::IdentityHash> g_playerIds;
     std::unordered_map<std::string, fge::net::Identity> g_playerIdentities;
+    fge::net::NetworkTypeEvents<StatEvents, PlayerEventData>* g_playerEvents{nullptr};
 };
 
 int main(int argc, char *argv[])
