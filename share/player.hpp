@@ -1,7 +1,11 @@
 #pragma once
 
+#include "FastEngine/object/C_objSprite.hpp"
 #include "FastEngine/object/C_object.hpp"
 #include "FastEngine/object/C_objAnim.hpp"
+#ifndef FGE_DEF_SERVER
+#include "box2d/box2d.h"
+#endif
 
 #define F_PLAYER_SPEED 30.0f
 #define F_BAIT_SPEED 2.0f
@@ -19,18 +23,12 @@
 class FishBait : public fge::Object
 {
 public:
-    enum class Stats : uint8_t
-    {
-        THROWING,
-        WAITING,
-        CATCHING
-    };
-
     FishBait() = default;
     FishBait(fge::Vector2i const& throwDirection, fge::Vector2f const& position);
     ~FishBait() override = default;
 
     FGE_OBJ_UPDATE_DECLARE
+    FGE_OBJ_DRAW_DECLARE
 
     void first(fge::Scene &scene) override;
 
@@ -48,8 +46,14 @@ public:
     void endCatchingFish();
 
 private:
+    fge::ObjSprite g_objSprite;
     fge::Vector2i g_throwDirection;
-    Stats g_state = Stats::THROWING;
+    enum class Stats
+    {
+        THROWING,
+        WAITING,
+        CATCHING
+    } g_state = Stats::THROWING;
     float g_time = 0.0f;
     fge::Vector2f g_startPosition;
     fge::Vector2f g_staticPosition;
@@ -72,6 +76,7 @@ public:
     ~Player() override = default;
 
     FGE_OBJ_UPDATE_DECLARE
+    FGE_OBJ_DRAW_DECLARE
 
     void first(fge::Scene &scene) override;
 
@@ -83,19 +88,40 @@ public:
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
 
+    void networkRegister() override;
+
+    void pack(fge::net::Packet &pck) override;
+    void unpack(const fge::net::Packet &pck) override;
+
+    [[nodiscard]] Stats getStat() const;
+    [[nodiscard]] fge::Vector2i const& getDirection() const;
+
     void setDirection(fge::Vector2i const& direction);
     void setStat(Stats stat);
-    [[nodiscard]] fge::Vector2i getDirection() const;
-    [[nodiscard]] Stats getStat() const;
+    void setServerPosition(fge::Vector2f const& position);
+    void setServerDirection(fge::Vector2i const& direction);
+    void setServerStat(Stats stat);
 
+    void boxMove(fge::Vector2f const& move);
     [[nodiscard]] bool isFishing() const;
 
     void catchingFish();
     void endCatchingFish();
 
+    void allowUserControl(bool allow);
+
 private:
     fge::ObjAnimation g_objAnim;
-    Stats g_state = Stats::WALKING;
+#ifdef FGE_DEF_SERVER
+    unsigned int g_bodyId;
+#else
+    b2BodyId g_bodyId;
+#endif
+    Stats g_stat = Stats::WALKING;
+    Stats g_serverStat = Stats::WALKING;
     fge::ObjectDataWeak g_fishBait;
     fge::Vector2i g_direction{0, 1};
+    fge::Vector2f g_serverPosition;
+    int g_audioWalking = -1;
+    bool g_isUserControlled = true;
 };

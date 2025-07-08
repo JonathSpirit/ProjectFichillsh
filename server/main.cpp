@@ -11,7 +11,7 @@
 #include <csignal>
 
 #include "../share/network.hpp"
-#include "player.hpp"
+#include "../share/player.hpp"
 
 std::atomic_bool gRunning = true;
 
@@ -62,6 +62,9 @@ public:
         //fge::font::gManager.initialize();
         //fge::shader::gManager.initialize();
         fge::anim::gManager.initialize();
+
+        //Load object (mostly for network)
+        fge::reg::RegisterNewClass(std::make_unique<fge::reg::Stamp<Player>>());
 
         //Load textures
         //fge::texture::gManager.loadFromFile("OutdoorsTileset", "resources/tilesets/OutdoorsTileset.png");
@@ -264,6 +267,7 @@ public:
                     auto playerId = this->generatePlayerId(netPacket->getIdentity());
                     player->_tags.add("player_" + playerId);
                     player->setPosition(position);
+                    player->_netList.ignoreClient(netPacket->getIdentity());
 
                     client->getStatus().setNetworkStatus(fge::net::ClientStatus::NetworkStatus::AUTHENTICATED);
                     client->getStatus().setTimeout(F_NET_CLIENT_TIMEOUT_CONNECT_MS);
@@ -328,7 +332,6 @@ public:
                         packet->setHeaderId(SERVER_UPDATE);
 
                         currentClient->_latencyPlanner.pack(packet);
-                        this->packUpdate(networkFlux, itClient->first, packet);
                         this->packModification(packet->packet(), itClient->first);
                         //this->packWatchedEvent(packet->packet(), itClient->first);
 
@@ -364,53 +367,6 @@ public:
         fge::anim::gManager.uninitialize();
     }
 
-    void packUpdate(fge::net::ServerNetFluxUdp& networkFlux, fge::net::Identity const& identity, fge::net::TransmitPacketPtr& packet)
-    {
-        //TODO: only modified player stats, and events
-
-        auto const yourPlayerId = this->getPlayerId(identity);
-        if (yourPlayerId.empty())
-        {
-            //Should not really happen
-            return;
-        }
-
-        fge::net::SizeType playerCount = 0;
-        auto const playerCountRewritePos = packet->getDataSize();
-        packet->append(sizeof playerCount);
-
-        {
-            auto lock = networkFlux._clients.acquireLock();
-            for (auto it=networkFlux._clients.begin(lock), end=networkFlux._clients.end(lock); it != end; ++it)
-            {
-                auto& currentClient = it->second._client;
-
-                if (currentClient->getStatus().getNetworkStatus() != fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
-                {
-                    continue;
-                }
-
-                auto const playerId = this->getPlayerId(it->first);
-
-                if (playerId == yourPlayerId)
-                {
-                    continue;
-                }
-
-                packet->packet() << playerId;
-
-                auto const player = this->getFirstObj_ByTag("player_" + playerId);
-                auto const playerObj = player->getObject<Player>();
-                packet->packet() << playerObj->getPosition()
-                    << playerObj->getDirection()
-                    << playerObj->getStat();
-
-                ++playerCount;
-            }
-        }
-
-        packet->pack(playerCountRewritePos, &playerCount, sizeof playerCount);
-    }
     void packFullUpdate(fge::net::ServerNetFluxUdp& networkFlux, fge::net::Identity const& identity, fge::net::TransmitPacketPtr& packet)
     {
         auto const yourPlayerId = this->getPlayerId(identity);
@@ -422,41 +378,7 @@ public:
 
         packet->packet() << yourPlayerId;
 
-        fge::net::SizeType playerCount = 0;
-        auto const playerCountRewritePos = packet->getDataSize();
-        packet->append(sizeof playerCount);
-
-        {
-            auto lock = networkFlux._clients.acquireLock();
-            for (auto it=networkFlux._clients.begin(lock), end=networkFlux._clients.end(lock); it != end; ++it)
-            {
-                auto& currentClient = it->second._client;
-
-                if (currentClient->getStatus().getNetworkStatus() != fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
-                {
-                    continue;
-                }
-
-                auto const playerId = this->getPlayerId(it->first);
-
-                if (playerId == yourPlayerId)
-                {
-                    continue;
-                }
-
-                packet->packet() << playerId;
-
-                auto const player = this->getFirstObj_ByTag("player_" + playerId);
-                auto const playerObj = player->getObject<Player>();
-                packet->packet() << playerObj->getPosition()
-                    << playerObj->getDirection()
-                    << playerObj->getStat();
-
-                ++playerCount;
-            }
-        }
-
-        packet->pack(playerCountRewritePos, &playerCount, sizeof playerCount);
+        this->pack(packet->packet(), identity);
     }
 
     void disconnectPlayer(fge::net::Identity const& id)

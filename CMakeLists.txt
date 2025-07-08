@@ -50,18 +50,18 @@ set(CMAKE_RELEASE_POSTFIX "${ARCH}")
 #Executable
 add_executable(${PROJECT_CLIENT})
 target_sources(${PROJECT_CLIENT} PRIVATE client/main.cpp)
-target_sources(${PROJECT_CLIENT} PRIVATE client/player.cpp client/player.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/game.cpp client/game.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/fish.cpp client/fish.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/ducky.cpp client/ducky.hpp)
 
+target_sources(${PROJECT_CLIENT} PRIVATE share/network.hpp)
+target_sources(${PROJECT_CLIENT} PRIVATE share/player.cpp share/player.hpp)
+
 add_executable(${PROJECT_SERVER})
 target_sources(${PROJECT_SERVER} PRIVATE server/main.cpp)
-target_sources(${PROJECT_SERVER} PRIVATE server/player.cpp server/player.hpp)
 
 target_sources(${PROJECT_SERVER} PRIVATE share/network.hpp)
-
-target_sources(${PROJECT_CLIENT} PRIVATE share/network.hpp)
+target_sources(${PROJECT_SERVER} PRIVATE share/player.cpp share/player.hpp)
 
 #Dependencies
 add_dependencies(${PROJECT_CLIENT} box2d GRUpdater)

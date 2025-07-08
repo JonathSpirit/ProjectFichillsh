@@ -1,5 +1,5 @@
 #include "game.hpp"
-#include "player.hpp"
+#include "../share/player.hpp"
 #include "fish.hpp"
 #include "FastEngine/C_random.hpp"
 #include "FastEngine/manager/audio_manager.hpp"

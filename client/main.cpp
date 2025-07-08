@@ -9,7 +9,7 @@
 #include "FastEngine/C_clock.hpp"
 #include "SDL.h"
 
-#include "player.hpp"
+#include "../share/player.hpp"
 #include "game.hpp"
 #include "fish.hpp"
 #include "ducky.hpp"
@@ -67,6 +67,9 @@ public:
         fge::anim::gManager.initialize();
         fge::audio::gManager.initialize();
         gFishManager.initialize();
+
+        //Load object (mostly for network)
+        fge::reg::RegisterNewClass(std::make_unique<fge::reg::Stamp<Player>>());
 
         //Load shaders
         fge::shader::gManager.loadFromFile(
@@ -393,7 +396,6 @@ public:
                     }
 
                     //Unpack data
-                    this->applyUpdate(netPacket->packet());
                     {
                         fge::Scene::UpdateCountRange updateCountRange{};
                         this->unpackModification(netPacket->packet(), updateCountRange, true);
@@ -456,40 +458,6 @@ public:
         network.stop();
         this->removeNetworkElement();
     }
-    void applyUpdate(fge::net::Packet& packet)
-    {
-        fge::net::SizeType playerCount;
-        packet >> playerCount;
-        for (fge::net::SizeType i = 0; i < playerCount; ++i)
-        {
-            std::string playerId;
-            packet >> playerId;
-
-            fge::Vector2f position;
-            fge::Vector2i direction;
-            uint8_t stat;
-            packet >> position >> direction >> stat;
-
-            Player* objPlayer = nullptr;
-            if (auto ply = this->getFirstObj_ByTag("player_" + playerId))
-            {
-                objPlayer = ply->getObject<Player>();
-            }
-            else
-            {
-                objPlayer = this->newObject<Player>();
-                objPlayer->allowUserControl(false);
-                objPlayer->_tags.add("player_" + playerId);
-                objPlayer->_tags.add("multiplayer");
-                objPlayer->_properties["playerId"] = playerId;
-                objPlayer->setPosition(position);
-            }
-
-            objPlayer->setServerPosition(position);
-            objPlayer->setServerDirection(direction);
-            objPlayer->setServerStat(static_cast<Player::Stats>(stat));
-        }
-    }
     void applyFullUpdate(fge::net::Packet& packet)
     {
         this->removeNetworkElement(); //TODO: remove only the ones that are not in the server
@@ -499,37 +467,7 @@ public:
 
         this->_properties["playerId"] = myPlayerId;
 
-        fge::net::SizeType playerCount;
-        packet >> playerCount;
-        for (fge::net::SizeType i = 0; i < playerCount; ++i)
-        {
-            std::string playerId;
-            packet >> playerId;
-
-            fge::Vector2f position;
-            fge::Vector2i direction;
-            uint8_t stat;
-            packet >> position >> direction >> stat;
-
-            Player* objPlayer = nullptr;
-            if (auto ply = this->getFirstObj_ByTag("player_" + playerId))
-            {
-                objPlayer = ply->getObject<Player>();
-            }
-            else
-            {
-                objPlayer = this->newObject<Player>();
-                objPlayer->allowUserControl(false);
-                objPlayer->_tags.add("player_" + playerId);
-                objPlayer->_tags.add("multiplayer");
-                objPlayer->_properties["playerId"] = playerId;
-            }
-
-            objPlayer->setPosition(position);
-            objPlayer->setServerPosition(position);
-            objPlayer->setServerDirection(direction);
-            objPlayer->setServerStat(static_cast<Player::Stats>(stat));
-        }
+        this->unpack(packet, false);
     }
 
 private:
