@@ -242,18 +242,10 @@ public:
 
         this->g_playerEvents = this->_netList.push<std::remove_pointer_t<decltype(this->g_playerEvents)> >();
         this->g_playerEvents->_onEvent.addLambda([&](auto const& event) {
-            Player* player = nullptr;
-            if (auto ply = this->getFirstObj_ByTag("player_" + event.second._playerId))
+            Player* player = this->findPlayerObject(event.second._playerId);
+            if (player == nullptr)
             {
-                player = ply->template getObject<Player>();
-            }
-            else
-            {
-                player = this->newObject<Player>();
-                player->allowUserControl(false);
-                player->_tags.add("player_" + event.second._playerId);
-                player->_tags.add("multiplayer");
-                player->_properties["playerId"] = event.second._playerId;
+                return;
             }
 
             switch (event.first)
@@ -437,12 +429,12 @@ public:
 
     void removeNetworkPlayer(std::string const& playerId)
     {
-        fge::ObjectContainer container;
-        this->getAllObj_ByTag("player_" + playerId, container);
-        for (auto const& obj : container)
+        auto player = this->findPlayerObject(playerId);
+        if (player == nullptr)
         {
-            this->delObject(obj->getSid());
+            return;
         }
+        this->delObject(player->_myObjectData.lock()->getSid());
     }
     void removeNetworkElement()
     {
@@ -468,6 +460,25 @@ public:
         this->_properties["playerId"] = myPlayerId;
 
         this->unpack(packet, false);
+    }
+
+    Player* findPlayerObject(std::string const& playerId) const
+    {
+        fge::ObjectContainer container;
+        if (this->getAllObj_ByClass("FISH_PLAYER", container) == 0)
+        {
+            return nullptr;
+        }
+
+        for (auto const& obj : container)
+        {
+            if (obj->getObject()->_properties["playerId"] == playerId)
+            {
+                return obj->getObject<Player>();
+            }
+        }
+
+        return nullptr;
     }
 
 private:

@@ -446,7 +446,6 @@ void Player::first(fge::Scene &scene)
     this->g_objAnim.setAnimation(fge::Animation{"human_1", "idle_down"});
     this->g_objAnim.getAnimation().setLoop(true);
     this->g_objAnim.centerOriginFromLocalBounds();
-    //this->_netSyncMode = NetSyncModes::NO_SYNC;
 
 #ifndef FGE_DEF_SERVER
     //Create the player's body
@@ -468,9 +467,7 @@ void Player::first(fge::Scene &scene)
     if (this->_myObjectData.lock()->getContextFlags().has(fge::OBJ_CONTEXT_NETWORK))
     {
         this->allowUserControl(false);
-        //this->_tags.add("player_" + playerId); TODO sync player id
         this->_tags.add("multiplayer");
-        //this->_properties["playerId"] = playerId;
     }
 #endif
 
@@ -507,15 +504,15 @@ void Player::networkRegister()
     this->_netList.pushTrivial<fge::Vector2f>(fge::DataAccessor<fge::Vector2f>{&this->getPosition(), [&](auto const& position){this->setPosition(position);}});
     this->_netList.pushTrivial<fge::Vector2i>(fge::DataAccessor<fge::Vector2i>{&this->g_direction, [&](auto const& direction){this->setDirection(direction);}});
     this->_netList.pushTrivial<Stats>(fge::DataAccessor<Stats>{&this->g_stat});
+    this->_netList.push<fge::net::NetworkTypePropertyList<std::string>>(&this->_properties, "playerId");
 #else
-    this->_netList.pushTrivial<fge::Vector2f>(fge::DataAccessor<fge::Vector2f>{&this->g_serverPosition})->_onApplied.addLambda([&]() {
-       std::cout << "Player position updated " << fge::string::ToStr(this->g_serverPosition) << std::endl;
-    });
+    this->_netList.pushTrivial<fge::Vector2f>(fge::DataAccessor<fge::Vector2f>{&this->g_serverPosition});
     this->_netList.pushTrivial<fge::Vector2i>(fge::DataAccessor<fge::Vector2i>{&this->g_direction, [&](auto const& direction){this->setServerDirection(direction);}});
     this->_netList.pushTrivial<Stats>(fge::DataAccessor<Stats>{&this->g_stat, [&](auto const& stat)
     {
         this->setServerStat(stat);
     }});
+    this->_netList.push<fge::net::NetworkTypePropertyList<std::string>>(&this->_properties, "playerId");
 #endif
 }
 
@@ -523,20 +520,23 @@ void Player::pack(fge::net::Packet &pck)
 {
     pck << this->getPosition()
         << this->g_direction
-        << this->g_stat;
+        << this->g_stat
+        << *this->_properties["playerId"].getPtr<std::string>(); //TODO: a bit unsafe
 }
 void Player::unpack(const fge::net::Packet &pck)
 {
     fge::Vector2f position;
     fge::Vector2i direction;
     Stats stat;
+    std::string playerId;
 
-    pck >> position >> direction >> stat;
+    pck >> position >> direction >> stat >> playerId;
 
     this->setPosition(position);
     this->setServerPosition(position);
     this->setServerDirection(direction);
     this->setServerStat(stat);
+    this->_properties["playerId"] = playerId;
 }
 
 Player::Stats Player::getStat() const
