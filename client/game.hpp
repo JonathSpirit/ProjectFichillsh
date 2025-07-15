@@ -13,6 +13,8 @@
 #include "box2d/box2d.h"
 #include <memory>
 
+#include "fish.hpp"
+
 #define F_TAG_MAJOR 0
 #define F_TAG_MINOR 2
 #define F_TAG_PATCH 0
@@ -90,6 +92,7 @@ public:
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
 
 private:
+    FishInstance g_fishReward;
     unsigned int g_difficulty;
     std::vector<float> g_fishPositions;
     float g_currentTime;
@@ -108,7 +111,7 @@ class FishAward : public fge::Object
 {
 public:
     FishAward() = default;
-    FishAward(std::string const& fishName);
+    FishAward(FishInstance const& fishReward);
     ~FishAward() override = default;
 
     FGE_OBJ_UPDATE_DECLARE
@@ -125,6 +128,7 @@ public:
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
 
 private:
+    FishInstance g_fishReward;
     fge::ObjSprite g_fish;
     fge::ObjSpriteBatches g_stars;
     fge::ObjText g_text;

@@ -183,9 +183,8 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         if (this->g_fishRemainingTime <= 0.0f)
         {
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("victory_fish")->_ptr.get(), 0);
-            auto const fishName = gFishManager.getRandomFishName();
-            scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, fishName);
-            gGameHandler->pushCaughtFishEvent(fishName);
+            scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, this->g_fishReward);
+            gGameHandler->pushCaughtFishEvent(this->g_fishReward._name);
             scene.delUpdatedObject();
             return;
         }
@@ -239,6 +238,9 @@ void Minigame::first(fge::Scene &scene)
 
     this->g_fish.setTexture("fishingIcon");
     this->g_fish.centerOriginFromLocalBounds();
+
+    //Generate fish reward
+    this->g_fishReward = gFishManager.generateRandomFish();
 
     for (std::size_t i=0; i<this->g_hearts.size(); ++i)
     {
@@ -309,9 +311,11 @@ fge::RectFloat Minigame::getLocalBounds() const
 
 //FishAward
 
-FishAward::FishAward(std::string const &fishName)
+FishAward::FishAward(FishInstance const& fishReward)
 {
-    auto const fish = gFishManager.getElement(fishName);
+    this->g_fishReward = fishReward;
+
+    auto const fish = gFishManager.getElement(this->g_fishReward._name);
     this->g_fish.setTexture(fish->_ptr->_textureName);
     this->g_fish.setTextureRect(fish->_ptr->_textureRect);
     this->g_fish.scale(20.0f);
@@ -371,7 +375,7 @@ void FishAward::first(fge::Scene &scene)
     this->setPosition({this->g_positionGoal.x, static_cast<float>(target->getSize().y) * 1.2f});
 
     this->g_stars.setTexture("stars");
-    for (std::size_t i=0; i<5; ++i)
+    for (std::size_t i=0; i<this->g_fishReward._starCount; ++i)
     {
         auto& transform = this->g_stars.addSprite(fge::RectInt{{32, 0}, {16, 16}});
         transform.setOrigin({8.0f + 20.0f*static_cast<float>(i), 8.0f});
