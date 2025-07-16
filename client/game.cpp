@@ -331,9 +331,18 @@ void FishAward::update(fge::RenderTarget &target, fge::Event &event, fge::DeltaT
 
     this->setPosition(fge::ReachVector(this->getPosition(), this->g_positionGoal, 300.0f, delta));
 
+    for (std::size_t i=0; i<this->g_stars.getSpriteCount(); ++i)
+    {
+        float const value = 2.0f * std::sin((this->g_currentTime + 0.2f * static_cast<float>(i)) * 2.0f);
+
+        auto& transformable = *this->g_stars.getTransformable(i);
+        transformable.setOrigin({transformable.getOrigin().x, 8.0f + value});
+    }
+
     if (this->g_currentTime >= 5.0f)
     {//Start to fade out
-        auto const alpha = this->g_fish.getColor()._a - 0.5f * delta;
+        auto const alphaFloat = static_cast<float>(this->g_fish.getColor()._a) - 0.5f * delta;
+        uint8_t const alpha = alphaFloat < 0.0f ? 0 : static_cast<uint8_t>(alphaFloat);
 
         this->g_fish.setColor(fge::SetAlpha(this->g_fish.getColor(), alpha));
         for (std::size_t i=0; i<this->g_stars.getSpriteCount(); ++i)
@@ -342,7 +351,8 @@ void FishAward::update(fge::RenderTarget &target, fge::Event &event, fge::DeltaT
         }
         this->g_text.setFillColor(fge::SetAlpha(this->g_text.getFillColor(), alpha));
         this->g_text.setOutlineColor(fge::SetAlpha(this->g_text.getOutlineColor(), alpha));
-        if (this->g_fish.getColor()._a <= 0.0f)
+
+        if (this->g_fish.getColor()._a == 0)
         {
             scene.delUpdatedObject();
         }
@@ -374,14 +384,41 @@ void FishAward::first(fge::Scene &scene)
         static_cast<float>(target->getSize().y)/2.0f};
     this->setPosition({this->g_positionGoal.x, static_cast<float>(target->getSize().y) * 1.2f});
 
+    constexpr float starsInterval = 80.0f;
+    fge::RectInt starsTextureRect{{0, 0}, {16, 16}};
+
+    if (this->g_fishReward._starCount > 4)
+    {
+        starsTextureRect._y = 32;
+    }
+    else if (this->g_fishReward._starCount > 2)
+    {
+        starsTextureRect._y = 16;
+    }
+
+    auto const rarity = gFishManager.getElement(this->g_fishReward._name)->_ptr->_rarity;
+    switch (rarity)
+    {
+    case FishData::Rarity::COMMON:
+        starsTextureRect._x = 0;
+        break;
+    case FishData::Rarity::UNCOMMON:
+        starsTextureRect._x = 16;
+        break;
+    case FishData::Rarity::RARE:
+        starsTextureRect._x = 32;
+        break;
+    }
+
     this->g_stars.setTexture("stars");
     for (std::size_t i=0; i<this->g_fishReward._starCount; ++i)
     {
-        auto& transform = this->g_stars.addSprite(fge::RectInt{{32, 0}, {16, 16}});
-        transform.setOrigin({8.0f + 20.0f*static_cast<float>(i), 8.0f});
+        auto& transform = this->g_stars.addSprite(starsTextureRect);
+        transform.move({starsInterval*static_cast<float>(i), 0.0f});
+        transform.setOrigin({0.0f, 8.0f});
         transform.scale(5.0f);
     }
-    this->g_stars.setPosition({200.0f, 100.0f});
+    this->g_stars.setPosition({-static_cast<float>(this->g_fishReward._starCount)*starsInterval*0.5f, 120.0f});
 
     this->g_text.setFont("default");
     this->g_text.setCharacterSize(40);
@@ -441,12 +478,14 @@ void MultiplayerFishAward::update(fge::RenderTarget &target, fge::Event &event, 
 
     if (this->g_currentTime >= 5.0f)
     {//Start to fade out
-        auto const alpha = this->g_fish.getColor()._a - 0.5f * delta;
+        auto const alphaFloat = static_cast<float>(this->g_fish.getColor()._a) - 0.5f * delta;
+        uint8_t const alpha = alphaFloat < 0.0f ? 0 : static_cast<uint8_t>(alphaFloat);
 
         this->g_fish.setColor(fge::SetAlpha(this->g_fish.getColor(), alpha));
         this->g_text.setFillColor(fge::SetAlpha(this->g_text.getFillColor(), alpha));
         this->g_text.setOutlineColor(fge::SetAlpha(this->g_text.getOutlineColor(), alpha));
-        if (this->g_fish.getColor()._a <= 0.0f)
+
+        if (this->g_fish.getColor()._a == 0)
         {
             scene.delUpdatedObject();
         }
