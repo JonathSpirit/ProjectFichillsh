@@ -351,6 +351,8 @@ void FishAward::update(fge::RenderTarget &target, fge::Event &event, fge::DeltaT
         }
         this->g_text.setFillColor(fge::SetAlpha(this->g_text.getFillColor(), alpha));
         this->g_text.setOutlineColor(fge::SetAlpha(this->g_text.getOutlineColor(), alpha));
+        this->g_textFishAttributes.setFillColor(fge::SetAlpha(this->g_textFishAttributes.getFillColor(), alpha));
+        this->g_textFishAttributes.setOutlineColor(fge::SetAlpha(this->g_textFishAttributes.getOutlineColor(), alpha));
 
         if (this->g_fish.getColor()._a == 0)
         {
@@ -370,6 +372,7 @@ void FishAward::draw(fge::RenderTarget &target, const fge::RenderStates &states)
     this->g_fish.draw(target, copyStates);
     this->g_stars.draw(target, copyStates);
     this->g_text.draw(target, copyStates);
+    this->g_textFishAttributes.draw(target, copyStates);
 
     target.setView(backupView);
 }
@@ -422,12 +425,25 @@ void FishAward::first(fge::Scene &scene)
 
     this->g_text.setFont("default");
     this->g_text.setCharacterSize(40);
-    this->g_text.setString("You caught a fish!\n   -> "+this->g_fish.getTexture().getName());
     this->g_text.setFillColor(fge::Color::White);
     this->g_text.setOutlineColor(fge::Color::Black);
     this->g_text.setOutlineThickness(1.8f);
+
+    this->g_text.setString("You caught a fish!\n   -> "+this->g_fish.getTexture().getName());
     this->g_text.centerOriginFromLocalBounds();
     this->g_text.setPosition({0.0f, 200.0f});
+
+    this->g_textFishAttributes.setFont("default");
+    this->g_textFishAttributes.setCharacterSize(30);
+    this->g_textFishAttributes.setFillColor(fge::Color::White);
+    this->g_textFishAttributes.setOutlineColor(fge::Color::Black);
+    this->g_textFishAttributes.setOutlineThickness(1.0f);
+
+    this->g_textFishAttributes.setString(std::format(
+        "Weight: {:.3f} kg\t\tLength: {:.2f} cm",
+        this->g_fishReward._weight, this->g_fishReward._length));
+    this->g_textFishAttributes.centerOriginFromLocalBounds();
+    this->g_textFishAttributes.setPosition({0.0f, 250.0f});
 }
 
 void FishAward::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)

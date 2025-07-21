@@ -132,6 +132,7 @@ private:
     fge::ObjSprite g_fish;
     fge::ObjSpriteBatches g_stars;
     fge::ObjText g_text;
+    fge::ObjText g_textFishAttributes;
     float g_currentTime = 0.0f;
     fge::Vector2f g_positionGoal;
 };
