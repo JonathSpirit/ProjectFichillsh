@@ -63,14 +63,15 @@ bool FishManager::loadFromFile(std::string_view fishName,
 
 std::string const& FishManager::getRandomFishName() const
 {
-    auto index = fge::_random.range<std::size_t>(0, this->size() - 1) + 1;
+    auto index = fge::_random.range<std::size_t>(0, this->size() - 1);
 
     auto lock = this->acquireLock();
     auto it = this->begin(lock);
 
-    while (index--)
+    while (index != 0)
     {
         ++it;
+        --index;
     }
 
     return it->first;
