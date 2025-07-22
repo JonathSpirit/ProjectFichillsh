@@ -103,10 +103,10 @@ public:
 
 private:
     FishInstance g_fishReward;
-    float g_difficulty;
+    float g_difficulty{0.0f};
     std::function<float(float)> g_sinusFunction;
-    float g_currentTime;
-    float g_fishRemainingTime;
+    float g_currentTime{0.0f};
+    float g_fishRemainingTime{0.0f};
     std::array<fge::ObjSprite, F_MINIGAME_HEARTS_COUNT> g_hearts;
 
     fge::ObjRectangleShape g_gauge;
