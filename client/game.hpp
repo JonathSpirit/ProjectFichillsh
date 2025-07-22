@@ -24,20 +24,31 @@
 #define F_REPO "ProjectFichillsh"
 #define F_TEMP_DIR "temp/"
 
+#define F_TESTING_MINIGAME 0 // Set to 1 to test the minigame without waiting for the fish countdown
+
 #define F_GAME_CHECK_TIME_MS 200
-#define F_GAME_FISH_COUNTDOWN_MAX 200
+#define F_GAME_FISH_COUNTDOWN_MAX 180
 #define F_GAME_FISH_COUNTDOWN_MIN 30
 
-#define F_MINIGAME_BASE_TIME_S 10.0f
-#define F_MINIGAME_DIFFICULTY_TIME_RATIO 0.7f
-#define F_MINIGAME_DIFFICULTY_SPEED_RATIO 0.025f
-#define F_MINIGAME_DELTA_TIME_S 0.01f
+#define F_MINIGAME_DIFFICULTY_START 0.0f
+#define F_MINIGAME_DIFFICULTY_RARITY_COMMON 10.0f
+#define F_MINIGAME_DIFFICULTY_RARITY_UNCOMMON 20.0f
+#define F_MINIGAME_DIFFICULTY_RARITY_RARE 30.0f
+#define F_MINIGAME_DIFFICULTY_RANDOM_VARIATION 15.0f
+#define F_MINIGAME_DIFFICULTY_MAX (F_MINIGAME_DIFFICULTY_START + F_MINIGAME_DIFFICULTY_RARITY_RARE*F_FISH_STAR_MAX + F_MINIGAME_DIFFICULTY_RANDOM_VARIATION)
+#define F_MINIGAME_TIME_MAX 16.0f
+#define F_MINIGAME_TIME_MIN 10.0f
+#define F_MINIGAME_SINUS_QUANTITY_MAX 5.0f
+#define F_MINIGAME_SINUS_QUANTITY_MIN 1.0f
+#define F_MINIGAME_SINUS_FREQ_MAX 0.4f
+#define F_MINIGAME_SINUS_FREQ_MIN 0.1f
+#define F_MINIGAME_SINUS_FREQ_VARIATION 0.1f
 
-#define F_MINIGAME_SLIDER_ACCELERATION 400.0f
-#define F_MINIGAME_SLIDER_MAX_VELOCITY 600.0f
-#define F_MINIGAME_SLIDER_FRICTION 300.0f
+#define F_MINIGAME_SLIDER_ACCELERATION 600.0f
+#define F_MINIGAME_SLIDER_MAX_VELOCITY 200.0f
+#define F_MINIGAME_SLIDER_FRICTION 180.0f
 
-#define F_MINIGAME_LOOSING_HEARTS_SPEED 3.0f
+#define F_MINIGAME_LOOSING_HEARTS_SPEED 2.0f
 #define F_MINIGAME_HEARTS_COUNT 3
 
 class Player;
@@ -74,7 +85,6 @@ class Minigame : public fge::Object
 {
 public:
     Minigame() = default;
-    Minigame(unsigned int difficulty);
     ~Minigame() override = default;
 
     FGE_OBJ_UPDATE_DECLARE
@@ -93,8 +103,8 @@ public:
 
 private:
     FishInstance g_fishReward;
-    unsigned int g_difficulty;
-    std::vector<float> g_fishPositions;
+    float g_difficulty;
+    std::function<float(float)> g_sinusFunction;
     float g_currentTime;
     float g_fishRemainingTime;
     std::array<fge::ObjSprite, F_MINIGAME_HEARTS_COUNT> g_hearts;

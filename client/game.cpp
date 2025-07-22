@@ -3,6 +3,7 @@
 #include "fish.hpp"
 #include "FastEngine/C_random.hpp"
 #include "FastEngine/manager/audio_manager.hpp"
+#include <iostream>
 
 //GameHandler
 
@@ -10,7 +11,11 @@ GameHandler::GameHandler(fge::Scene& scene, fge::net::ClientSideNetUdp& network)
     g_scene(&scene),
     g_network(&network)
 {
+#if F_TESTING_MINIGAME == 1
+    this->g_fishCountDown = 1.0f;
+#else
     this->g_fishCountDown = fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
+#endif
 }
 GameHandler::~GameHandler()
 {
@@ -76,8 +81,12 @@ void GameHandler::update(fge::DeltaTime const &deltaTime)
         {
             if (--this->g_fishCountDown == 0)
             {
+#if F_TESTING_MINIGAME == 1
+                this->g_fishCountDown = 1.0f;
+#else
                 this->g_fishCountDown = fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
-                this->g_scene->newObject<Minigame>({FGE_SCENE_PLAN_HIGH_TOP + 1}, fge::_random.range(0, 10));
+#endif
+                this->g_scene->newObject<Minigame>({FGE_SCENE_PLAN_HIGH_TOP + 1});
             }
         }
 
@@ -96,18 +105,10 @@ std::unique_ptr<GameHandler> gGameHandler;
 
 //Minigame
 
-Minigame::Minigame(unsigned int difficulty) :
-        g_difficulty(std::clamp<unsigned int>(difficulty, 0, 10))
-{}
-
 FGE_OBJ_UPDATE_BODY(Minigame)
 {
     auto const delta = fge::DurationToSecondFloat(deltaTime);
     this->g_currentTime += delta;
-    if (this->g_currentTime >= this->g_fishPositions.size() * F_MINIGAME_DELTA_TIME_S)
-    {
-        this->g_currentTime = 0.0f;
-    }
 
     //Update slider
     if (event.isKeyPressed(SDLK_w))
@@ -191,8 +192,8 @@ FGE_OBJ_UPDATE_BODY(Minigame)
     }
 
     //Update fish position
-    auto index = std::clamp<std::size_t>(this->g_currentTime / F_MINIGAME_DELTA_TIME_S, 0, this->g_fishPositions.size()-1);
-    this->g_fish.setPosition({this->g_gauge.getPosition().x + posXeffect, this->g_fishPositions[index]});
+    auto const posy = this->g_sinusFunction(this->g_currentTime);
+    this->g_fish.setPosition({this->g_gauge.getPosition().x + posXeffect, posy});
 }
 
 FGE_OBJ_DRAW_BODY(Minigame)
@@ -241,29 +242,68 @@ void Minigame::first(fge::Scene &scene)
 
     //Generate fish reward
     this->g_fishReward = gFishManager.generateRandomFish();
+    auto const fish = gFishManager.getElement(this->g_fishReward._name);
 
+    //Generate difficulty
+    this->g_difficulty = F_MINIGAME_DIFFICULTY_START;
+    switch (fish->_ptr->_rarity)
+    {
+    case FishData::Rarity::COMMON:
+        this->g_difficulty += F_MINIGAME_DIFFICULTY_RARITY_COMMON;
+        break;
+    case FishData::Rarity::UNCOMMON:
+        this->g_difficulty += F_MINIGAME_DIFFICULTY_RARITY_UNCOMMON;
+        break;
+    case FishData::Rarity::RARE:
+        this->g_difficulty += F_MINIGAME_DIFFICULTY_RARITY_RARE;
+        break;
+    }
+    this->g_difficulty *= static_cast<float>(this->g_fishReward._starCount);
+    this->g_difficulty += fge::_random.range(0.0f, F_MINIGAME_DIFFICULTY_RANDOM_VARIATION);
+
+    //Setup hearts
     for (std::size_t i=0; i<this->g_hearts.size(); ++i)
     {
         this->g_hearts[i].setTexture("hearts");
         this->g_hearts[i].setTextureRect({{0, 0}, {16, 16}});
         this->g_hearts[i].centerOriginFromLocalBounds();
-        this->g_hearts[i].setPosition({-60.0f, -20.0f + 60.0f * i});
+        this->g_hearts[i].setPosition({-60.0f, -20.0f + 60.0f * static_cast<float>(i)});
         this->g_hearts[i].scale(7.0f);
     }
 
-    this->g_fishRemainingTime = F_MINIGAME_BASE_TIME_S + static_cast<float>(this->g_difficulty) * F_MINIGAME_DIFFICULTY_TIME_RATIO;
+    this->g_fishRemainingTime = fge::ConvertRange(this->g_difficulty,
+        F_MINIGAME_DIFFICULTY_START, F_MINIGAME_DIFFICULTY_MAX,
+        F_MINIGAME_TIME_MIN, F_MINIGAME_TIME_MAX);
 
     //Generate fish positions
-    auto const frequency = (this->g_difficulty+1) * F_MINIGAME_DIFFICULTY_SPEED_RATIO;
-    auto const speed = 2.0f * FGE_MATH_PI * frequency;
-    auto const sinPeriod = 1.0f / frequency;
-    this->g_fishPositions.resize(sinPeriod / F_MINIGAME_DELTA_TIME_S);
+    auto sinusQuantity = static_cast<std::size_t>(std::round(fge::ConvertRange(this->g_difficulty,
+        F_MINIGAME_DIFFICULTY_START, F_MINIGAME_DIFFICULTY_MAX,
+        F_MINIGAME_SINUS_QUANTITY_MIN, F_MINIGAME_SINUS_QUANTITY_MAX)));
 
-    for (std::size_t i=0; i<this->g_fishPositions.size(); ++i)
+    std::vector<float> sinusValues(sinusQuantity, 0.0f);
+    std::vector<float> sinusOffset(sinusQuantity, 0.0f);
+    for (std::size_t i=0; i<sinusValues.size(); ++i)
     {
-        this->g_fishPositions[i] = std::sin(static_cast<float>(i) * F_MINIGAME_DELTA_TIME_S * speed)
-                * this->g_gauge.getSize().y / 2.0f + this->g_gauge.getPosition().y / 2.0f;
+        auto frequency = fge::ConvertRange(this->g_difficulty,
+            F_MINIGAME_DIFFICULTY_START, F_MINIGAME_DIFFICULTY_MAX,
+            F_MINIGAME_SINUS_FREQ_MIN, F_MINIGAME_SINUS_FREQ_MAX);
+        frequency += fge::_random.range(-F_MINIGAME_SINUS_FREQ_VARIATION, F_MINIGAME_SINUS_FREQ_VARIATION);
+
+        sinusValues[i] = 2.0f * static_cast<float>(FGE_MATH_PI) * frequency;
+        sinusOffset[i] = fge::_random.range(0.0f, 30.0f);
+
+        std::cout << "Sinus " << i << ": frequency: " << frequency << " offset: " << sinusOffset[i] << std::endl;
     }
+
+    this->g_sinusFunction = [sinusValues, sinusQuantity, sinusOffset, this](float const time)
+    {
+        float value = 0.0f;
+        for (std::size_t i=0; i<sinusValues.size(); ++i)
+        {
+            value += std::sin((time + sinusOffset[i]) * sinusValues[i]) * (1.0f / static_cast<float>(sinusQuantity));
+        }
+        return value * this->g_gauge.getSize().y / 2.0f + this->g_gauge.getPosition().y / 2.0f;
+    };
 
     auto target = scene.getLinkedRenderTarget();
     this->setPosition({target->getSize().x/2.0f, target->getSize().y/2.0f});

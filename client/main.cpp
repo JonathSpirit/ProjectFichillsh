@@ -119,15 +119,15 @@ public:
         gFishManager.loadFromFile("sardine", 0.02f, 0.09f, 2.0f, 9.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-sardine.png");
         gFishManager.loadFromFile("shrimp-anemone", 0.005f, 0.02f, 0.5f, 2.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/shrimp-anemone.png");
         gFishManager.loadFromFile("shrimp-northern-prawn", 0.01f, 0.04f, 1.0f, 3.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/shrimp-northern-prawn.png");
-        gFishManager.loadFromFile("krill", 0.001f, 0.005f, 0.2f, 1.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/krill.png");
-        gFishManager.loadFromFile("krill-1", 0.001f, 0.005f, 0.2f, 1.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/krill-1.png");
+        gFishManager.loadFromFile("krill", 0.001f, 0.005f, 0.8f, 5.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/krill.png");
+        gFishManager.loadFromFile("krill-1", 0.001f, 0.005f, 0.2f, 6.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/krill-1.png");
 
         gFishManager.loadFromFile("bronze-striped-grunt", 0.10f, 0.50f, 5.0f, 20.0f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/fish-bronze-striped-grunt.png");
-        gFishManager.loadFromFile("krill-2", 0.001f, 0.005f, 0.2f, 1.0f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/krill-2.png");
+        gFishManager.loadFromFile("krill-2", 0.001f, 0.005f, 1.0f, 10.0f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/krill-2.png");
         gFishManager.loadFromFile("zoo-plankton", 0.0005f, 0.002f, 0.1f, 0.5f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/zoo-plankton.png");
         gFishManager.loadFromFile("zoo-plankton-small", 0.0002f, 0.001f, 0.05f, 0.3f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/zoo-plankton-small.png");
 
-        gFishManager.loadFromFile("krill-3", 0.001f, 0.005f, 0.2f, 1.0f, FishData::Rarity::RARE, "resources/sprites/fishes/krill-3.png");
+        gFishManager.loadFromFile("krill-3", 0.001f, 0.005f, 0.2f, 1.2f, FishData::Rarity::RARE, "resources/sprites/fishes/krill-3.png");
         gFishManager.loadFromFile("squid-reef", 0.10f, 0.50f, 5.0f, 20.0f, FishData::Rarity::RARE, "resources/sprites/fishes/squid-reef.png");
 
         //Prepare the view

@@ -3,6 +3,8 @@
 #include "FastEngine/C_rect.hpp"
 #include "FastEngine/manager/C_baseManager.hpp"
 
+#define F_FISH_STAR_MAX 5
+
 struct FishData
 {
     enum class Rarity
@@ -26,7 +28,7 @@ struct FishInstance
     std::string _name;
     float _weight = 0.0f;
     float _length = 0.0f;
-    uint8_t _starCount = 1; //1 to 5 stars
+    uint8_t _starCount = 1;
 };
 
 struct FishDataBlock : fge::manager::BaseDataBlock<FishData>
