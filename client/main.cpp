@@ -108,25 +108,27 @@ public:
         fge::audio::gManager.loadFromFile("ducky", "resources/audio/duck_1.ogg");
 
         //Load fishes
-        gFishManager.loadFromFile("algae", std::nullopt, "resources/sprites/fishes/algae.png");
-        gFishManager.loadFromFile("anchovy", std::nullopt, "resources/sprites/fishes/fish-anchovy.png");
-        gFishManager.loadFromFile("bronze-striped-grunt", std::nullopt, "resources/sprites/fishes/fish-bronze-striped-grunt.png");
-        gFishManager.loadFromFile("butter", std::nullopt, "resources/sprites/fishes/fish-butter.png");
-        gFishManager.loadFromFile("gulf-croaker", std::nullopt, "resources/sprites/fishes/fish-gulf-croaker.png");
-        gFishManager.loadFromFile("halfbeak", std::nullopt, "resources/sprites/fishes/fish-halfbeak.png");
-        gFishManager.loadFromFile("herring", std::nullopt, "resources/sprites/fishes/fish-herring.png");
-        gFishManager.loadFromFile("pollock", std::nullopt, "resources/sprites/fishes/fish-pollock.png");
-        gFishManager.loadFromFile("sandlance", std::nullopt, "resources/sprites/fishes/fish-sandlance.png");
-        gFishManager.loadFromFile("sardine", std::nullopt, "resources/sprites/fishes/fish-sardine.png");
-        gFishManager.loadFromFile("krill", std::nullopt, "resources/sprites/fishes/krill.png");
-        gFishManager.loadFromFile("krill-1", std::nullopt, "resources/sprites/fishes/krill-1.png");
-        gFishManager.loadFromFile("krill-2", std::nullopt, "resources/sprites/fishes/krill-2.png");
-        gFishManager.loadFromFile("krill-3", std::nullopt, "resources/sprites/fishes/krill-3.png");
-        gFishManager.loadFromFile("shrimp-anemone", std::nullopt, "resources/sprites/fishes/shrimp-anemone.png");
-        gFishManager.loadFromFile("shrimp-northern-prawn", std::nullopt, "resources/sprites/fishes/shrimp-northern-prawn.png");
-        gFishManager.loadFromFile("squid-reef", std::nullopt, "resources/sprites/fishes/squid-reef.png");
-        gFishManager.loadFromFile("zoo-plankton", std::nullopt, "resources/sprites/fishes/zoo-plankton.png");
-        gFishManager.loadFromFile("zoo-plankton-small", std::nullopt, "resources/sprites/fishes/zoo-plankton-small.png");
+        gFishManager.loadFromFile("algae", 0.01f, 0.05f, 1.0f, 5.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/algae.png");
+        gFishManager.loadFromFile("anchovy", 0.02f, 0.10f, 2.0f, 8.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-anchovy.png");
+        gFishManager.loadFromFile("butter", 0.05f, 0.20f, 3.0f, 12.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-butter.png");
+        gFishManager.loadFromFile("gulf-croaker", 0.08f, 0.30f, 4.0f, 15.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-gulf-croaker.png");
+        gFishManager.loadFromFile("halfbeak", 0.03f, 0.12f, 2.5f, 10.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-halfbeak.png");
+        gFishManager.loadFromFile("herring", 0.04f, 0.15f, 3.0f, 11.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-herring.png");
+        gFishManager.loadFromFile("pollock", 0.20f, 1.00f, 10.0f, 40.0f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/fish-pollock.png");
+        gFishManager.loadFromFile("sandlance", 0.01f, 0.07f, 1.5f, 7.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-sandlance.png");
+        gFishManager.loadFromFile("sardine", 0.02f, 0.09f, 2.0f, 9.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-sardine.png");
+        gFishManager.loadFromFile("shrimp-anemone", 0.005f, 0.02f, 0.5f, 2.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/shrimp-anemone.png");
+        gFishManager.loadFromFile("shrimp-northern-prawn", 0.01f, 0.04f, 1.0f, 3.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/shrimp-northern-prawn.png");
+        gFishManager.loadFromFile("krill", 0.001f, 0.005f, 0.8f, 5.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/krill.png");
+        gFishManager.loadFromFile("krill-1", 0.001f, 0.005f, 0.2f, 6.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/krill-1.png");
+
+        gFishManager.loadFromFile("bronze-striped-grunt", 0.10f, 0.50f, 5.0f, 20.0f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/fish-bronze-striped-grunt.png");
+        gFishManager.loadFromFile("krill-2", 0.001f, 0.005f, 1.0f, 10.0f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/krill-2.png");
+        gFishManager.loadFromFile("zoo-plankton", 0.0005f, 0.002f, 0.1f, 0.5f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/zoo-plankton.png");
+        gFishManager.loadFromFile("zoo-plankton-small", 0.0002f, 0.001f, 0.05f, 0.3f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/zoo-plankton-small.png");
+
+        gFishManager.loadFromFile("krill-3", 0.001f, 0.005f, 0.2f, 1.2f, FishData::Rarity::RARE, "resources/sprites/fishes/krill-3.png");
+        gFishManager.loadFromFile("squid-reef", 0.10f, 0.50f, 5.0f, 20.0f, FishData::Rarity::RARE, "resources/sprites/fishes/squid-reef.png");
 
         //Prepare the view
         auto view = renderWindow.getView();

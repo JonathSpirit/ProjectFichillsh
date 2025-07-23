@@ -3,6 +3,7 @@
 #include "fish.hpp"
 #include "FastEngine/C_random.hpp"
 #include "FastEngine/manager/audio_manager.hpp"
+#include <iostream>
 
 //GameHandler
 
@@ -10,7 +11,11 @@ GameHandler::GameHandler(fge::Scene& scene, fge::net::ClientSideNetUdp& network)
     g_scene(&scene),
     g_network(&network)
 {
+#if F_TESTING_MINIGAME == 1
+    this->g_fishCountDown = 1.0f;
+#else
     this->g_fishCountDown = fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
+#endif
 }
 GameHandler::~GameHandler()
 {
@@ -76,8 +81,12 @@ void GameHandler::update(fge::DeltaTime const &deltaTime)
         {
             if (--this->g_fishCountDown == 0)
             {
+#if F_TESTING_MINIGAME == 1
+                this->g_fishCountDown = 1.0f;
+#else
                 this->g_fishCountDown = fge::_random.range(F_GAME_FISH_COUNTDOWN_MIN, F_GAME_FISH_COUNTDOWN_MAX);
-                this->g_scene->newObject<Minigame>({FGE_SCENE_PLAN_HIGH_TOP + 1}, fge::_random.range(0, 10));
+#endif
+                this->g_scene->newObject<Minigame>({FGE_SCENE_PLAN_HIGH_TOP + 1});
             }
         }
 
@@ -96,18 +105,10 @@ std::unique_ptr<GameHandler> gGameHandler;
 
 //Minigame
 
-Minigame::Minigame(unsigned int difficulty) :
-        g_difficulty(std::clamp<unsigned int>(difficulty, 0, 10))
-{}
-
 FGE_OBJ_UPDATE_BODY(Minigame)
 {
     auto const delta = fge::DurationToSecondFloat(deltaTime);
     this->g_currentTime += delta;
-    if (this->g_currentTime >= this->g_fishPositions.size() * F_MINIGAME_DELTA_TIME_S)
-    {
-        this->g_currentTime = 0.0f;
-    }
 
     //Update slider
     if (event.isKeyPressed(SDLK_w))
@@ -183,17 +184,16 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         if (this->g_fishRemainingTime <= 0.0f)
         {
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("victory_fish")->_ptr.get(), 0);
-            auto const fishName = gFishManager.getRandomFishName();
-            scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, fishName);
-            gGameHandler->pushCaughtFishEvent(fishName);
+            scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, this->g_fishReward);
+            gGameHandler->pushCaughtFishEvent(this->g_fishReward._name);
             scene.delUpdatedObject();
             return;
         }
     }
 
     //Update fish position
-    auto index = std::clamp<std::size_t>(this->g_currentTime / F_MINIGAME_DELTA_TIME_S, 0, this->g_fishPositions.size()-1);
-    this->g_fish.setPosition({this->g_gauge.getPosition().x + posXeffect, this->g_fishPositions[index]});
+    auto const posy = this->g_sinusFunction(this->g_currentTime);
+    this->g_fish.setPosition({this->g_gauge.getPosition().x + posXeffect, posy});
 }
 
 FGE_OBJ_DRAW_BODY(Minigame)
@@ -240,28 +240,70 @@ void Minigame::first(fge::Scene &scene)
     this->g_fish.setTexture("fishingIcon");
     this->g_fish.centerOriginFromLocalBounds();
 
+    //Generate fish reward
+    this->g_fishReward = gFishManager.generateRandomFish();
+    auto const fish = gFishManager.getElement(this->g_fishReward._name);
+
+    //Generate difficulty
+    this->g_difficulty = F_MINIGAME_DIFFICULTY_START;
+    switch (fish->_ptr->_rarity)
+    {
+    case FishData::Rarity::COMMON:
+        this->g_difficulty += F_MINIGAME_DIFFICULTY_RARITY_COMMON;
+        break;
+    case FishData::Rarity::UNCOMMON:
+        this->g_difficulty += F_MINIGAME_DIFFICULTY_RARITY_UNCOMMON;
+        break;
+    case FishData::Rarity::RARE:
+        this->g_difficulty += F_MINIGAME_DIFFICULTY_RARITY_RARE;
+        break;
+    }
+    this->g_difficulty *= static_cast<float>(this->g_fishReward._starCount);
+    this->g_difficulty += fge::_random.range(0.0f, F_MINIGAME_DIFFICULTY_RANDOM_VARIATION);
+
+    //Setup hearts
     for (std::size_t i=0; i<this->g_hearts.size(); ++i)
     {
         this->g_hearts[i].setTexture("hearts");
         this->g_hearts[i].setTextureRect({{0, 0}, {16, 16}});
         this->g_hearts[i].centerOriginFromLocalBounds();
-        this->g_hearts[i].setPosition({-60.0f, -20.0f + 60.0f * i});
+        this->g_hearts[i].setPosition({-60.0f, -20.0f + 60.0f * static_cast<float>(i)});
         this->g_hearts[i].scale(7.0f);
     }
 
-    this->g_fishRemainingTime = F_MINIGAME_BASE_TIME_S + static_cast<float>(this->g_difficulty) * F_MINIGAME_DIFFICULTY_TIME_RATIO;
+    this->g_fishRemainingTime = fge::ConvertRange(this->g_difficulty,
+        F_MINIGAME_DIFFICULTY_START, F_MINIGAME_DIFFICULTY_MAX,
+        F_MINIGAME_TIME_MIN, F_MINIGAME_TIME_MAX);
 
     //Generate fish positions
-    auto const frequency = (this->g_difficulty+1) * F_MINIGAME_DIFFICULTY_SPEED_RATIO;
-    auto const speed = 2.0f * FGE_MATH_PI * frequency;
-    auto const sinPeriod = 1.0f / frequency;
-    this->g_fishPositions.resize(sinPeriod / F_MINIGAME_DELTA_TIME_S);
+    auto sinusQuantity = static_cast<std::size_t>(std::round(fge::ConvertRange(this->g_difficulty,
+        F_MINIGAME_DIFFICULTY_START, F_MINIGAME_DIFFICULTY_MAX,
+        F_MINIGAME_SINUS_QUANTITY_MIN, F_MINIGAME_SINUS_QUANTITY_MAX)));
 
-    for (std::size_t i=0; i<this->g_fishPositions.size(); ++i)
+    std::vector<float> sinusValues(sinusQuantity, 0.0f);
+    std::vector<float> sinusOffset(sinusQuantity, 0.0f);
+    for (std::size_t i=0; i<sinusValues.size(); ++i)
     {
-        this->g_fishPositions[i] = std::sin(static_cast<float>(i) * F_MINIGAME_DELTA_TIME_S * speed)
-                * this->g_gauge.getSize().y / 2.0f + this->g_gauge.getPosition().y / 2.0f;
+        auto frequency = fge::ConvertRange(this->g_difficulty,
+            F_MINIGAME_DIFFICULTY_START, F_MINIGAME_DIFFICULTY_MAX,
+            F_MINIGAME_SINUS_FREQ_MIN, F_MINIGAME_SINUS_FREQ_MAX);
+        frequency += fge::_random.range(-F_MINIGAME_SINUS_FREQ_VARIATION, F_MINIGAME_SINUS_FREQ_VARIATION);
+
+        sinusValues[i] = 2.0f * static_cast<float>(FGE_MATH_PI) * frequency;
+        sinusOffset[i] = fge::_random.range(0.0f, 30.0f);
+
+        std::cout << "Sinus " << i << ": frequency: " << frequency << " offset: " << sinusOffset[i] << std::endl;
     }
+
+    this->g_sinusFunction = [sinusValues, sinusQuantity, sinusOffset, this](float const time)
+    {
+        float value = 0.0f;
+        for (std::size_t i=0; i<sinusValues.size(); ++i)
+        {
+            value += std::sin((time + sinusOffset[i]) * sinusValues[i]) * (1.0f / static_cast<float>(sinusQuantity));
+        }
+        return value * this->g_gauge.getSize().y / 2.0f + this->g_gauge.getPosition().y / 2.0f;
+    };
 
     auto target = scene.getLinkedRenderTarget();
     this->setPosition({target->getSize().x/2.0f, target->getSize().y/2.0f});
@@ -309,9 +351,11 @@ fge::RectFloat Minigame::getLocalBounds() const
 
 //FishAward
 
-FishAward::FishAward(std::string const &fishName)
+FishAward::FishAward(FishInstance const& fishReward)
 {
-    auto const fish = gFishManager.getElement(fishName);
+    this->g_fishReward = fishReward;
+
+    auto const fish = gFishManager.getElement(this->g_fishReward._name);
     this->g_fish.setTexture(fish->_ptr->_textureName);
     this->g_fish.setTextureRect(fish->_ptr->_textureRect);
     this->g_fish.scale(20.0f);
@@ -327,9 +371,18 @@ void FishAward::update(fge::RenderTarget &target, fge::Event &event, fge::DeltaT
 
     this->setPosition(fge::ReachVector(this->getPosition(), this->g_positionGoal, 300.0f, delta));
 
+    for (std::size_t i=0; i<this->g_stars.getSpriteCount(); ++i)
+    {
+        float const value = 2.0f * std::sin((this->g_currentTime + 0.2f * static_cast<float>(i)) * 2.0f);
+
+        auto& transformable = *this->g_stars.getTransformable(i);
+        transformable.setOrigin({transformable.getOrigin().x, 8.0f + value});
+    }
+
     if (this->g_currentTime >= 5.0f)
     {//Start to fade out
-        auto const alpha = this->g_fish.getColor()._a - 0.5f * delta;
+        auto const alphaFloat = static_cast<float>(this->g_fish.getColor()._a) - 0.5f * delta;
+        uint8_t const alpha = alphaFloat < 0.0f ? 0 : static_cast<uint8_t>(alphaFloat);
 
         this->g_fish.setColor(fge::SetAlpha(this->g_fish.getColor(), alpha));
         for (std::size_t i=0; i<this->g_stars.getSpriteCount(); ++i)
@@ -338,7 +391,10 @@ void FishAward::update(fge::RenderTarget &target, fge::Event &event, fge::DeltaT
         }
         this->g_text.setFillColor(fge::SetAlpha(this->g_text.getFillColor(), alpha));
         this->g_text.setOutlineColor(fge::SetAlpha(this->g_text.getOutlineColor(), alpha));
-        if (this->g_fish.getColor()._a <= 0.0f)
+        this->g_textFishAttributes.setFillColor(fge::SetAlpha(this->g_textFishAttributes.getFillColor(), alpha));
+        this->g_textFishAttributes.setOutlineColor(fge::SetAlpha(this->g_textFishAttributes.getOutlineColor(), alpha));
+
+        if (this->g_fish.getColor()._a == 0)
         {
             scene.delUpdatedObject();
         }
@@ -356,6 +412,7 @@ void FishAward::draw(fge::RenderTarget &target, const fge::RenderStates &states)
     this->g_fish.draw(target, copyStates);
     this->g_stars.draw(target, copyStates);
     this->g_text.draw(target, copyStates);
+    this->g_textFishAttributes.draw(target, copyStates);
 
     target.setView(backupView);
 }
@@ -370,23 +427,63 @@ void FishAward::first(fge::Scene &scene)
         static_cast<float>(target->getSize().y)/2.0f};
     this->setPosition({this->g_positionGoal.x, static_cast<float>(target->getSize().y) * 1.2f});
 
-    this->g_stars.setTexture("stars");
-    for (std::size_t i=0; i<5; ++i)
+    constexpr float starsInterval = 80.0f;
+    fge::RectInt starsTextureRect{{0, 0}, {16, 16}};
+
+    if (this->g_fishReward._starCount > 4)
     {
-        auto& transform = this->g_stars.addSprite(fge::RectInt{{32, 0}, {16, 16}});
-        transform.setOrigin({8.0f + 20.0f*static_cast<float>(i), 8.0f});
+        starsTextureRect._y = 32;
+    }
+    else if (this->g_fishReward._starCount > 2)
+    {
+        starsTextureRect._y = 16;
+    }
+
+    auto const rarity = gFishManager.getElement(this->g_fishReward._name)->_ptr->_rarity;
+    switch (rarity)
+    {
+    case FishData::Rarity::COMMON:
+        starsTextureRect._x = 0;
+        break;
+    case FishData::Rarity::UNCOMMON:
+        starsTextureRect._x = 16;
+        break;
+    case FishData::Rarity::RARE:
+        starsTextureRect._x = 32;
+        break;
+    }
+
+    this->g_stars.setTexture("stars");
+    for (std::size_t i=0; i<this->g_fishReward._starCount; ++i)
+    {
+        auto& transform = this->g_stars.addSprite(starsTextureRect);
+        transform.move({starsInterval*static_cast<float>(i), 0.0f});
+        transform.setOrigin({0.0f, 8.0f});
         transform.scale(5.0f);
     }
-    this->g_stars.setPosition({200.0f, 100.0f});
+    this->g_stars.setPosition({-static_cast<float>(this->g_fishReward._starCount)*starsInterval*0.5f, 120.0f});
 
     this->g_text.setFont("default");
     this->g_text.setCharacterSize(40);
-    this->g_text.setString("You caught a fish!\n   -> "+this->g_fish.getTexture().getName());
     this->g_text.setFillColor(fge::Color::White);
     this->g_text.setOutlineColor(fge::Color::Black);
     this->g_text.setOutlineThickness(1.8f);
+
+    this->g_text.setString("You caught a fish!\n   -> "+this->g_fish.getTexture().getName());
     this->g_text.centerOriginFromLocalBounds();
     this->g_text.setPosition({0.0f, 200.0f});
+
+    this->g_textFishAttributes.setFont("default");
+    this->g_textFishAttributes.setCharacterSize(30);
+    this->g_textFishAttributes.setFillColor(fge::Color::White);
+    this->g_textFishAttributes.setOutlineColor(fge::Color::Black);
+    this->g_textFishAttributes.setOutlineThickness(1.0f);
+
+    this->g_textFishAttributes.setString(std::format(
+        "Weight: {:.3f} kg\t\tLength: {:.2f} cm",
+        this->g_fishReward._weight, this->g_fishReward._length));
+    this->g_textFishAttributes.centerOriginFromLocalBounds();
+    this->g_textFishAttributes.setPosition({0.0f, 250.0f});
 }
 
 void FishAward::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)
@@ -437,12 +534,14 @@ void MultiplayerFishAward::update(fge::RenderTarget &target, fge::Event &event, 
 
     if (this->g_currentTime >= 5.0f)
     {//Start to fade out
-        auto const alpha = this->g_fish.getColor()._a - 0.5f * delta;
+        auto const alphaFloat = static_cast<float>(this->g_fish.getColor()._a) - 0.5f * delta;
+        uint8_t const alpha = alphaFloat < 0.0f ? 0 : static_cast<uint8_t>(alphaFloat);
 
         this->g_fish.setColor(fge::SetAlpha(this->g_fish.getColor(), alpha));
         this->g_text.setFillColor(fge::SetAlpha(this->g_text.getFillColor(), alpha));
         this->g_text.setOutlineColor(fge::SetAlpha(this->g_text.getOutlineColor(), alpha));
-        if (this->g_fish.getColor()._a <= 0.0f)
+
+        if (this->g_fish.getColor()._a == 0)
         {
             scene.delUpdatedObject();
         }
