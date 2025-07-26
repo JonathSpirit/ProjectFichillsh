@@ -5,7 +5,7 @@
 #else
     #include "FastEngine/C_scene.hpp"
 #endif //FGE_DEF_SERVER
-#include "FastEngine/object/C_objTilemap.hpp"
+#include "FastEngine/object/C_objTilelayer.hpp"
 #include "FastEngine/C_random.hpp"
 #include <iostream>
 
@@ -101,9 +101,10 @@ FGE_OBJ_UPDATE_BODY(FishBait)
         if (this->g_time >= static_cast<float>(FGE_MATH_PI)/(2.0f * F_BAIT_SPEED))
         {
             //Check if the bait is in water
-            if (auto const map = scene.getFirstObj_ByTag("map"))
+            if (auto const firstLayer = scene.getFirstObj_ByTag("map"))
             {
-                auto const waterLayer = map->getObject<fge::ObjTileMap>()->findLayerName("Water")->get()->as<fge::TileLayer>();
+                auto const map = firstLayer->getObject<fge::ObjTileLayer>()->getTileMap();
+                auto const waterLayer = map->findLayerName("Water")->get()->as<fge::TileLayer>();
                 auto const tileGrid = waterLayer->getGridPosition(this->getPosition());
                 if (!tileGrid || waterLayer->getGid(*tileGrid) == 0)
                 {//Not in water
@@ -431,6 +432,44 @@ FGE_OBJ_UPDATE_BODY(Player)
     //Update position
     auto const bpos = b2Body_GetPosition(this->g_bodyId);
     this->setPosition({bpos.x, bpos.y});
+
+    //Update plan
+    float distanceDown = std::numeric_limits<float>::max();
+    float distanceUp = std::numeric_limits<float>::max();
+    for (auto const& y : this->g_transitionYPoints)
+    {
+        auto const distance = y - this->getPosition().y;
+        if (distance > 0.0f)
+        {
+            if (distance < distanceDown)
+            {
+                distanceDown = distance;
+            }
+        }
+        else
+        {
+            if (-distance < distanceUp)
+            {
+                distanceUp = -distance;
+            }
+        }
+    }
+    if (distanceUp < distanceDown)
+    {
+        if (!this->g_transitionLast)
+        {
+            this->g_transitionLast = true;
+            scene.setObjectPlanBot(this->_myObjectData.lock()->getSid());
+        }
+    }
+    else
+    {
+        if (this->g_transitionLast)
+        {
+            this->g_transitionLast = false;
+            scene.setObjectPlanTop(this->_myObjectData.lock()->getSid());
+        }
+    }
 }
 FGE_OBJ_DRAW_BODY(Player)
 {
@@ -469,6 +508,22 @@ void Player::first(fge::Scene &scene)
         this->allowUserControl(false);
         this->_tags.add("multiplayer");
     }
+
+    //Build layer transition lines for the player
+    this->g_transitionYPoints.clear();
+    auto const tilemap = scene.getFirstObj_ByTag("map")->getObject<fge::ObjTileLayer>()->getTileMap();
+    auto const mapDepthObjects = tilemap->findLayerName("DepthObjects")->get()->as<fge::TileLayer>();
+    for (auto const& tile : mapDepthObjects->getTiles())
+    {
+        auto const gid = tile.getGid();
+        if (gid != FGE_LAYER_BAD_ID)
+        {
+            auto const position = mapDepthObjects->getPosition() + tile.getPosition();
+            this->g_transitionYPoints.emplace_back(position.y);
+        }
+    }
+    this->g_transitionPlan = tilemap->retrieveGeneratedTilelayerObject("DepthObjects")->getPlan();
+    scene.setObjectPlan(this->_myObjectData.lock()->getSid(), this->g_transitionPlan);
 #endif
 
     this->networkRegister();

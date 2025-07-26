@@ -1,6 +1,6 @@
 #include "ducky.hpp"
 #include "FastEngine/C_scene.hpp"
-#include "FastEngine/object/C_objTilemap.hpp"
+#include "FastEngine/object/C_objTilelayer.hpp"
 #include "FastEngine/manager/audio_manager.hpp"
 #include "FastEngine/C_random.hpp"
 #include "FastEngine/extra/extra_pathFinding.hpp"
@@ -122,10 +122,12 @@ void Ducky::computeRandomWalkPath()
     auto scene = this->_myObjectData.lock()->getScene();
     this->g_walkPath.clear();
 
-    if (auto map = scene->getFirstObj_ByTag("map"))
+    if (auto firstLayer = scene->getFirstObj_ByTag("map"))
     {
-        auto const objectsLayer = map->getObject<fge::ObjTileMap>()->findLayerName("Objects")->get()->as<fge::TileLayer>();
-        auto const waterLayer = map->getObject<fge::ObjTileMap>()->findLayerName("Water")->get()->as<fge::TileLayer>();
+        auto const map = firstLayer->getObject<fge::ObjTileLayer>()->getTileMap();
+        auto const objectsLayer = map->findLayerName("DepthObjects")->get()->as<fge::TileLayer>();
+        auto const waterLayer = map->findLayerName("Water")->get()->as<fge::TileLayer>();
+
         auto const mapSize = waterLayer->getTiles().getSize();
 
         std::size_t randomTry = 20;

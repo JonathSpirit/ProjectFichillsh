@@ -3,7 +3,7 @@
 #include "FastEngine/manager/anim_manager.hpp"
 #include "FastEngine/network/C_server.hpp"
 #include "FastEngine/graphic/C_renderWindow.hpp"
-#include "FastEngine/object/C_objTilemap.hpp"
+#include "FastEngine/object/C_objTilelayer.hpp"
 #include "FastEngine/object/C_objSpriteBatches.hpp"
 #include "FastEngine/object/C_objRenderMap.hpp"
 #include "FastEngine/C_clock.hpp"
@@ -137,26 +137,24 @@ public:
         renderWindow.setView(view);
 
         // Creating objects
-        auto* objPlayer = this->newObject<Player>();
-        objPlayer->_tags.add("player");
-
         auto* objTopMap = this->newObject<fge::ObjRenderMap>({FGE_SCENE_PLAN_HIGH_TOP});
         objTopMap->setClearColor(fge::Color{50, 50, 50, 140});
         objTopMap->_tags.add("topMap");
         objTopMap->_drawMode = fge::Object::DrawModes::DRAW_ALWAYS_HIDDEN;
 
         // Create a tileMap object
-        auto* objMap = this->newObject<fge::ObjTileMap>({FGE_SCENE_PLAN_BACK});
-        objMap->_drawMode = fge::Object::DrawModes::DRAW_ALWAYS_DRAWN;
-        objMap->_tags.add("map");
+        auto tilemap = fge::TileMap::create();
 
 #if SHOW_COLLIDERS
         std::vector<fge::ObjRectangleShape*> objRectCollider;
 #endif
 
         //Load the tileMap from a "tiled" json
-        objMap->loadFromFile("resources/map_1/map_1.json", false);
-        for (auto const& layer : objMap->getTileLayers())
+        tilemap->loadFromFile("resources/map_1/map_1.json");
+        tilemap->generateObjects(*this, FGE_SCENE_PLAN_HIDE_BACK - 10);
+        tilemap->_generatedObjects.front().lock()->getObject()->_tags.add("map"); //Add tag to the first tile layer object, in order to find it later
+
+        for (auto const& layer : tilemap->_layers)
         {
             if (layer->getType() != fge::BaseLayer::Types::TILE_LAYER)
             {
@@ -187,7 +185,11 @@ public:
                 }
             }
         }
-        auto const mapBounds = objMap->findLayerName("Water")->get()->as<fge::TileLayer>()->getGlobalBounds();
+        auto const mapBounds = tilemap->findLayerName("Water")->get()->as<fge::TileLayer>()->getGlobalBounds();
+
+        //Player
+        auto* objPlayer = this->newObject<Player>();
+        objPlayer->_tags.add("player");
 
         //Wall colliders
         gGameHandler->pushStaticCollider(
@@ -211,7 +213,7 @@ public:
 #endif
 
         //Load spawn point
-        auto const specialObjects = objMap->findLayerName("SpecialObjects")->get()->as<fge::ObjectGroupLayer>();
+        auto const specialObjects = tilemap->findLayerName("SpecialObjects")->get()->as<fge::ObjectGroupLayer>();
         objPlayer->boxMove(specialObjects->findObjectName("spawn")->_position);
 
         //Load duckies

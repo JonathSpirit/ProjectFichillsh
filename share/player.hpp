@@ -3,6 +3,7 @@
 #include "FastEngine/object/C_objSprite.hpp"
 #include "FastEngine/object/C_object.hpp"
 #include "FastEngine/object/C_objAnim.hpp"
+#include "FastEngine/C_scene.hpp"
 #ifndef FGE_DEF_SERVER
 #include "box2d/box2d.h"
 #endif
@@ -122,6 +123,9 @@ private:
     fge::ObjectDataWeak g_fishBait;
     fge::Vector2i g_direction{0, 1};
     fge::Vector2f g_serverPosition;
+    std::vector<float> g_transitionYPoints;
+    fge::ObjectPlan g_transitionPlan;
+    bool g_transitionLast = false;
     int g_audioWalking = -1;
     bool g_isUserControlled = true;
 };
