@@ -1,8 +1,8 @@
 #pragma once
 
-#include "FastEngine/object/C_objSprite.hpp"
 #include "FastEngine/object/C_object.hpp"
 #include "FastEngine/object/C_objAnim.hpp"
+#include "FastEngine/C_scene.hpp"
 
 #define F_DUCK_SPEED 50.0f
 #define F_DUCK_WALK_TIME_MIN_S 3.0f
@@ -45,6 +45,10 @@ private:
     float g_timeBeforeWalk = 0.0f;
     std::vector<fge::Vector2f> g_walkPath;
     bool g_handlingQuack = false;
+
+    fge::ObjectDataWeak g_player;
+    fge::ObjectPlan g_transitionPlan;
+    bool g_transitionLast = false;
 
     static bool gQuackHandled;
     static float gTimeBeforeQuack;

@@ -69,6 +69,23 @@ FGE_OBJ_UPDATE_BODY(Ducky)
         break;
     }}
 
+    //Update plan
+    if (this->g_player.lock()->getObject()->getPosition().y < this->getPosition().y)
+    {
+        if (!this->g_transitionLast)
+        {
+            this->g_transitionLast = true;
+            scene.setObjectPlan(this->_myObjectData.lock()->getSid(), this->g_transitionPlan + 1);
+        }
+    }
+    else
+    {
+        if (this->g_transitionLast)
+        {
+            this->g_transitionLast = false;
+            scene.setObjectPlan(this->_myObjectData.lock()->getSid(), this->g_transitionPlan - 1);
+        }
+    }
 }
 FGE_OBJ_DRAW_BODY(Ducky)
 {
@@ -80,6 +97,10 @@ FGE_OBJ_DRAW_BODY(Ducky)
 
 void Ducky::first(fge::Scene &scene)
 {
+    auto player = scene.getFirstObj_ByTag("player");
+    this->g_player = player;
+    this->g_transitionPlan = player->getPlan();
+
     this->g_objAnim.setAnimation(fge::Animation{"ducky_1", "idle"});
     this->g_objAnim.getAnimation().setLoop(true);
     this->g_objAnim.scale(0.5f);
