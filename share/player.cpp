@@ -230,6 +230,7 @@ FGE_OBJ_UPDATE_BODY(Player)
 FGE_OBJ_UPDATE_BODY(Player)
 {
     FGE_OBJ_UPDATE_CALL(this->g_objAnim);
+    FGE_OBJ_UPDATE_CALL(this->g_objAnimShadow);
 
     if (!this->g_isUserControlled)
     {
@@ -293,6 +294,7 @@ FGE_OBJ_UPDATE_BODY(Player)
             }
 
             this->g_objAnim.getAnimation().setGroup(animationName);
+            this->g_objAnimShadow.getAnimation().setGroup(animationName);
             break;
         }case Stats::IDLE:
             break;
@@ -325,6 +327,8 @@ FGE_OBJ_UPDATE_BODY(Player)
 
             this->g_objAnim.getAnimation().setGroup(animationName);
             this->g_objAnim.getAnimation().setFrame(0);
+            this->g_objAnimShadow.getAnimation().setGroup(animationName);
+            this->g_objAnimShadow.getAnimation().setFrame(0);
             this->g_fishBait = scene.newObject(FGE_NEWOBJECT(FishBait, this->g_direction, this->getPosition()));
 
             b2Body_SetLinearVelocity(this->g_bodyId, {0.0f, 0.0f});
@@ -332,6 +336,7 @@ FGE_OBJ_UPDATE_BODY(Player)
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("swipe")->_ptr.get(), 0);
             this->g_stat = Stats::THROWING;
             this->g_objAnim.getAnimation().setLoop(false);
+            this->g_objAnimShadow.getAnimation().setLoop(false);
 
             if (this->g_audioWalking != -1)
             {
@@ -393,6 +398,7 @@ FGE_OBJ_UPDATE_BODY(Player)
             static_cast<float>(moveDirection.y) * F_PLAYER_SPEED
         });
         this->g_objAnim.getAnimation().setGroup(animationName);
+        this->g_objAnimShadow.getAnimation().setGroup(animationName);
         break;
     } case Stats::IDLE:
         break;
@@ -408,6 +414,7 @@ FGE_OBJ_UPDATE_BODY(Player)
         {
             this->g_stat = Stats::WALKING;
             this->g_objAnim.getAnimation().setLoop(true);
+            this->g_objAnimShadow.getAnimation().setLoop(true);
         }
         break;
     case Stats::FISHING:
@@ -420,6 +427,7 @@ FGE_OBJ_UPDATE_BODY(Player)
 
             this->g_stat = Stats::WALKING;
             this->g_objAnim.getAnimation().setLoop(true);
+            this->g_objAnimShadow.getAnimation().setLoop(true);
         }
         break;
     }
@@ -476,6 +484,7 @@ FGE_OBJ_DRAW_BODY(Player)
     auto copyStats = states.copy();
     copyStats._resTransform.set(target.requestGlobalTransform(*this, copyStats._resTransform));
 
+    this->g_objAnimShadow.draw(target , copyStats);
     this->g_objAnim.draw(target, copyStats);
 }
 #endif //FGE_DEF_SERVER
@@ -485,6 +494,14 @@ void Player::first(fge::Scene &scene)
     this->g_objAnim.setAnimation(fge::Animation{"human_1", "idle_down"});
     this->g_objAnim.getAnimation().setLoop(true);
     this->g_objAnim.centerOriginFromLocalBounds();
+
+    this->g_objAnimShadow.setAnimation(fge::Animation{"human_1_shadow", "idle_down"});
+    this->g_objAnimShadow.getAnimation().setLoop(true);
+    this->g_objAnimShadow.centerOriginFromLocalBounds();
+    this->g_objAnimShadow.setRotation(20.0f);
+    this->g_objAnimShadow.move({4.0f, 0.0f});
+    this->g_objAnimShadow.scale({0.8f, 0.7f});
+    this->g_objAnimShadow.setColor({255, 255, 255, 30});
 
 #ifndef FGE_DEF_SERVER
     //Create the player's body
@@ -631,10 +648,13 @@ void Player::setServerStat(Stats stat)
 
         this->g_objAnim.getAnimation().setGroup(animationName);
         this->g_objAnim.getAnimation().setFrame(0);
+        this->g_objAnimShadow.getAnimation().setGroup(animationName);
+        this->g_objAnimShadow.getAnimation().setFrame(0);
         this->g_fishBait = scene.newObject(FGE_NEWOBJECT(FishBait, this->g_direction, this->getPosition()));
 
         this->g_stat = Stats::THROWING;
         this->g_objAnim.getAnimation().setLoop(false);
+        this->g_objAnimShadow.getAnimation().setLoop(false);
     }
     else if ((this->g_serverStat == Stats::CATCHING ||this->g_serverStat == Stats::FISHING || this->g_serverStat == Stats::THROWING) && stat == Stats::WALKING)
     {
@@ -643,6 +663,7 @@ void Player::setServerStat(Stats stat)
             scene.delObject(fishBait->getSid());
         }
         this->g_objAnim.getAnimation().setLoop(true);
+        this->g_objAnimShadow.getAnimation().setLoop(true);
     }
     else if (this->g_serverStat == Stats::FISHING && stat == Stats::CATCHING)
     {
@@ -694,6 +715,7 @@ void Player::endCatchingFish()
             this->_myObjectData.lock()->getScene()->delObject(fishBait->getSid());
         }
         this->g_objAnim.getAnimation().setLoop(true);
+        this->g_objAnimShadow.getAnimation().setLoop(true);
         this->g_stat = Stats::WALKING;
     }
 }

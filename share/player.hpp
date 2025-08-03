@@ -113,6 +113,7 @@ public:
 
 private:
     fge::ObjAnimation g_objAnim;
+    fge::ObjAnimation g_objAnimShadow;
 #ifdef FGE_DEF_SERVER
     unsigned int g_bodyId;
 #else

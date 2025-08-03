@@ -94,6 +94,30 @@ public:
         fge::anim::gManager.loadFromFile("human_1", "resources/sprites/human_1.json");
         fge::anim::gManager.loadFromFile("ducky_1", "resources/sprites/ducky_1.json");
 
+        //Create player shadow
+        {//TODO: yep maybe make it easier in the engine
+            auto humanAnimData = fge::anim::gManager.getElement("human_1");
+
+            fge::anim::AnimationManager::DataBlockPointer dataBlock = std::make_shared<fge::anim::DataBlock>();
+            dataBlock->_valid = true;
+            dataBlock->_ptr = std::make_shared<fge::anim::AnimationData>();
+            *dataBlock->_ptr = *humanAnimData->_ptr;
+
+            fge::Surface surface(humanAnimData->_ptr->_tilesetTexture->copyToSurface());
+            for (int i=0; i<surface.getSize().x; ++i)
+            {
+                for (int j=0; j<surface.getSize().y; ++j)
+                {
+                    auto color = fge::Color(0,0, 0, surface.getPixel(i, j).value()._a);
+                    surface.setPixel(i, j, color);
+                }
+            }
+            dataBlock->_ptr->_tilesetTexture = std::make_shared<fge::TextureType>(fge::vulkan::GetActiveContext());
+            dataBlock->_ptr->_tilesetTexture->create(surface.get());
+
+            fge::anim::gManager.push("human_1_shadow", std::move(dataBlock));
+        }
+
         //Load fonts
         fge::font::gManager.loadFromFile("default", "resources/fonts/ttf/monogram.ttf");
 
