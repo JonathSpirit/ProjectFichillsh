@@ -265,7 +265,7 @@ public:
                 << objPlayer->getStat();
 
             //Pack needed update
-            //this->packNeededUpdate(transmissionPacket->packet());
+            this->packNeededUpdate(packet->packet());
         });
 
         this->g_playerEvents = this->_netList.push<std::remove_pointer_t<decltype(this->g_playerEvents)> >();

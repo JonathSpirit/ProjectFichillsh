@@ -172,6 +172,8 @@ public:
                     return chain;
                 }).end();
 
+            this->unpackNeededUpdate(packet->packet(), id);
+
             if (err)
             {
                 std::cout << "Error in client packet: \n";

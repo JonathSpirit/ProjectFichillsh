@@ -584,7 +584,7 @@ void Player::networkRegister()
     {
         this->setServerStat(stat);
     }});
-    this->_netList.push<fge::net::NetworkTypePropertyList<std::string>>(&this->_properties, "playerId");
+    this->_netList.push<fge::net::NetworkTypePropertyList<std::string>>(&this->_properties, "playerId")->needExplicitUpdate();
 #endif
 }
 
