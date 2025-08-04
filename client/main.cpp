@@ -95,13 +95,9 @@ public:
         fge::anim::gManager.loadFromFile("ducky_1", "resources/sprites/ducky_1.json");
 
         //Create player shadow
-        {//TODO: yep maybe make it easier in the engine
-            auto humanAnimData = fge::anim::gManager.getElement("human_1");
-
-            fge::anim::AnimationManager::DataBlockPointer dataBlock = std::make_shared<fge::anim::DataBlock>();
-            dataBlock->_valid = true;
-            dataBlock->_ptr = std::make_shared<fge::anim::AnimationData>();
-            *dataBlock->_ptr = *humanAnimData->_ptr;
+        {
+            fge::anim::gManager.duplicate("human_1", "human_1_shadow");
+            auto humanAnimData = fge::anim::gManager.getElement("human_1_shadow");
 
             fge::Surface surface(humanAnimData->_ptr->_tilesetTexture->copyToSurface());
             for (int i=0; i<surface.getSize().x; ++i)
@@ -112,10 +108,8 @@ public:
                     surface.setPixel(i, j, color);
                 }
             }
-            dataBlock->_ptr->_tilesetTexture = std::make_shared<fge::TextureType>(fge::vulkan::GetActiveContext());
-            dataBlock->_ptr->_tilesetTexture->create(surface.get());
-
-            fge::anim::gManager.push("human_1_shadow", std::move(dataBlock));
+            humanAnimData->_ptr->_tilesetTexture = std::make_shared<fge::TextureType>(fge::vulkan::GetActiveContext());
+            humanAnimData->_ptr->_tilesetTexture->create(surface.get());
         }
 
         //Load fonts
