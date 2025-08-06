@@ -3,6 +3,7 @@
 #include "FastEngine/object/C_objSprite.hpp"
 #include "FastEngine/object/C_object.hpp"
 #include "FastEngine/object/C_objAnim.hpp"
+#include "FastEngine/object/C_objText.hpp"
 #include "FastEngine/C_scene.hpp"
 #ifndef FGE_DEF_SERVER
 #include "box2d/box2d.h"
@@ -60,18 +61,19 @@ private:
     fge::Vector2f g_staticPosition;
 };
 
-class Player : public fge::Object
+class Player : public fge::Object, public fge::Subscriber
 {
 public:
-    enum class Stats : uint8_t
+    enum class States : uint8_t
     {
         WALKING,
         IDLE,
         THROWING,
         FISHING,
-        CATCHING
+        CATCHING,
+        CHATTING
     };
-    using Stats_t = std::underlying_type_t<Stats>;
+    using Stats_t = std::underlying_type_t<States>;
 
     Player() = default;
     ~Player() override = default;
@@ -94,14 +96,16 @@ public:
     void pack(fge::net::Packet &pck) override;
     void unpack(const fge::net::Packet &pck) override;
 
-    [[nodiscard]] Stats getStat() const;
+    [[nodiscard]] States getStat() const;
     [[nodiscard]] fge::Vector2i const& getDirection() const;
 
     void setDirection(fge::Vector2i const& direction);
-    void setStat(Stats stat);
+    void setStat(States stat);
     void setServerPosition(fge::Vector2f const& position);
     void setServerDirection(fge::Vector2i const& direction);
-    void setServerStat(Stats stat);
+    void setServerStat(States stat);
+
+    void startChatting(fge::Event& event);
 
     void boxMove(fge::Vector2f const& move);
     [[nodiscard]] bool isFishing() const;
@@ -114,13 +118,14 @@ public:
 private:
     fge::ObjAnimation g_objAnim;
     fge::ObjAnimation g_objAnimShadow;
+    fge::ObjText g_objChatText;
 #ifdef FGE_DEF_SERVER
     unsigned int g_bodyId;
 #else
     b2BodyId g_bodyId;
 #endif
-    Stats g_stat = Stats::WALKING;
-    Stats g_serverStat = Stats::WALKING;
+    States g_stat = States::WALKING;
+    States g_serverStat = States::WALKING;
     fge::ObjectDataWeak g_fishBait;
     fge::Vector2i g_direction{0, 1};
     fge::Vector2f g_serverPosition;

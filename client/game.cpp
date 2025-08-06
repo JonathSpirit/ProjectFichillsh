@@ -100,6 +100,17 @@ void GameHandler::pushCaughtFishEvent(std::string const& fishName) const
     packet->packet() << StatEvents::CAUGHT_FISH << fishName;
     this->g_network->endReturnEvent();
 }
+void GameHandler::pushChatEvent(std::string const& chat) const
+{
+    if (chat.size() > F_NET_CHAT_MAX_SIZE)
+    {
+        return;
+    }
+
+    auto& packet = this->g_network->startReturnEvent(fge::net::ReturnEvents::REVT_CUSTOM);
+    packet->packet() << StatEvents::PLAYER_CHAT << chat;
+    this->g_network->endReturnEvent();
+}
 
 std::unique_ptr<GameHandler> gGameHandler;
 

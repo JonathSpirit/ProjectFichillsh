@@ -70,6 +70,7 @@ public:
     void update(fge::DeltaTime const& deltaTime);
 
     void pushCaughtFishEvent(std::string const& fishName) const;
+    void pushChatEvent(std::string const& chat) const;
 
 private:
     b2WorldId g_bworld{};
