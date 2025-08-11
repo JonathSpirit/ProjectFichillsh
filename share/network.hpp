@@ -1,6 +1,6 @@
 #pragma once
 #include "FastEngine/manager/network_manager.hpp"
-#include <chrono>
+#include "FastEngine/network/C_server.hpp"
 
 #define F_NET_STRING_SEQ "ProjectFichillshGG"
 #define F_NET_CLIENT_HELLO "Hello"

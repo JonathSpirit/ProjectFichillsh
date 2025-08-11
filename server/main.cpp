@@ -129,17 +129,36 @@ public:
                    .and_then([&](auto& chain) {
                        switch (chain.value())
                        {
-                       case StatEvents::CAUGHT_FISH:{
-                           std::string fishName;
-                           chain.packet() >> fishName;
-                           if (chain.packet().isValid())
+                       case StatEvents::CAUGHT_FISH:
                            {
-                               auto const playerId = this->getPlayerId(id);
-                               std::cout << "Player " << playerId << " caught a fish " << fishName << "\n";
-                               this->g_playerEvents->pushEventIgnore(std::make_pair(StatEvents::CAUGHT_FISH, PlayerEventData{playerId, fishName}), id);
+                               std::string fishName;
+                               chain.packet() >> fishName;
+                               if (chain.packet().isValid())
+                               {
+                                   auto const playerId = this->getPlayerId(id);
+                                   std::cout << "Player " << playerId << " caught a fish " << fishName << "\n";
+                                   this->g_playerEvents->pushEventIgnore(std::make_pair(StatEvents::CAUGHT_FISH, PlayerEventData{playerId, fishName}), id);
+                               }
                            }
                            break;
-                       }}
+                       case StatEvents::PLAYER_CHAT:
+                           {
+                               std::string message;
+                               chain.packet() >> message;
+                               if (message.size() > F_NET_CHAT_MAX_SIZE)
+                               {
+                                   std::cout << "Player " << this->getPlayerId(id) << " sent a too long message, discarded\n";
+                                   return chain;
+                               }
+                               if (chain.packet().isValid())
+                               {
+                                   auto const playerId = this->getPlayerId(id);
+                                   std::cout << "Player " << playerId << " message: " << message << "\n";
+                                   this->g_playerEvents->pushEventIgnore(std::make_pair(StatEvents::PLAYER_CHAT, PlayerEventData{playerId, message}), id);
+                               }
+                           }
+                           break;
+                       }
                        return chain;
                    }).end();
 

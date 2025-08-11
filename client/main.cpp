@@ -278,6 +278,9 @@ public:
             case StatEvents::PLAYER_DISCONNECTED:
                 this->removeNetworkPlayer(event.second._playerId);
                 break;
+            case StatEvents::PLAYER_CHAT:
+                this->newObject<PlayerChatMessage>({FGE_SCENE_PLAN_TOP}, event.second._data, player->_myObjectData.lock()->getSid());
+                break;
             default:
                 break;
             }

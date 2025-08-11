@@ -5,6 +5,7 @@
 #else
     #include "FastEngine/C_scene.hpp"
 #endif //FGE_DEF_SERVER
+#include "network.hpp"
 #include "FastEngine/object/C_objTilelayer.hpp"
 #include "FastEngine/C_random.hpp"
 #include <iostream>
@@ -217,6 +218,100 @@ void FishBait::endCatchingFish()
 {
     this->g_state = Stats::WAITING;
     this->g_time = 0.0f;
+}
+
+//PlayerChatMessage
+PlayerChatMessage::PlayerChatMessage(tiny_utf8::string message, fge::ObjectSid playerSid) :
+        g_objText(std::move(message), "default", {}, 44),
+        g_playerSid(playerSid)
+{
+    this->g_objText.scale(0.2f);
+    this->g_objText.setFillColor(fge::Color::White);
+    this->g_objText.setOutlineColor(fge::Color::Black);
+    this->g_objText.setOutlineThickness(1.0f);
+    this->g_objText.setPosition({0.0f, -20.0f});
+}
+
+FGE_OBJ_UPDATE_BODY(PlayerChatMessage)
+{
+    FGE_OBJ_UPDATE_CALL(this->g_objText);
+
+    if (auto player = this->g_player.lock())
+    {
+        this->setPosition(player->getObject()->getPosition());
+    }
+
+    this->g_time += fge::DurationToSecondFloat(deltaTime);
+
+    if (this->g_fading)
+    {
+        auto alpha = 255 - static_cast<uint8_t>(this->g_time/3.0f * 255.0f);
+        this->g_objText.setFillColor(fge::SetAlpha(this->g_objText.getFillColor(), alpha));
+        this->g_objText.setOutlineColor(fge::SetAlpha(this->g_objText.getOutlineColor(), alpha));
+        if (alpha == 0)
+        {
+            scene.delUpdatedObject();
+        }
+        return;
+    }
+
+    if (this->g_time >= 0.1f)
+    {
+        this->g_time = 0.0f;
+
+        this->g_fading = true;
+        for (auto& character : this->g_objText.getCharacters())
+        {
+            if (!character.isVisible())
+            {
+                character.setVisibility(true);
+                this->g_fading = false;
+
+                auto const posx = this->g_objText.getGlobalBounds()._width/2.0f;
+                this->g_objText.setPosition({-posx, this->g_objText.getPosition().y});
+                return;
+            }
+        }
+    }
+}
+#ifndef FGE_DEF_SERVER
+FGE_OBJ_DRAW_BODY(PlayerChatMessage)
+{
+    auto copyStates = states.copy();
+    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+
+    this->g_objText.draw(target, copyStates);
+}
+#endif
+
+void PlayerChatMessage::first(fge::Scene &scene)
+{
+    for (auto& character : this->g_objText.getCharacters())
+    {
+        character.setVisibility(false);
+    }
+
+    this->g_player = scene.getObject(this->g_playerSid);
+}
+
+const char * PlayerChatMessage::getClassName() const
+{
+    return "FISH_PLAYER_CHAT_MESSAGE";
+}
+
+const char * PlayerChatMessage::getReadableClassName() const
+{
+    return "player chat message";
+}
+
+fge::RectFloat PlayerChatMessage::getGlobalBounds() const
+{
+    return this->getTransform() * this->g_objText.getGlobalBounds();
+}
+
+fge::RectFloat PlayerChatMessage::getLocalBounds() const
+{
+    return this->g_objText.getLocalBounds();
 }
 
 //Player
@@ -689,8 +784,9 @@ void Player::setServerStat(States stat)
     this->g_stat = this->g_serverStat;
 }
 
-void Player::startChatting(fge::Event& event)
+void Player::startChatting([[maybe_unused]] fge::Event& event)
 {
+#ifndef FGE_DEF_SERVER
     this->g_stat = States::CHATTING;
     this->g_objChatText.setString(">");
     auto const posx = this->g_objChatText.getGlobalBounds()._width/2.0f;
@@ -728,17 +824,20 @@ void Player::startChatting(fge::Event& event)
         else if (arg.keysym.sym == SDLK_RETURN || arg.keysym.sym == SDLK_ESCAPE)
         {
             this->g_stat = States::WALKING;
-            const_cast<fge::Event&>(evt)._onTextInput.delSub(this);
-            const_cast<fge::Event&>(evt)._onKeyDown.delSub(this);
+            evt._onTextInput.delSub(this);
+            evt._onKeyDown.delSub(this);
+            auto str = this->g_objChatText.getString();
             if (this->g_objChatText.getString().size() > 1)
             {
-                gGameHandler->pushChatEvent(this->g_objChatText.getString().cpp_str());
+                str.erase(0, 1); //Remove the '>' character
+                gGameHandler->pushChatEvent(str.cpp_str());
             }
         }
 
         auto const posx = this->g_objChatText.getGlobalBounds()._width/2.0f;
         this->g_objChatText.setPosition({-posx, this->g_objChatText.getPosition().y});
     }, this);
+#endif // FGE_DEF_SERVER
 }
 
 void Player::boxMove(fge::Vector2f const& move)

@@ -61,6 +61,32 @@ private:
     fge::Vector2f g_staticPosition;
 };
 
+class PlayerChatMessage : public fge::Object
+{
+public:
+    PlayerChatMessage() = default;
+    PlayerChatMessage(tiny_utf8::string message, fge::ObjectSid playerSid = FGE_SCENE_BAD_SID);
+    ~PlayerChatMessage() override = default;
+
+    FGE_OBJ_UPDATE_DECLARE
+    FGE_OBJ_DRAW_DECLARE
+
+    void first(fge::Scene &scene) override;
+
+    const char * getClassName() const override;
+    const char * getReadableClassName() const override;
+
+    [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
+    [[nodiscard]] fge::RectFloat getLocalBounds() const override;
+
+private:
+    fge::ObjText g_objText;
+    float g_time = 0.0f;
+    bool g_fading = false;
+    fge::ObjectSid g_playerSid = FGE_SCENE_BAD_SID;
+    fge::ObjectDataWeak g_player;
+};
+
 class Player : public fge::Object, public fge::Subscriber
 {
 public:
