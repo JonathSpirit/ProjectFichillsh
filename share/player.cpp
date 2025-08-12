@@ -330,7 +330,7 @@ FGE_OBJ_UPDATE_BODY(Player)
 
     if (!this->g_isUserControlled)
     {
-        switch (this->g_stat)
+        switch (this->g_state)
         {
         case States::WALKING:
         {
@@ -401,7 +401,7 @@ FGE_OBJ_UPDATE_BODY(Player)
         return;
     }
 
-    switch (this->g_stat)
+    switch (this->g_state)
     {
     case States::WALKING: {
         //Player movement and animation
@@ -422,7 +422,7 @@ FGE_OBJ_UPDATE_BODY(Player)
             b2Body_SetLinearVelocity(this->g_bodyId, {0.0f, 0.0f});
 
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("swipe")->_ptr.get(), 0);
-            this->g_stat = States::THROWING;
+            this->g_state = States::THROWING;
             this->g_objAnim.getAnimation().setLoop(false);
             this->g_objAnimShadow.getAnimation().setLoop(false);
 
@@ -500,12 +500,12 @@ FGE_OBJ_UPDATE_BODY(Player)
         {
             if (fishBait->getObject<FishBait>()->isWaiting())
             {
-                this->g_stat = States::FISHING;
+                this->g_state = States::FISHING;
             }
         }
         else
         {
-            this->g_stat = States::WALKING;
+            this->g_state = States::WALKING;
             this->g_objAnim.getAnimation().setLoop(true);
             this->g_objAnimShadow.getAnimation().setLoop(true);
         }
@@ -518,7 +518,7 @@ FGE_OBJ_UPDATE_BODY(Player)
                 scene.delObject(fishBait->getSid());
             }
 
-            this->g_stat = States::WALKING;
+            this->g_state = States::WALKING;
             this->g_objAnim.getAnimation().setLoop(true);
             this->g_objAnimShadow.getAnimation().setLoop(true);
         }
@@ -581,7 +581,7 @@ FGE_OBJ_DRAW_BODY(Player)
 
     this->g_objAnimShadow.draw(target , copyStats);
     this->g_objAnim.draw(target, copyStats);
-    if (this->g_stat == States::CHATTING)
+    if (this->g_state == States::CHATTING)
     {
         this->g_objChatText.draw(target, copyStats);
     }
@@ -682,14 +682,14 @@ void Player::networkRegister()
 #ifdef FGE_DEF_SERVER
     this->_netList.pushTrivial<fge::Vector2f>(fge::DataAccessor<fge::Vector2f>{&this->getPosition(), [&](auto const& position){this->setPosition(position);}});
     this->_netList.pushTrivial<fge::Vector2i>(fge::DataAccessor<fge::Vector2i>{&this->g_direction, [&](auto const& direction){this->setDirection(direction);}});
-    this->_netList.pushTrivial<States>(fge::DataAccessor<States>{&this->g_stat});
+    this->_netList.pushTrivial<States>(fge::DataAccessor<States>{&this->g_state});
     this->_netList.push<fge::net::NetworkTypePropertyList<std::string>>(&this->_properties, "playerId");
 #else
     this->_netList.pushTrivial<fge::Vector2f>(fge::DataAccessor<fge::Vector2f>{&this->g_serverPosition});
     this->_netList.pushTrivial<fge::Vector2i>(fge::DataAccessor<fge::Vector2i>{&this->g_direction, [&](auto const& direction){this->setServerDirection(direction);}});
-    this->_netList.pushTrivial<States>(fge::DataAccessor<States>{&this->g_stat, [&](auto const& stat)
+    this->_netList.pushTrivial<States>(fge::DataAccessor<States>{&this->g_state, [&](auto const& stat)
     {
-        this->setServerStat(stat);
+        this->setServerState(stat);
     }});
     this->_netList.push<fge::net::NetworkTypePropertyList<std::string>>(&this->_properties, "playerId")->needExplicitUpdate();
 #endif
@@ -699,7 +699,7 @@ void Player::pack(fge::net::Packet &pck)
 {
     pck << this->getPosition()
         << this->g_direction
-        << this->g_stat
+        << this->g_state
         << *this->_properties["playerId"].getPtr<std::string>(); //TODO: a bit unsafe
 }
 void Player::unpack(const fge::net::Packet &pck)
@@ -714,13 +714,13 @@ void Player::unpack(const fge::net::Packet &pck)
     this->setPosition(position);
     this->setServerPosition(position);
     this->setServerDirection(direction);
-    this->setServerStat(stat);
+    this->setServerState(stat);
     this->_properties["playerId"] = playerId;
 }
 
-Player::States Player::getStat() const
+Player::States Player::getState() const
 {
-    return this->g_stat;
+    return this->g_state;
 }
 fge::Vector2i const& Player::getDirection() const
 {
@@ -731,9 +731,9 @@ void Player::setDirection(fge::Vector2i const& direction)
 {
     this->g_direction = direction;
 }
-void Player::setStat(States stat)
+void Player::setState(States state)
 {
-    this->g_stat = stat;
+    this->g_state = state;
 }
 void Player::setServerPosition(fge::Vector2f const& position)
 {
@@ -743,11 +743,11 @@ void Player::setServerDirection(fge::Vector2i const& direction)
 {
     this->g_direction = direction;
 }
-void Player::setServerStat(States stat)
+void Player::setServerState(States state)
 {
     auto& scene = *this->_myObjectData.lock()->getScene();
 
-    if (this->g_serverStat == States::WALKING && (stat == States::FISHING || stat == States::THROWING))
+    if (this->g_serverState == States::WALKING && (state == States::FISHING || state == States::THROWING))
     {
         std::string animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
         animationName = animationName.substr(animationName.find('_'));
@@ -759,11 +759,11 @@ void Player::setServerStat(States stat)
         this->g_objAnimShadow.getAnimation().setFrame(0);
         this->g_fishBait = scene.newObject(FGE_NEWOBJECT(FishBait, this->g_direction, this->getPosition()));
 
-        this->g_stat = States::THROWING;
+        this->g_state = States::THROWING;
         this->g_objAnim.getAnimation().setLoop(false);
         this->g_objAnimShadow.getAnimation().setLoop(false);
     }
-    else if ((this->g_serverStat == States::CATCHING ||this->g_serverStat == States::FISHING || this->g_serverStat == States::THROWING) && stat == States::WALKING)
+    else if ((this->g_serverState == States::CATCHING ||this->g_serverState == States::FISHING || this->g_serverState == States::THROWING) && state == States::WALKING)
     {
         if (auto fishBait = this->g_fishBait.lock())
         {
@@ -772,7 +772,7 @@ void Player::setServerStat(States stat)
         this->g_objAnim.getAnimation().setLoop(true);
         this->g_objAnimShadow.getAnimation().setLoop(true);
     }
-    else if (this->g_serverStat == States::FISHING && stat == States::CATCHING)
+    else if (this->g_serverState == States::FISHING && state == States::CATCHING)
     {
         if (auto fishBait = this->g_fishBait.lock())
         {
@@ -780,14 +780,14 @@ void Player::setServerStat(States stat)
         }
     }
 
-    this->g_serverStat = stat;
-    this->g_stat = this->g_serverStat;
+    this->g_serverState = state;
+    this->g_state = this->g_serverState;
 }
 
 void Player::startChatting([[maybe_unused]] fge::Event& event)
 {
 #ifndef FGE_DEF_SERVER
-    this->g_stat = States::CHATTING;
+    this->g_state = States::CHATTING;
     this->g_objChatText.setString(">");
     auto const posx = this->g_objChatText.getGlobalBounds()._width/2.0f;
     this->g_objChatText.setPosition({-posx, this->g_objChatText.getPosition().y});
@@ -823,7 +823,7 @@ void Player::startChatting([[maybe_unused]] fge::Event& event)
         }
         else if (arg.keysym.sym == SDLK_RETURN || arg.keysym.sym == SDLK_ESCAPE)
         {
-            this->g_stat = States::WALKING;
+            this->g_state = States::WALKING;
             evt._onTextInput.delSub(this);
             evt._onKeyDown.delSub(this);
             auto str = this->g_objChatText.getString();
@@ -854,14 +854,14 @@ void Player::boxMove(fge::Vector2f const& move)
 }
 bool Player::isFishing() const
 {
-    return this->g_stat == States::FISHING;
+    return this->g_state == States::FISHING;
 }
 
 void Player::catchingFish()
 {
-    if (this->g_stat == States::FISHING)
+    if (this->g_state == States::FISHING)
     {
-        this->g_stat = States::CATCHING;
+        this->g_state = States::CATCHING;
 
         if (auto fishBait = this->g_fishBait.lock())
         {
@@ -871,7 +871,7 @@ void Player::catchingFish()
 }
 void Player::endCatchingFish()
 {
-    if (this->g_stat == States::CATCHING)
+    if (this->g_state == States::CATCHING)
     {
         if (auto fishBait = this->g_fishBait.lock())
         {
@@ -879,7 +879,7 @@ void Player::endCatchingFish()
         }
         this->g_objAnim.getAnimation().setLoop(true);
         this->g_objAnimShadow.getAnimation().setLoop(true);
-        this->g_stat = States::WALKING;
+        this->g_state = States::WALKING;
     }
 }
 

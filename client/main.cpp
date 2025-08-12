@@ -256,7 +256,7 @@ public:
             packet->packet()
                 << objPlayer->getPosition()
                 << objPlayer->getDirection()
-                << objPlayer->getStat();
+                << objPlayer->getState();
 
             //Pack needed update
             this->packNeededUpdate(packet->packet());

@@ -187,7 +187,7 @@ public:
                     playerObj->setDirection(chain.value());
                     return RValid<Player::Stats_t>(chain);
                 }).and_then([&](auto& chain) {
-                    playerObj->setStat(static_cast<Player::States>(chain.value()));
+                    playerObj->setState(static_cast<Player::States>(chain.value()));
                     return chain;
                 }).end();
 

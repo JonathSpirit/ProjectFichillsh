@@ -122,14 +122,14 @@ public:
     void pack(fge::net::Packet &pck) override;
     void unpack(const fge::net::Packet &pck) override;
 
-    [[nodiscard]] States getStat() const;
+    [[nodiscard]] States getState() const;
     [[nodiscard]] fge::Vector2i const& getDirection() const;
 
     void setDirection(fge::Vector2i const& direction);
-    void setStat(States stat);
+    void setState(States state);
     void setServerPosition(fge::Vector2f const& position);
     void setServerDirection(fge::Vector2i const& direction);
-    void setServerStat(States stat);
+    void setServerState(States state);
 
     void startChatting(fge::Event& event);
 
@@ -150,8 +150,8 @@ private:
 #else
     b2BodyId g_bodyId;
 #endif
-    States g_stat = States::WALKING;
-    States g_serverStat = States::WALKING;
+    States g_state = States::WALKING;
+    States g_serverState = States::WALKING;
     fge::ObjectDataWeak g_fishBait;
     fge::Vector2i g_direction{0, 1};
     fge::Vector2f g_serverPosition;
