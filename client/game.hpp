@@ -1,16 +1,16 @@
 #pragma once
 
-#include "FastEngine/object/C_objSprite.hpp"
-#include "FastEngine/object/C_object.hpp"
 #include "FastEngine/C_scene.hpp"
+#include "FastEngine/network/C_server.hpp"
 #include "FastEngine/object/C_objRectangleShape.hpp"
+#include "FastEngine/object/C_objSprite.hpp"
 #include "FastEngine/object/C_objSpriteBatches.hpp"
 #include "FastEngine/object/C_objText.hpp"
-#include "FastEngine/network/C_server.hpp"
+#include "FastEngine/object/C_object.hpp"
 
-#include "updater.hpp"
 #include "../share/network.hpp"
 #include "box2d/box2d.h"
+#include "updater.hpp"
 #include <memory>
 
 #include "fish.hpp"
@@ -18,8 +18,13 @@
 #define F_TAG_MAJOR 0
 #define F_TAG_MINOR 2
 #define F_TAG_PATCH 0
-#define F_TAG_STR "v" GRUPDATER_TOSTRING(F_TAG_MAJOR) "." GRUPDATER_TOSTRING(F_TAG_MINOR) "." GRUPDATER_TOSTRING(F_TAG_PATCH)
-#define F_TAG updater::Tag{F_TAG_MAJOR, F_TAG_MINOR, F_TAG_PATCH}
+#define F_TAG_STR                                                                                                      \
+    "v" GRUPDATER_TOSTRING(F_TAG_MAJOR) "." GRUPDATER_TOSTRING(F_TAG_MINOR) "." GRUPDATER_TOSTRING(F_TAG_PATCH)
+#define F_TAG                                                                                                          \
+    updater::Tag                                                                                                       \
+    {                                                                                                                  \
+        F_TAG_MAJOR, F_TAG_MINOR, F_TAG_PATCH                                                                          \
+    }
 #define F_OWNER "JonathSpirit"
 #define F_REPO "ProjectFichillsh"
 #define F_TEMP_DIR "temp/"
@@ -35,7 +40,9 @@
 #define F_MINIGAME_DIFFICULTY_RARITY_UNCOMMON 20.0f
 #define F_MINIGAME_DIFFICULTY_RARITY_RARE 30.0f
 #define F_MINIGAME_DIFFICULTY_RANDOM_VARIATION 15.0f
-#define F_MINIGAME_DIFFICULTY_MAX (F_MINIGAME_DIFFICULTY_START + F_MINIGAME_DIFFICULTY_RARITY_RARE*F_FISH_STAR_MAX + F_MINIGAME_DIFFICULTY_RANDOM_VARIATION)
+#define F_MINIGAME_DIFFICULTY_MAX                                                                                      \
+    (F_MINIGAME_DIFFICULTY_START + F_MINIGAME_DIFFICULTY_RARITY_RARE * F_FISH_STAR_MAX +                               \
+     F_MINIGAME_DIFFICULTY_RANDOM_VARIATION)
 #define F_MINIGAME_TIME_MAX 16.0f
 #define F_MINIGAME_TIME_MIN 10.0f
 #define F_MINIGAME_SINUS_QUANTITY_MAX 5.0f
@@ -91,13 +98,13 @@ public:
     FGE_OBJ_UPDATE_DECLARE
     FGE_OBJ_DRAW_DECLARE
 
-    void first(fge::Scene &scene) override;
-    void removed(fge::Scene &scene) override;
+    void first(fge::Scene& scene) override;
+    void removed(fge::Scene& scene) override;
 
-    void callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr) override;
+    void callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) override;
 
-    const char * getClassName() const override;
-    const char * getReadableClassName() const override;
+    char const* getClassName() const override;
+    char const* getReadableClassName() const override;
 
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
@@ -128,12 +135,12 @@ public:
     FGE_OBJ_UPDATE_DECLARE
     FGE_OBJ_DRAW_DECLARE
 
-    void first(fge::Scene &scene) override;
+    void first(fge::Scene& scene) override;
 
-    void callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr) override;
+    void callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) override;
 
-    const char * getClassName() const override;
-    const char * getReadableClassName() const override;
+    char const* getClassName() const override;
+    char const* getReadableClassName() const override;
 
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
@@ -158,12 +165,12 @@ public:
     FGE_OBJ_UPDATE_DECLARE
     FGE_OBJ_DRAW_DECLARE
 
-    void first(fge::Scene &scene) override;
+    void first(fge::Scene& scene) override;
 
-    void callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr) override;
+    void callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) override;
 
-    const char * getClassName() const override;
-    const char * getReadableClassName() const override;
+    char const* getClassName() const override;
+    char const* getReadableClassName() const override;
 
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;

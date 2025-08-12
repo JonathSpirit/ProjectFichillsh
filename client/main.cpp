@@ -1,19 +1,19 @@
-#include "FastEngine/fge_includes.hpp"
-#include "FastEngine/manager/reg_manager.hpp"
-#include "FastEngine/manager/anim_manager.hpp"
-#include "FastEngine/network/C_server.hpp"
-#include "FastEngine/graphic/C_renderWindow.hpp"
-#include "FastEngine/object/C_objTilelayer.hpp"
-#include "FastEngine/object/C_objSpriteBatches.hpp"
-#include "FastEngine/object/C_objRenderMap.hpp"
 #include "FastEngine/C_clock.hpp"
+#include "FastEngine/fge_includes.hpp"
+#include "FastEngine/graphic/C_renderWindow.hpp"
+#include "FastEngine/manager/anim_manager.hpp"
+#include "FastEngine/manager/reg_manager.hpp"
+#include "FastEngine/network/C_server.hpp"
+#include "FastEngine/object/C_objRenderMap.hpp"
+#include "FastEngine/object/C_objSpriteBatches.hpp"
+#include "FastEngine/object/C_objTilelayer.hpp"
 #include "SDL.h"
 
-#include "../share/player.hpp"
-#include "game.hpp"
-#include "fish.hpp"
-#include "ducky.hpp"
 #include "../share/network.hpp"
+#include "../share/player.hpp"
+#include "ducky.hpp"
+#include "fish.hpp"
+#include "game.hpp"
 
 #include <iostream>
 #include <memory>
@@ -73,8 +73,8 @@ public:
 
         //Load shaders
         fge::shader::gManager.loadFromFile(
-            FGE_OBJSHAPE_INSTANCES_SHADER_VERTEX, "resources/shaders/objShapeInstances_vertex.vert",
-            fge::vulkan::Shader::Type::SHADER_VERTEX, fge::shader::ShaderInputTypes::SHADER_GLSL);
+                FGE_OBJSHAPE_INSTANCES_SHADER_VERTEX, "resources/shaders/objShapeInstances_vertex.vert",
+                fge::vulkan::Shader::Type::SHADER_VERTEX, fge::shader::ShaderInputTypes::SHADER_GLSL);
         fge::shader::gManager.loadFromFile(
                 FGE_OBJSPRITEBATCHES_SHADER_FRAGMENT, "resources/shaders/objSpriteBatches_fragment.frag",
                 fge::vulkan::Shader::Type::SHADER_FRAGMENT, fge::shader::ShaderInputTypes::SHADER_GLSL);
@@ -100,11 +100,11 @@ public:
             auto humanAnimData = fge::anim::gManager.getElement("human_1_shadow");
 
             fge::Surface surface(humanAnimData->_ptr->_tilesetTexture->copyToSurface());
-            for (int i=0; i<surface.getSize().x; ++i)
+            for (int i = 0; i < surface.getSize().x; ++i)
             {
-                for (int j=0; j<surface.getSize().y; ++j)
+                for (int j = 0; j < surface.getSize().y; ++j)
                 {
-                    auto color = fge::Color(0,0, 0, surface.getPixel(i, j).value()._a);
+                    auto color = fge::Color(0, 0, 0, surface.getPixel(i, j).value()._a);
                     surface.setPixel(i, j, color);
                 }
             }
@@ -126,32 +126,51 @@ public:
         fge::audio::gManager.loadFromFile("ducky", "resources/audio/duck_1.ogg");
 
         //Load fishes
-        gFishManager.loadFromFile("algae", 0.01f, 0.05f, 1.0f, 5.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/algae.png");
-        gFishManager.loadFromFile("anchovy", 0.02f, 0.10f, 2.0f, 8.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-anchovy.png");
-        gFishManager.loadFromFile("butter", 0.05f, 0.20f, 3.0f, 12.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-butter.png");
-        gFishManager.loadFromFile("gulf-croaker", 0.08f, 0.30f, 4.0f, 15.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-gulf-croaker.png");
-        gFishManager.loadFromFile("halfbeak", 0.03f, 0.12f, 2.5f, 10.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-halfbeak.png");
-        gFishManager.loadFromFile("herring", 0.04f, 0.15f, 3.0f, 11.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-herring.png");
-        gFishManager.loadFromFile("pollock", 0.20f, 1.00f, 10.0f, 40.0f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/fish-pollock.png");
-        gFishManager.loadFromFile("sandlance", 0.01f, 0.07f, 1.5f, 7.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-sandlance.png");
-        gFishManager.loadFromFile("sardine", 0.02f, 0.09f, 2.0f, 9.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/fish-sardine.png");
-        gFishManager.loadFromFile("shrimp-anemone", 0.005f, 0.02f, 0.5f, 2.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/shrimp-anemone.png");
-        gFishManager.loadFromFile("shrimp-northern-prawn", 0.01f, 0.04f, 1.0f, 3.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/shrimp-northern-prawn.png");
-        gFishManager.loadFromFile("krill", 0.001f, 0.005f, 0.8f, 5.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/krill.png");
-        gFishManager.loadFromFile("krill-1", 0.001f, 0.005f, 0.2f, 6.0f, FishData::Rarity::COMMON, "resources/sprites/fishes/krill-1.png");
+        gFishManager.loadFromFile("algae", 0.01f, 0.05f, 1.0f, 5.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/algae.png");
+        gFishManager.loadFromFile("anchovy", 0.02f, 0.10f, 2.0f, 8.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/fish-anchovy.png");
+        gFishManager.loadFromFile("butter", 0.05f, 0.20f, 3.0f, 12.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/fish-butter.png");
+        gFishManager.loadFromFile("gulf-croaker", 0.08f, 0.30f, 4.0f, 15.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/fish-gulf-croaker.png");
+        gFishManager.loadFromFile("halfbeak", 0.03f, 0.12f, 2.5f, 10.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/fish-halfbeak.png");
+        gFishManager.loadFromFile("herring", 0.04f, 0.15f, 3.0f, 11.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/fish-herring.png");
+        gFishManager.loadFromFile("pollock", 0.20f, 1.00f, 10.0f, 40.0f, FishData::Rarity::UNCOMMON,
+                                  "resources/sprites/fishes/fish-pollock.png");
+        gFishManager.loadFromFile("sandlance", 0.01f, 0.07f, 1.5f, 7.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/fish-sandlance.png");
+        gFishManager.loadFromFile("sardine", 0.02f, 0.09f, 2.0f, 9.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/fish-sardine.png");
+        gFishManager.loadFromFile("shrimp-anemone", 0.005f, 0.02f, 0.5f, 2.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/shrimp-anemone.png");
+        gFishManager.loadFromFile("shrimp-northern-prawn", 0.01f, 0.04f, 1.0f, 3.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/shrimp-northern-prawn.png");
+        gFishManager.loadFromFile("krill", 0.001f, 0.005f, 0.8f, 5.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/krill.png");
+        gFishManager.loadFromFile("krill-1", 0.001f, 0.005f, 0.2f, 6.0f, FishData::Rarity::COMMON,
+                                  "resources/sprites/fishes/krill-1.png");
 
-        gFishManager.loadFromFile("bronze-striped-grunt", 0.10f, 0.50f, 5.0f, 20.0f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/fish-bronze-striped-grunt.png");
-        gFishManager.loadFromFile("krill-2", 0.001f, 0.005f, 1.0f, 10.0f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/krill-2.png");
-        gFishManager.loadFromFile("zoo-plankton", 0.0005f, 0.002f, 0.1f, 0.5f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/zoo-plankton.png");
-        gFishManager.loadFromFile("zoo-plankton-small", 0.0002f, 0.001f, 0.05f, 0.3f, FishData::Rarity::UNCOMMON, "resources/sprites/fishes/zoo-plankton-small.png");
+        gFishManager.loadFromFile("bronze-striped-grunt", 0.10f, 0.50f, 5.0f, 20.0f, FishData::Rarity::UNCOMMON,
+                                  "resources/sprites/fishes/fish-bronze-striped-grunt.png");
+        gFishManager.loadFromFile("krill-2", 0.001f, 0.005f, 1.0f, 10.0f, FishData::Rarity::UNCOMMON,
+                                  "resources/sprites/fishes/krill-2.png");
+        gFishManager.loadFromFile("zoo-plankton", 0.0005f, 0.002f, 0.1f, 0.5f, FishData::Rarity::UNCOMMON,
+                                  "resources/sprites/fishes/zoo-plankton.png");
+        gFishManager.loadFromFile("zoo-plankton-small", 0.0002f, 0.001f, 0.05f, 0.3f, FishData::Rarity::UNCOMMON,
+                                  "resources/sprites/fishes/zoo-plankton-small.png");
 
-        gFishManager.loadFromFile("krill-3", 0.001f, 0.005f, 0.2f, 1.2f, FishData::Rarity::RARE, "resources/sprites/fishes/krill-3.png");
-        gFishManager.loadFromFile("squid-reef", 0.10f, 0.50f, 5.0f, 20.0f, FishData::Rarity::RARE, "resources/sprites/fishes/squid-reef.png");
+        gFishManager.loadFromFile("krill-3", 0.001f, 0.005f, 0.2f, 1.2f, FishData::Rarity::RARE,
+                                  "resources/sprites/fishes/krill-3.png");
+        gFishManager.loadFromFile("squid-reef", 0.10f, 0.50f, 5.0f, 20.0f, FishData::Rarity::RARE,
+                                  "resources/sprites/fishes/squid-reef.png");
 
         //Prepare the view
         auto view = renderWindow.getView();
         view.zoom(0.1f);
-        view.setCenter({0,0});
+        view.setCenter({0, 0});
         renderWindow.setView(view);
 
         // Creating objects
@@ -170,23 +189,24 @@ public:
         //Load the tileMap from a "tiled" json
         tilemap->loadFromFile("resources/map_1/map_1.json");
         tilemap->generateObjects(*this, FGE_SCENE_PLAN_HIDE_BACK - 10);
-        tilemap->_generatedObjects.front().lock()->getObject()->_tags.add("map"); //Add tag to the first tile layer object, in order to find it later
+        tilemap->_generatedObjects.front().lock()->getObject()->_tags.add(
+                "map"); //Add tag to the first tile layer object, in order to find it later
 
-        for (auto const& layer : tilemap->_layers)
+        for (auto const& layer: tilemap->_layers)
         {
             if (layer->getType() != fge::BaseLayer::Types::TILE_LAYER)
             {
                 continue;
             }
 
-            for (auto const& tile : layer->as<fge::TileLayer>()->getTiles())
+            for (auto const& tile: layer->as<fge::TileLayer>()->getTiles())
             {
                 if (tile.getGid() == 0)
                 {
                     continue;
                 }
                 auto const& collisions = tile.getTileData()->_collisionRects;
-                for (auto const& collision : collisions)
+                for (auto const& collision: collisions)
                 {
                     auto collisionRect = static_cast<fge::RectFloat>(collision);
                     collisionRect._x += tile.getPosition().x;
@@ -211,20 +231,15 @@ public:
 
         //Wall colliders
         gGameHandler->pushStaticCollider(
-            {mapBounds.getPosition()-fge::Vector2f{16.0f, 0.0f},
-                {16.0f, 500.0f}}); //Left
+                {mapBounds.getPosition() - fge::Vector2f{16.0f, 0.0f}, {16.0f, 500.0f}}); //Left
+        gGameHandler->pushStaticCollider({mapBounds.getPosition() - fge::Vector2f{0.0f, 16.0f}, {500.0f, 16.0f}}); //Top
         gGameHandler->pushStaticCollider(
-            {mapBounds.getPosition()-fge::Vector2f{0.0f, 16.0f},
-                {500.0f, 16.0f}}); //Top
+                {{mapBounds.getPosition().x + mapBounds._width, mapBounds.getPosition().y}, {16.0f, 500.0f}}); //Right
         gGameHandler->pushStaticCollider(
-            {{mapBounds.getPosition().x+mapBounds._width, mapBounds.getPosition().y},
-                {16.0f, 500.0f}}); //Right
-        gGameHandler->pushStaticCollider(
-            {{mapBounds.getPosition().x, mapBounds.getPosition().y+mapBounds._height},
-                {500.0f, 16.0f}}); //Bottom
+                {{mapBounds.getPosition().x, mapBounds.getPosition().y + mapBounds._height}, {500.0f, 16.0f}}); //Bottom
 
 #if SHOW_COLLIDERS
-        for (auto const& obj : objRectCollider)
+        for (auto const& obj: objRectCollider)
         {
             this->newObject(FGE_NEWOBJECT_PTR(obj), FGE_SCENE_PLAN_TOP);
         }
@@ -235,7 +250,7 @@ public:
         objPlayer->boxMove(specialObjects->findObjectName("spawn")->_position);
 
         //Load duckies
-        for (auto const& object : specialObjects->getObjects())
+        for (auto const& object: specialObjects->getObjects())
         {
             if (object._name == "duckySpawn")
             {
@@ -251,18 +266,16 @@ public:
             std::cout << "Connection lost ! (timeout)" << std::endl;
             this->stopNetwork(network);
         });
-        network._onTransmitReturnPacket.addLambda([&](fge::net::ClientSideNetUdp& net, fge::net::TransmitPacketPtr& packet) {
+        network._onTransmitReturnPacket.addLambda(
+                [&](fge::net::ClientSideNetUdp& net, fge::net::TransmitPacketPtr& packet) {
             //Pack data
-            packet->packet()
-                << objPlayer->getPosition()
-                << objPlayer->getDirection()
-                << objPlayer->getState();
+            packet->packet() << objPlayer->getPosition() << objPlayer->getDirection() << objPlayer->getState();
 
             //Pack needed update
             this->packNeededUpdate(packet->packet());
         });
 
-        this->g_playerEvents = this->_netList.push<std::remove_pointer_t<decltype(this->g_playerEvents)> >();
+        this->g_playerEvents = this->_netList.push<std::remove_pointer_t<decltype(this->g_playerEvents)>>();
         this->g_playerEvents->_onEvent.addLambda([&](auto const& event) {
             Player* player = this->findPlayerObject(event.second._playerId);
             if (player == nullptr)
@@ -279,7 +292,8 @@ public:
                 this->removeNetworkPlayer(event.second._playerId);
                 break;
             case StatEvents::PLAYER_CHAT:
-                this->newObject<PlayerChatMessage>({FGE_SCENE_PLAN_TOP}, event.second._data, player->_myObjectData.lock()->getSid());
+                this->newObject<PlayerChatMessage>({FGE_SCENE_PLAN_TOP}, event.second._data,
+                                                   player->_myObjectData.lock()->getSid());
                 break;
             default:
                 break;
@@ -287,9 +301,7 @@ public:
         });
 
         //Connect to the server
-        if (!network.start(0, fge::net::IpAddress::Ipv4Any,
-                port, serverIp,
-                fge::net::IpAddress::Types::Ipv4))
+        if (!network.start(0, fge::net::IpAddress::Ipv4Any, port, serverIp, fge::net::IpAddress::Types::Ipv4))
         {
             std::cout << "Can't start network\n";
         }
@@ -325,7 +337,9 @@ public:
                             {
                                 using namespace fge::net::rules;
                                 std::string dataHello;
-                                auto err = RValid(RSizeMustEqual<std::string>(sizeof(F_NET_SERVER_HELLO) - 1, {netPacket->packet(), &dataHello})).end();
+                                auto err = RValid(RSizeMustEqual<std::string>(sizeof(F_NET_SERVER_HELLO) - 1,
+                                                                              {netPacket->packet(), &dataHello}))
+                                                   .end();
 
                                 if (err || dataHello != F_NET_SERVER_HELLO)
                                 {
@@ -338,9 +352,10 @@ public:
                                     std::cout << "Connected to the server\n";
                                     this->applyFullUpdate(netPacket->packet());
                                     network.enableReturnPacket(true);
-                                    network._client.setPacketReturnRate(std::chrono::milliseconds(RETURN_PACKET_DELAYms));
-                                    network._client.getPacketReorderer().setMaximumSize(FGE_NET_PACKET_REORDERER_CACHE_COMPUTE(
-                                            RETURN_PACKET_DELAYms, F_TICK_TIME));
+                                    network._client.setPacketReturnRate(
+                                            std::chrono::milliseconds(RETURN_PACKET_DELAYms));
+                                    network._client.getPacketReorderer().setMaximumSize(
+                                            FGE_NET_PACKET_REORDERER_CACHE_COMPUTE(RETURN_PACKET_DELAYms, F_TICK_TIME));
                                 }
                             }
                             else
@@ -389,8 +404,7 @@ public:
             //Receive packets
             fge::net::ReceivedPacketPtr netPacket;
             fge::net::FluxProcessResults processResult;
-            do
-            {
+            do {
                 processResult = network.process(netPacket);
                 if (processResult != fge::net::FluxProcessResults::USER_RETRIEVABLE)
                 {
@@ -432,8 +446,7 @@ public:
                     std::cout << "Too many bad packets" << std::endl;
                     gAskForFullUpdate = true;
                 }
-            }
-            while (processResult != fge::net::FluxProcessResults::NONE_AVAILABLE);
+            } while (processResult != fge::net::FluxProcessResults::NONE_AVAILABLE);
 
             if (!network.isRunning())
             {
@@ -465,7 +478,7 @@ public:
     {
         fge::ObjectContainer container;
         this->getAllObj_ByTag("multiplayer", container);
-        for (auto const& obj : container)
+        for (auto const& obj: container)
         {
             this->delObject(obj->getSid());
         }
@@ -495,7 +508,7 @@ public:
             return nullptr;
         }
 
-        for (auto const& obj : container)
+        for (auto const& obj: container)
         {
             if (obj->getObject()->_properties["playerId"] == playerId)
             {
@@ -510,7 +523,7 @@ private:
     fge::net::NetworkTypeEvents<StatEvents, PlayerEventData>* g_playerEvents{nullptr};
 };
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     using namespace fge::vulkan;
 
@@ -524,8 +537,8 @@ int main(int argc, char *argv[])
         messageBoxData.title = "Game update";
         messageBoxData.message = "A new version of the game is available, do you want to update now? (from Github)";
         SDL_MessageBoxButtonData buttons[] = {
-            {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "Yes"},
-            {SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "No"},
+                {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "Yes"},
+                {SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "No"},
         };
         messageBoxData.numbuttons = std::size(buttons);
         messageBoxData.buttons = buttons;
@@ -533,7 +546,8 @@ int main(int argc, char *argv[])
         if (SDL_ShowMessageBox(&messageBoxData, &buttonId) < 0)
         {
             std::cout << "Error displaying message box: " << SDL_GetError() << std::endl;
-            std::cout << "Can't ask for update, if you want to update it, please go to the game main website" << std::endl;
+            std::cout << "Can't ask for update, if you want to update it, please go to the game main website"
+                      << std::endl;
         }
         else
         {
@@ -563,7 +577,7 @@ int main(int argc, char *argv[])
     InstanceLayers.push_back("VK_LAYER_LUNARG_monitor");
     //InstanceLayers.push_back("VK_LAYER_KHRONOS_validation");
 
-    if ( !fge::net::Socket::initSocket() )
+    if (!fge::net::Socket::initSocket())
     {
         return -1;
     }
@@ -571,10 +585,12 @@ int main(int argc, char *argv[])
     SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
     SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "system");
 
-    auto instance = Context::init(SDL_INIT_VIDEO | SDL_INIT_EVENTS, "Fichillsh [" F_TAG_STR "] on FastEngine [" FGE_VERSION_FULL_WITHTAG_STRING "]");
+    auto instance = Context::init(SDL_INIT_VIDEO | SDL_INIT_EVENTS,
+                                  "Fichillsh [" F_TAG_STR "] on FastEngine [" FGE_VERSION_FULL_WITHTAG_STRING "]");
     Context::enumerateExtensions();
 
-    SurfaceSDLWindow window(instance, FGE_WINDOWPOS_CENTERED, {1366,768}, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    SurfaceSDLWindow window(instance, FGE_WINDOWPOS_CENTERED, {1366, 768},
+                            SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 
     // Check that the window was successfully created
     if (!window.isCreated())
@@ -597,10 +613,9 @@ int main(int argc, char *argv[])
     //Loading resources
 
     //Loading scenes
-    std::unique_ptr<Scene> currentScene  = std::make_unique<Scene>();
+    std::unique_ptr<Scene> currentScene = std::make_unique<Scene>();
 
-    do
-    {
+    do {
         GetActiveContext()._garbageCollector.enable(true);
 
         currentScene->run(renderWindow, network);
@@ -608,8 +623,7 @@ int main(int argc, char *argv[])
         GetActiveContext().waitIdle();
         GetActiveContext()._garbageCollector.enable(false);
         currentScene.reset();
-    }
-    while (currentScene);
+    } while (currentScene);
 
     //Unloading resources
 

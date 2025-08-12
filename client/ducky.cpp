@@ -1,9 +1,9 @@
 #include "ducky.hpp"
-#include "FastEngine/C_scene.hpp"
-#include "FastEngine/object/C_objTilelayer.hpp"
-#include "FastEngine/manager/audio_manager.hpp"
 #include "FastEngine/C_random.hpp"
+#include "FastEngine/C_scene.hpp"
 #include "FastEngine/extra/extra_pathFinding.hpp"
+#include "FastEngine/manager/audio_manager.hpp"
+#include "FastEngine/object/C_objTilelayer.hpp"
 
 //Ducky
 
@@ -30,7 +30,8 @@ FGE_OBJ_UPDATE_BODY(Ducky)
 
     switch (this->g_state)
     {
-    case States::IDLE: {
+    case States::IDLE:
+    {
         this->g_time += delta;
         if (this->g_time >= this->g_timeBeforeWalk)
         {
@@ -47,7 +48,9 @@ FGE_OBJ_UPDATE_BODY(Ducky)
             this->g_state = States::WALKING;
         }
         break;
-    } case States::WALKING: {
+    }
+    case States::WALKING:
+    {
         if (this->g_walkPath.empty())
         {
             this->g_objAnim.getAnimation().setGroup("idle");
@@ -67,7 +70,8 @@ FGE_OBJ_UPDATE_BODY(Ducky)
             this->g_walkPath.erase(this->g_walkPath.begin());
         }
         break;
-    }}
+    }
+    }
 
     //Update plan
     if (this->g_player.lock()->getObject()->getPosition().y < this->getPosition().y)
@@ -95,7 +99,7 @@ FGE_OBJ_DRAW_BODY(Ducky)
     this->g_objAnim.draw(target, copyStates);
 }
 
-void Ducky::first(fge::Scene &scene)
+void Ducky::first(fge::Scene& scene)
 {
     auto player = scene.getFirstObj_ByTag("player");
     this->g_player = player;
@@ -116,15 +120,13 @@ void Ducky::first(fge::Scene &scene)
     }
 }
 
-void Ducky::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)
-{
-}
+void Ducky::callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) {}
 
-const char * Ducky::getClassName() const
+char const* Ducky::getClassName() const
 {
     return "FISH_DUCKY";
 }
-const char * Ducky::getReadableClassName() const
+char const* Ducky::getReadableClassName() const
 {
     return "ducky";
 }
@@ -155,10 +157,8 @@ void Ducky::computeRandomWalkPath()
         while (randomTry--)
         {
             //Random position
-            auto const randomPos = fge::Vector2i{
-                fge::_random.range<std::size_t>(0, mapSize.x - 1),
-                fge::_random.range<std::size_t>(0, mapSize.y - 1)
-            };
+            auto const randomPos = fge::Vector2i{fge::_random.range<std::size_t>(0, mapSize.x - 1),
+                                                 fge::_random.range<std::size_t>(0, mapSize.y - 1)};
 
             //Check if the position is walkable
             if (waterLayer->getTiles().get(randomPos).getGid() != 0)
@@ -169,16 +169,16 @@ void Ducky::computeRandomWalkPath()
             //Compute path
             fge::AStar::Generator generator;
             generator.setWorldSize({static_cast<int>(mapSize.x), static_cast<int>(mapSize.y)});
-            for (std::size_t y=0; y<mapSize.y; ++y)
+            for (std::size_t y = 0; y < mapSize.y; ++y)
             {
-                for (std::size_t x=0; x<mapSize.x; ++x)
+                for (std::size_t x = 0; x < mapSize.x; ++x)
                 {
                     if (waterLayer->getTiles().get(x, y).getGid() != 0)
                     {
                         generator.addCollision({static_cast<int>(x), static_cast<int>(y)});
                     }
                     else if (objectsLayer->getTiles().get(x, y).getGid() != 0 &&
-                        !objectsLayer->getTiles().get(x, y).getTileData()->_collisionRects.empty())
+                             !objectsLayer->getTiles().get(x, y).getTileData()->_collisionRects.empty())
                     {
                         generator.addCollision({static_cast<int>(x), static_cast<int>(y)});
                     }
@@ -193,12 +193,10 @@ void Ducky::computeRandomWalkPath()
                 continue;
             }
 
-            for (auto const& node : path)
+            for (auto const& node: path)
             {
-                this->g_walkPath.emplace_back(
-                    16.0f * static_cast<float>(node.x) + 8.0f,
-                    16.0f * static_cast<float>(node.y) + 8.0f
-                );
+                this->g_walkPath.emplace_back(16.0f * static_cast<float>(node.x) + 8.0f,
+                                              16.0f * static_cast<float>(node.y) + 8.0f);
             }
 
             break;

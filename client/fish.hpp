@@ -43,10 +43,12 @@ public:
     void uninitialize() override;
 
     bool loadFromFile(std::string_view fishName,
-                        float weightMin, float weightMax,
-                        float lengthMin, float lengthMax,
-                        FishData::Rarity rarity,
-                        std::filesystem::path const &path);
+                      float weightMin,
+                      float weightMax,
+                      float lengthMin,
+                      float lengthMax,
+                      FishData::Rarity rarity,
+                      std::filesystem::path const& path);
 
     std::string const& getRandomFishName() const;
     [[nodiscard]] FishInstance generateRandomFish() const;

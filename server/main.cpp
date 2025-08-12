@@ -1,14 +1,14 @@
-#include "FastEngine/manager/reg_manager.hpp"
-#include "FastEngine/network/C_server.hpp"
-#include "FastEngine/fge_version.hpp"
-#include "FastEngine/C_scene.hpp"
 #include "FastEngine/C_clock.hpp"
 #include "FastEngine/C_random.hpp"
+#include "FastEngine/C_scene.hpp"
+#include "FastEngine/fge_version.hpp"
+#include "FastEngine/manager/reg_manager.hpp"
+#include "FastEngine/network/C_server.hpp"
 #include "SDL.h"
 
+#include <csignal>
 #include <iostream>
 #include <memory>
-#include <csignal>
 
 #include "../share/network.hpp"
 #include "../share/player.hpp"
@@ -51,7 +51,7 @@ public:
             return;
         }
 
-        this->g_playerEvents = this->_netList.push<std::remove_pointer_t<decltype(this->g_playerEvents)> >();
+        this->g_playerEvents = this->_netList.push<std::remove_pointer_t<decltype(this->g_playerEvents)>>();
 
         fge::Event event;
 
@@ -108,59 +108,63 @@ public:
 
         //Handling clients timeout
         networkFlux._onClientTimeout.addLambda([&](fge::net::ClientSharedPtr client, fge::net::Identity const& id) {
-            std::cout << "client "<< id.toString() << " timeout !\n";
+            std::cout << "client " << id.toString() << " timeout !\n";
             this->disconnectPlayer(id);
         });
-        networkFlux._onClientDisconnected.addLambda([&](fge::net::ClientSharedPtr client, fge::net::Identity const& id) {
-            std::cout << "client "<< id.toString() << " disconnected !\n";
+        networkFlux._onClientDisconnected.addLambda(
+                [&](fge::net::ClientSharedPtr client, fge::net::Identity const& id) {
+            std::cout << "client " << id.toString() << " disconnected !\n";
             this->disconnectPlayer(id);
         });
 
         //Handling clients connection
-        networkFlux._onClientConnected.addLambda([](fge::net::ClientSharedPtr const& client, fge::net::Identity const& id) {
-            std::cout << "client "<< id.toString() << " is connected and now try to authenticate !\n";
+        networkFlux._onClientConnected.addLambda(
+                [](fge::net::ClientSharedPtr const& client, fge::net::Identity const& id) {
+            std::cout << "client " << id.toString() << " is connected and now try to authenticate !\n";
         });
 
         //Handling clients return packet
         networkFlux._onClientReturnEvent.addLambda([&](fge::net::ClientSharedPtr const& client, fge::net::Identity id,
                                                        fge::net::ReceivedPacketPtr const& packet) {
-                                                           using namespace fge::net::rules;
+            using namespace fge::net::rules;
             auto err = RStrictLess<StatEvents>(StatEvents::EVENT_COUNT, {packet->packet()})
-                   .and_then([&](auto& chain) {
-                       switch (chain.value())
-                       {
-                       case StatEvents::CAUGHT_FISH:
-                           {
-                               std::string fishName;
-                               chain.packet() >> fishName;
-                               if (chain.packet().isValid())
-                               {
-                                   auto const playerId = this->getPlayerId(id);
-                                   std::cout << "Player " << playerId << " caught a fish " << fishName << "\n";
-                                   this->g_playerEvents->pushEventIgnore(std::make_pair(StatEvents::CAUGHT_FISH, PlayerEventData{playerId, fishName}), id);
-                               }
-                           }
-                           break;
-                       case StatEvents::PLAYER_CHAT:
-                           {
-                               std::string message;
-                               chain.packet() >> message;
-                               if (message.size() > F_NET_CHAT_MAX_SIZE)
-                               {
-                                   std::cout << "Player " << this->getPlayerId(id) << " sent a too long message, discarded\n";
-                                   return chain;
-                               }
-                               if (chain.packet().isValid())
-                               {
-                                   auto const playerId = this->getPlayerId(id);
-                                   std::cout << "Player " << playerId << " message: " << message << "\n";
-                                   this->g_playerEvents->pushEventIgnore(std::make_pair(StatEvents::PLAYER_CHAT, PlayerEventData{playerId, message}), id);
-                               }
-                           }
-                           break;
-                       }
-                       return chain;
-                   }).end();
+                               .and_then([&](auto& chain) {
+                switch (chain.value())
+                {
+                case StatEvents::CAUGHT_FISH:
+                {
+                    std::string fishName;
+                    chain.packet() >> fishName;
+                    if (chain.packet().isValid())
+                    {
+                        auto const playerId = this->getPlayerId(id);
+                        std::cout << "Player " << playerId << " caught a fish " << fishName << "\n";
+                        this->g_playerEvents->pushEventIgnore(
+                                std::make_pair(StatEvents::CAUGHT_FISH, PlayerEventData{playerId, fishName}), id);
+                    }
+                }
+                break;
+                case StatEvents::PLAYER_CHAT:
+                {
+                    std::string message;
+                    chain.packet() >> message;
+                    if (message.size() > F_NET_CHAT_MAX_SIZE)
+                    {
+                        std::cout << "Player " << this->getPlayerId(id) << " sent a too long message, discarded\n";
+                        return chain;
+                    }
+                    if (chain.packet().isValid())
+                    {
+                        auto const playerId = this->getPlayerId(id);
+                        std::cout << "Player " << playerId << " message: " << message << "\n";
+                        this->g_playerEvents->pushEventIgnore(
+                                std::make_pair(StatEvents::PLAYER_CHAT, PlayerEventData{playerId, message}), id);
+                    }
+                }
+                break;
+                }
+                return chain;
+            }).end();
 
             if (err)
             {
@@ -170,7 +174,7 @@ public:
         });
 
         networkFlux._onClientReturnPacket.addLambda([&](fge::net::ClientSharedPtr const& client, fge::net::Identity id,
-                                                       fge::net::ReceivedPacketPtr const& packet) {
+                                                        fge::net::ReceivedPacketPtr const& packet) {
             if (client->getStatus().getNetworkStatus() != fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
             {
                 return;
@@ -180,16 +184,18 @@ public:
 
             using namespace fge::net::rules;
             auto err = RValid<fge::Vector2f>(*packet)
-                .and_then([&](auto& chain) {
-                    playerObj->setPosition(chain.value());
-                    return RValid<fge::Vector2i>(chain);
-                }).and_then([&](auto& chain) {
-                    playerObj->setDirection(chain.value());
-                    return RValid<Player::Stats_t>(chain);
-                }).and_then([&](auto& chain) {
-                    playerObj->setState(static_cast<Player::States>(chain.value()));
-                    return chain;
-                }).end();
+                               .and_then([&](auto& chain) {
+                playerObj->setPosition(chain.value());
+                return RValid<fge::Vector2i>(chain);
+            })
+                               .and_then([&](auto& chain) {
+                playerObj->setDirection(chain.value());
+                return RValid<Player::Stats_t>(chain);
+            })
+                               .and_then([&](auto& chain) {
+                playerObj->setState(static_cast<Player::States>(chain.value()));
+                return chain;
+            }).end();
 
             this->unpackNeededUpdate(packet->packet(), id);
 
@@ -229,8 +235,7 @@ public:
             fge::net::ReceivedPacketPtr netPacket;
             fge::net::ClientSharedPtr client;
             fge::net::FluxProcessResults processResult;
-            do
-            {
+            do {
                 processResult = networkFlux.process(client, netPacket, true);
                 if (processResult != fge::net::FluxProcessResults::USER_RETRIEVABLE)
                 {
@@ -239,7 +244,8 @@ public:
 
                 switch (static_cast<PacketHeaders>(netPacket->retrieveHeaderId().value()))
                 {
-                case CLIENT_ASK_CONNECT:{
+                case CLIENT_ASK_CONNECT:
+                {
                     //Check current stat
                     if (client->getStatus().getNetworkStatus() == fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
                     {
@@ -251,7 +257,9 @@ public:
 
                     using namespace fge::net::rules;
                     std::string dataHello;
-                    auto err = RValid(RSizeMustEqual<std::string>(sizeof(F_NET_CLIENT_HELLO) - 1, {netPacket->packet(), &dataHello})).end();
+                    auto err = RValid(RSizeMustEqual<std::string>(sizeof(F_NET_CLIENT_HELLO) - 1,
+                                                                  {netPacket->packet(), &dataHello}))
+                                       .end();
 
                     if (err)
                     {
@@ -300,11 +308,11 @@ public:
 
                     std::cout << "Client connected " << netPacket->getIdentity().toString() << "\n";
                     break;
-                }default:
+                }
+                default:
                     break;
                 }
-            }
-            while (processResult != fge::net::FluxProcessResults::NONE_AVAILABLE);
+            } while (processResult != fge::net::FluxProcessResults::NONE_AVAILABLE);
 
             /**MAIN LOOP**/
 
@@ -320,11 +328,13 @@ public:
 
                 bool mustNotify = false;
 
-                for (auto itClient = networkFlux._clients.begin(lock); itClient != networkFlux._clients.end(lock); ++itClient)
+                for (auto itClient = networkFlux._clients.begin(lock); itClient != networkFlux._clients.end(lock);
+                     ++itClient)
                 {
                     auto& currentClient = itClient->second._client;
 
-                    if (currentClient->getStatus().getNetworkStatus() != fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
+                    if (currentClient->getStatus().getNetworkStatus() !=
+                        fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
                     {
                         continue;
                     }
@@ -363,10 +373,12 @@ public:
                 {
                     network.notifyTransmission();
                 }
-                for (auto itClient = networkFlux._clients.begin(lock); itClient != networkFlux._clients.end(lock); ++itClient)
+                for (auto itClient = networkFlux._clients.begin(lock); itClient != networkFlux._clients.end(lock);
+                     ++itClient)
                 {
                     auto& currentClient = itClient->second._client;
-                    if (currentClient->getStatus().getNetworkStatus() != fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
+                    if (currentClient->getStatus().getNetworkStatus() !=
+                        fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
                     {
                         continue;
                     }
@@ -377,7 +389,8 @@ public:
             networkFlux._clients.clearClientEvent();
 
             //Tick time
-            tickTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - tickTimeStart);
+            tickTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
+                                                                             tickTimeStart);
         }
 
         network.stop();
@@ -388,7 +401,9 @@ public:
         fge::anim::gManager.uninitialize();
     }
 
-    void packFullUpdate(fge::net::ServerNetFluxUdp& networkFlux, fge::net::Identity const& identity, fge::net::TransmitPacketPtr& packet)
+    void packFullUpdate(fge::net::ServerNetFluxUdp& networkFlux,
+                        fge::net::Identity const& identity,
+                        fge::net::TransmitPacketPtr& packet)
     {
         auto const yourPlayerId = this->getPlayerId(identity);
         if (yourPlayerId.empty())
@@ -419,7 +434,8 @@ public:
 
         this->delObject(player->_myObjectData.lock()->getSid());
         this->removePlayerId(playerId);
-        this->g_playerEvents->pushEventIgnore(std::make_pair(StatEvents::PLAYER_DISCONNECTED, PlayerEventData{playerId, ""}), id);
+        this->g_playerEvents->pushEventIgnore(
+                std::make_pair(StatEvents::PLAYER_DISCONNECTED, PlayerEventData{playerId, ""}), id);
     }
 
     std::string const& generatePlayerId(fge::net::Identity const& identity)
@@ -431,11 +447,9 @@ public:
         }
 
         std::string newPlayerId;
-        do
-        {
+        do {
             newPlayerId = fge::_random.randStr(32);
-        }
-        while (this->g_playerIdentities.contains(newPlayerId));
+        } while (this->g_playerIdentities.contains(newPlayerId));
 
         this->g_playerIds[identity] = newPlayerId;
         this->g_playerIdentities[newPlayerId] = identity;
@@ -477,7 +491,7 @@ public:
             return nullptr;
         }
 
-        for (auto const& obj : container)
+        for (auto const& obj: container)
         {
             if (obj->getObject()->_properties["playerId"] == playerId)
             {
@@ -494,7 +508,7 @@ private:
     fge::net::NetworkTypeEvents<StatEvents, PlayerEventData>* g_playerEvents{nullptr};
 };
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     using namespace fge::vulkan;
 
@@ -519,7 +533,7 @@ int main(int argc, char *argv[])
         std::cout << "Built in debug mode" << std::endl;
     }
 
-    if ( !fge::net::Socket::initSocket() )
+    if (!fge::net::Socket::initSocket())
     {
         return -1;
     }
@@ -529,7 +543,7 @@ int main(int argc, char *argv[])
     //Loading resources
 
     //Loading scenes
-    std::unique_ptr<Scene> clientShareStatsScene  = std::make_unique<Scene>();
+    std::unique_ptr<Scene> clientShareStatsScene = std::make_unique<Scene>();
     clientShareStatsScene->run(network);
     clientShareStatsScene.reset();
 

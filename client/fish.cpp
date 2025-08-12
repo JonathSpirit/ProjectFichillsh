@@ -1,6 +1,6 @@
 #include "fish.hpp"
-#include "FastEngine/manager/texture_manager.hpp"
 #include "FastEngine/C_random.hpp"
+#include "FastEngine/manager/texture_manager.hpp"
 
 bool FishManager::initialize()
 {
@@ -22,14 +22,14 @@ void FishManager::uninitialize()
 }
 
 bool FishManager::loadFromFile(std::string_view fishName,
-                                float weightMin, float weightMax,
-                                float lengthMin, float lengthMax,
-                                FishData::Rarity rarity,
-                                std::filesystem::path const &path)
+                               float weightMin,
+                               float weightMax,
+                               float lengthMin,
+                               float lengthMax,
+                               FishData::Rarity rarity,
+                               std::filesystem::path const& path)
 {
-    if (fishName.empty() ||
-        weightMin < 0.0f || weightMax < 0.0f ||
-        lengthMin < 0.0f || lengthMax < 0.0f ||
+    if (fishName.empty() || weightMin < 0.0f || weightMax < 0.0f || lengthMin < 0.0f || lengthMax < 0.0f ||
         weightMin > weightMax || lengthMin > lengthMax)
     {
         return false;
@@ -46,7 +46,7 @@ bool FishManager::loadFromFile(std::string_view fishName,
     DataBlockPointer block = std::make_shared<DataBlockType>();
     block->_ptr = std::make_shared<DataType>();
     block->_ptr->_textureName = fishName;
-    block->_ptr->_textureRect = fge::RectInt{{0,0}, fge::texture::gManager.getElement(fishName)->_ptr->getSize()};
+    block->_ptr->_textureRect = fge::RectInt{{0, 0}, fge::texture::gManager.getElement(fishName)->_ptr->getSize()};
     block->_ptr->_weightMin = weightMin;
     block->_ptr->_weightMax = weightMax;
     block->_ptr->_lengthMin = lengthMin;
@@ -93,7 +93,7 @@ FishInstance FishManager::generateRandomFish() const
     {
         fishInstance._starCount += 2; //2 stars
     }
-    else if (fishInstance._weight >  fishData->_ptr->_weightMin + weightDelta)
+    else if (fishInstance._weight > fishData->_ptr->_weightMin + weightDelta)
     {
         fishInstance._starCount = 1; //1 star
     }

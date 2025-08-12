@@ -1,8 +1,8 @@
 #pragma once
 
-#include "FastEngine/object/C_object.hpp"
-#include "FastEngine/object/C_objAnim.hpp"
 #include "FastEngine/C_scene.hpp"
+#include "FastEngine/object/C_objAnim.hpp"
+#include "FastEngine/object/C_object.hpp"
 
 #define F_DUCK_SPEED 50.0f
 #define F_DUCK_WALK_TIME_MIN_S 3.0f
@@ -20,12 +20,12 @@ public:
     FGE_OBJ_UPDATE_DECLARE
     FGE_OBJ_DRAW_DECLARE
 
-    void first(fge::Scene &scene) override;
+    void first(fge::Scene& scene) override;
 
-    void callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr) override;
+    void callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) override;
 
-    const char * getClassName() const override;
-    const char * getReadableClassName() const override;
+    char const* getClassName() const override;
+    char const* getReadableClassName() const override;
 
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;

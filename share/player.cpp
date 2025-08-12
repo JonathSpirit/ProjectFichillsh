@@ -5,9 +5,9 @@
 #else
     #include "FastEngine/C_scene.hpp"
 #endif //FGE_DEF_SERVER
-#include "network.hpp"
-#include "FastEngine/object/C_objTilelayer.hpp"
 #include "FastEngine/C_random.hpp"
+#include "FastEngine/object/C_objTilelayer.hpp"
+#include "network.hpp"
 #include <iostream>
 
 //FishBait
@@ -46,41 +46,43 @@ FGE_OBJ_UPDATE_BODY(FishBait)
 
     switch (this->g_state)
     {
-        case Stats::THROWING:
-        {
-            auto sinusValue = std::sin(this->g_time * F_BAIT_SPEED);
+    case Stats::THROWING:
+    {
+        auto sinusValue = std::sin(this->g_time * F_BAIT_SPEED);
 
-            //y = sin(t * speed)
-            //t = asin(y) / speed
-            //t = asin(1) / speed
-            //t = PI/(2*speed)
-            if (this->g_time >= static_cast<float>(FGE_MATH_PI)/(2.0f * F_BAIT_SPEED))
-            {
-                this->g_state = Stats::WAITING;
-                this->g_time = 0.0f;
-                sinusValue = 1.0f;
-            }
-
-            auto const newPosition = this->g_startPosition + static_cast<fge::Vector2f>(this->g_throwDirection)
-                    * (1.0f / glm::length(static_cast<fge::Vector2f>(this->g_throwDirection))) * F_BAIT_THROW_LENGTH * sinusValue;
-            this->setPosition(newPosition);
-            this->g_staticPosition = this->getPosition();
-        }
-            break;
-        case Stats::WAITING:
+        //y = sin(t * speed)
+        //t = asin(y) / speed
+        //t = asin(1) / speed
+        //t = PI/(2*speed)
+        if (this->g_time >= static_cast<float>(FGE_MATH_PI) / (2.0f * F_BAIT_SPEED))
         {
-            auto sinx = std::sin(this->g_time);
-            auto siny = std::sin(this->g_time * 1.7f);
+            this->g_state = Stats::WAITING;
+            this->g_time = 0.0f;
+            sinusValue = 1.0f;
+        }
 
-            this->setPosition(this->g_staticPosition + fge::Vector2f{sinx, siny});
-        }
-            break;
-        case Stats::CATCHING:
-        {
-            auto const posXeffect = fge::_random.range(-1.0f, 1.0f);
-            this->setPosition(this->g_staticPosition + fge::Vector2f{posXeffect, 0.0f});
-        }
-            break;
+        auto const newPosition = this->g_startPosition +
+                                 static_cast<fge::Vector2f>(this->g_throwDirection) *
+                                         (1.0f / glm::length(static_cast<fge::Vector2f>(this->g_throwDirection))) *
+                                         F_BAIT_THROW_LENGTH * sinusValue;
+        this->setPosition(newPosition);
+        this->g_staticPosition = this->getPosition();
+    }
+    break;
+    case Stats::WAITING:
+    {
+        auto sinx = std::sin(this->g_time);
+        auto siny = std::sin(this->g_time * 1.7f);
+
+        this->setPosition(this->g_staticPosition + fge::Vector2f{sinx, siny});
+    }
+    break;
+    case Stats::CATCHING:
+    {
+        auto const posXeffect = fge::_random.range(-1.0f, 1.0f);
+        this->setPosition(this->g_staticPosition + fge::Vector2f{posXeffect, 0.0f});
+    }
+    break;
     }
 }
 #else
@@ -99,7 +101,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
         //t = asin(y) / speed
         //t = asin(1) / speed
         //t = PI/(2*speed)
-        if (this->g_time >= static_cast<float>(FGE_MATH_PI)/(2.0f * F_BAIT_SPEED))
+        if (this->g_time >= static_cast<float>(FGE_MATH_PI) / (2.0f * F_BAIT_SPEED))
         {
             //Check if the bait is in water
             if (auto const firstLayer = scene.getFirstObj_ByTag("map"))
@@ -108,7 +110,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
                 auto const waterLayer = map->findLayerName("Water")->get()->as<fge::TileLayer>();
                 auto const tileGrid = waterLayer->getGridPosition(this->getPosition());
                 if (!tileGrid || waterLayer->getGid(*tileGrid) == 0)
-                {//Not in water
+                { //Not in water
                     scene.delUpdatedObject();
                     return;
                 }
@@ -116,7 +118,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
                 auto const& collisionRects = waterTile.getTileData()->_collisionRects;
 
                 bool isInside = false;
-                for (auto const& rect : collisionRects)
+                for (auto const& rect: collisionRects)
                 {
                     auto frect = static_cast<fge::RectFloat>(rect);
                     frect._x += waterTile.getPosition().x;
@@ -141,12 +143,14 @@ FGE_OBJ_UPDATE_BODY(FishBait)
             sinusValue = 1.0f;
         }
 
-        auto const newPosition = this->g_startPosition + static_cast<fge::Vector2f>(this->g_throwDirection)
-                * (1.0f / glm::length(static_cast<fge::Vector2f>(this->g_throwDirection))) * F_BAIT_THROW_LENGTH * sinusValue;
+        auto const newPosition = this->g_startPosition +
+                                 static_cast<fge::Vector2f>(this->g_throwDirection) *
+                                         (1.0f / glm::length(static_cast<fge::Vector2f>(this->g_throwDirection))) *
+                                         F_BAIT_THROW_LENGTH * sinusValue;
         this->setPosition(newPosition);
         this->g_staticPosition = this->getPosition();
     }
-        break;
+    break;
     case Stats::WAITING:
     {
         auto sinx = std::sin(this->g_time);
@@ -154,13 +158,13 @@ FGE_OBJ_UPDATE_BODY(FishBait)
 
         this->setPosition(this->g_staticPosition + fge::Vector2f{sinx, siny});
     }
-        break;
+    break;
     case Stats::CATCHING:
     {
         auto const posXeffect = fge::_random.range(-1.0f, 1.0f);
         this->setPosition(this->g_staticPosition + fge::Vector2f{posXeffect, 0.0f});
     }
-        break;
+    break;
     }
 }
 FGE_OBJ_DRAW_BODY(FishBait)
@@ -172,7 +176,7 @@ FGE_OBJ_DRAW_BODY(FishBait)
 }
 #endif //FGE_DEF_SERVER
 
-void FishBait::first(fge::Scene &scene)
+void FishBait::first(fge::Scene& scene)
 {
     this->g_objSprite.setTexture("fishBait_1");
     this->g_objSprite.centerOriginFromLocalBounds();
@@ -181,16 +185,14 @@ void FishBait::first(fge::Scene &scene)
     this->_netSyncMode = NetSyncModes::NO_SYNC;
 }
 
-void FishBait::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)
-{
-}
+void FishBait::callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) {}
 
-const char * FishBait::getClassName() const
+char const* FishBait::getClassName() const
 {
     return "FISH_BAIT";
 }
 
-const char * FishBait::getReadableClassName() const
+char const* FishBait::getReadableClassName() const
 {
     return "fish bait";
 }
@@ -245,7 +247,7 @@ FGE_OBJ_UPDATE_BODY(PlayerChatMessage)
 
     if (this->g_fading)
     {
-        auto alpha = 255 - static_cast<uint8_t>(this->g_time/3.0f * 255.0f);
+        auto alpha = 255 - static_cast<uint8_t>(this->g_time / 3.0f * 255.0f);
         this->g_objText.setFillColor(fge::SetAlpha(this->g_objText.getFillColor(), alpha));
         this->g_objText.setOutlineColor(fge::SetAlpha(this->g_objText.getOutlineColor(), alpha));
         if (alpha == 0)
@@ -260,14 +262,14 @@ FGE_OBJ_UPDATE_BODY(PlayerChatMessage)
         this->g_time = 0.0f;
 
         this->g_fading = true;
-        for (auto& character : this->g_objText.getCharacters())
+        for (auto& character: this->g_objText.getCharacters())
         {
             if (!character.isVisible())
             {
                 character.setVisibility(true);
                 this->g_fading = false;
 
-                auto const posx = this->g_objText.getGlobalBounds()._width/2.0f;
+                auto const posx = this->g_objText.getGlobalBounds()._width / 2.0f;
                 this->g_objText.setPosition({-posx, this->g_objText.getPosition().y});
                 return;
             }
@@ -284,9 +286,9 @@ FGE_OBJ_DRAW_BODY(PlayerChatMessage)
 }
 #endif
 
-void PlayerChatMessage::first(fge::Scene &scene)
+void PlayerChatMessage::first(fge::Scene& scene)
 {
-    for (auto& character : this->g_objText.getCharacters())
+    for (auto& character: this->g_objText.getCharacters())
     {
         character.setVisibility(false);
     }
@@ -294,12 +296,12 @@ void PlayerChatMessage::first(fge::Scene &scene)
     this->g_player = scene.getObject(this->g_playerSid);
 }
 
-const char * PlayerChatMessage::getClassName() const
+char const* PlayerChatMessage::getClassName() const
 {
     return "FISH_PLAYER_CHAT_MESSAGE";
 }
 
-const char * PlayerChatMessage::getReadableClassName() const
+char const* PlayerChatMessage::getReadableClassName() const
 {
     return "player chat message";
 }
@@ -362,7 +364,7 @@ FGE_OBJ_UPDATE_BODY(Player)
             }
 
             if (animationName.empty())
-            {//Idle
+            { //Idle
                 if (this->g_direction.y == -1)
                 {
                     animationName += "_up";
@@ -384,7 +386,7 @@ FGE_OBJ_UPDATE_BODY(Player)
                 animationName = "idle" + animationName;
             }
             else
-            {//Walking
+            { //Walking
                 animationName = "walk" + animationName;
                 //this->g_direction = moveDirection;
             }
@@ -392,18 +394,20 @@ FGE_OBJ_UPDATE_BODY(Player)
             this->g_objAnim.getAnimation().setGroup(animationName);
             this->g_objAnimShadow.getAnimation().setGroup(animationName);
             break;
-        }default:
+        }
+        default:
             break;
         }
 
         auto const delta = fge::DurationToSecondFloat(deltaTime);
-        this->setPosition(fge::ReachVector(this->getPosition(), this->g_serverPosition, F_PLAYER_SPEED*2.0f, delta));
+        this->setPosition(fge::ReachVector(this->getPosition(), this->g_serverPosition, F_PLAYER_SPEED * 2.0f, delta));
         return;
     }
 
     switch (this->g_state)
     {
-    case States::WALKING: {
+    case States::WALKING:
+    {
         //Player movement and animation
         std::string animationName;
 
@@ -458,7 +462,7 @@ FGE_OBJ_UPDATE_BODY(Player)
         }
 
         if (animationName.empty())
-        {//Idle
+        { //Idle
             animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
             animationName = animationName.substr(animationName.find('_'));
             animationName = "idle" + animationName;
@@ -477,23 +481,23 @@ FGE_OBJ_UPDATE_BODY(Player)
             }
         }
         else
-        {//Walking
+        { //Walking
             if (this->g_audioWalking == -1 || Mix_Playing(this->g_audioWalking) == 0)
             {
-                this->g_audioWalking = Mix_PlayChannel(-1, fge::audio::gManager.getElement("walk_grass")->_ptr.get(), -1);
+                this->g_audioWalking =
+                        Mix_PlayChannel(-1, fge::audio::gManager.getElement("walk_grass")->_ptr.get(), -1);
             }
             animationName = "walk" + animationName;
             this->g_direction = moveDirection;
         }
 
-        b2Body_SetLinearVelocity(this->g_bodyId, {
-            static_cast<float>(moveDirection.x) * F_PLAYER_SPEED,
-            static_cast<float>(moveDirection.y) * F_PLAYER_SPEED
-        });
+        b2Body_SetLinearVelocity(this->g_bodyId, {static_cast<float>(moveDirection.x) * F_PLAYER_SPEED,
+                                                  static_cast<float>(moveDirection.y) * F_PLAYER_SPEED});
         this->g_objAnim.getAnimation().setGroup(animationName);
         this->g_objAnimShadow.getAnimation().setGroup(animationName);
         break;
-    } case States::IDLE:
+    }
+    case States::IDLE:
         break;
     case States::THROWING:
         if (auto fishBait = this->g_fishBait.lock())
@@ -511,7 +515,8 @@ FGE_OBJ_UPDATE_BODY(Player)
         }
         break;
     case States::FISHING:
-        if (event.isKeyPressed(SDLK_w) || event.isKeyPressed(SDLK_s) || event.isKeyPressed(SDLK_a) || event.isKeyPressed(SDLK_d))
+        if (event.isKeyPressed(SDLK_w) || event.isKeyPressed(SDLK_s) || event.isKeyPressed(SDLK_a) ||
+            event.isKeyPressed(SDLK_d))
         {
             if (auto fishBait = this->g_fishBait.lock())
             {
@@ -539,7 +544,7 @@ FGE_OBJ_UPDATE_BODY(Player)
     //Update plan
     float distanceDown = std::numeric_limits<float>::max();
     float distanceUp = std::numeric_limits<float>::max();
-    for (auto const& y : this->g_transitionYPoints)
+    for (auto const& y: this->g_transitionYPoints)
     {
         auto const distance = y - this->getPosition().y;
         if (distance > 0.0f)
@@ -579,7 +584,7 @@ FGE_OBJ_DRAW_BODY(Player)
     auto copyStats = states.copy();
     copyStats._resTransform.set(target.requestGlobalTransform(*this, copyStats._resTransform));
 
-    this->g_objAnimShadow.draw(target , copyStats);
+    this->g_objAnimShadow.draw(target, copyStats);
     this->g_objAnim.draw(target, copyStats);
     if (this->g_state == States::CHATTING)
     {
@@ -588,7 +593,7 @@ FGE_OBJ_DRAW_BODY(Player)
 }
 #endif //FGE_DEF_SERVER
 
-void Player::first(fge::Scene &scene)
+void Player::first(fge::Scene& scene)
 {
     this->g_objAnim.setAnimation(fge::Animation{"human_1", "idle_down"});
     this->g_objAnim.getAnimation().setLoop(true);
@@ -637,7 +642,7 @@ void Player::first(fge::Scene &scene)
     this->g_transitionYPoints.clear();
     auto const tilemap = scene.getFirstObj_ByTag("map")->getObject<fge::ObjTileLayer>()->getTileMap();
     auto const mapDepthObjects = tilemap->findLayerName("DepthObjects")->get()->as<fge::TileLayer>();
-    for (auto const& tile : mapDepthObjects->getTiles())
+    for (auto const& tile: mapDepthObjects->getTiles())
     {
         auto const gid = tile.getGid();
         if (gid != FGE_LAYER_BAD_ID)
@@ -653,15 +658,13 @@ void Player::first(fge::Scene &scene)
     this->networkRegister();
 }
 
-void Player::callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr)
-{
-}
+void Player::callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) {}
 
-const char * Player::getClassName() const
+char const* Player::getClassName() const
 {
     return "FISH_PLAYER";
 }
-const char * Player::getReadableClassName() const
+char const* Player::getReadableClassName() const
 {
     return "player";
 }
@@ -680,29 +683,29 @@ void Player::networkRegister()
     this->_netList.clear();
 
 #ifdef FGE_DEF_SERVER
-    this->_netList.pushTrivial<fge::Vector2f>(fge::DataAccessor<fge::Vector2f>{&this->getPosition(), [&](auto const& position){this->setPosition(position);}});
-    this->_netList.pushTrivial<fge::Vector2i>(fge::DataAccessor<fge::Vector2i>{&this->g_direction, [&](auto const& direction){this->setDirection(direction);}});
+    this->_netList.pushTrivial<fge::Vector2f>(fge::DataAccessor<fge::Vector2f>{
+            &this->getPosition(), [&](auto const& position) { this->setPosition(position); }});
+    this->_netList.pushTrivial<fge::Vector2i>(fge::DataAccessor<fge::Vector2i>{
+            &this->g_direction, [&](auto const& direction) { this->setDirection(direction); }});
     this->_netList.pushTrivial<States>(fge::DataAccessor<States>{&this->g_state});
     this->_netList.push<fge::net::NetworkTypePropertyList<std::string>>(&this->_properties, "playerId");
 #else
     this->_netList.pushTrivial<fge::Vector2f>(fge::DataAccessor<fge::Vector2f>{&this->g_serverPosition});
-    this->_netList.pushTrivial<fge::Vector2i>(fge::DataAccessor<fge::Vector2i>{&this->g_direction, [&](auto const& direction){this->setServerDirection(direction);}});
-    this->_netList.pushTrivial<States>(fge::DataAccessor<States>{&this->g_state, [&](auto const& stat)
-    {
-        this->setServerState(stat);
-    }});
-    this->_netList.push<fge::net::NetworkTypePropertyList<std::string>>(&this->_properties, "playerId")->needExplicitUpdate();
+    this->_netList.pushTrivial<fge::Vector2i>(fge::DataAccessor<fge::Vector2i>{
+            &this->g_direction, [&](auto const& direction) { this->setServerDirection(direction); }});
+    this->_netList.pushTrivial<States>(
+            fge::DataAccessor<States>{&this->g_state, [&](auto const& stat) { this->setServerState(stat); }});
+    this->_netList.push<fge::net::NetworkTypePropertyList<std::string>>(&this->_properties, "playerId")
+            ->needExplicitUpdate();
 #endif
 }
 
-void Player::pack(fge::net::Packet &pck)
+void Player::pack(fge::net::Packet& pck)
 {
-    pck << this->getPosition()
-        << this->g_direction
-        << this->g_state
+    pck << this->getPosition() << this->g_direction << this->g_state
         << *this->_properties["playerId"].getPtr<std::string>(); //TODO: a bit unsafe
 }
-void Player::unpack(const fge::net::Packet &pck)
+void Player::unpack(fge::net::Packet const& pck)
 {
     fge::Vector2f position;
     fge::Vector2i direction;
@@ -763,7 +766,9 @@ void Player::setServerState(States state)
         this->g_objAnim.getAnimation().setLoop(false);
         this->g_objAnimShadow.getAnimation().setLoop(false);
     }
-    else if ((this->g_serverState == States::CATCHING ||this->g_serverState == States::FISHING || this->g_serverState == States::THROWING) && state == States::WALKING)
+    else if ((this->g_serverState == States::CATCHING || this->g_serverState == States::FISHING ||
+              this->g_serverState == States::THROWING) &&
+             state == States::WALKING)
     {
         if (auto fishBait = this->g_fishBait.lock())
         {
@@ -789,7 +794,7 @@ void Player::startChatting([[maybe_unused]] fge::Event& event)
 #ifndef FGE_DEF_SERVER
     this->g_state = States::CHATTING;
     this->g_objChatText.setString(">");
-    auto const posx = this->g_objChatText.getGlobalBounds()._width/2.0f;
+    auto const posx = this->g_objChatText.getGlobalBounds()._width / 2.0f;
     this->g_objChatText.setPosition({-posx, this->g_objChatText.getPosition().y});
 
     event._onTextInput.addLambda([&](fge::Event const& evt, SDL_TextInputEvent const& arg) {
@@ -802,13 +807,13 @@ void Player::startChatting([[maybe_unused]] fge::Event& event)
         }
 
         auto str = this->g_objChatText.getString();
-        if (str.size()-1 < F_NET_CHAT_MAX_SIZE)
+        if (str.size() - 1 < F_NET_CHAT_MAX_SIZE)
         {
             str += key;
             this->g_objChatText.setString(std::move(str));
         }
 
-        auto const posx = this->g_objChatText.getGlobalBounds()._width/2.0f;
+        auto const posx = this->g_objChatText.getGlobalBounds()._width / 2.0f;
         this->g_objChatText.setPosition({-posx, this->g_objChatText.getPosition().y});
     }, this);
     event._onKeyDown.addLambda([&](fge::Event const& evt, SDL_KeyboardEvent const& arg) {
@@ -834,7 +839,7 @@ void Player::startChatting([[maybe_unused]] fge::Event& event)
             }
         }
 
-        auto const posx = this->g_objChatText.getGlobalBounds()._width/2.0f;
+        auto const posx = this->g_objChatText.getGlobalBounds()._width / 2.0f;
         this->g_objChatText.setPosition({-posx, this->g_objChatText.getPosition().y});
     }, this);
 #endif // FGE_DEF_SERVER
@@ -845,9 +850,8 @@ void Player::boxMove(fge::Vector2f const& move)
     if (this->g_isUserControlled)
     {
 #ifndef FGE_DEF_SERVER
-        b2Body_SetTransform(this->g_bodyId,
-        {this->getPosition().x + move.x, this->getPosition().y + move.y},
-        b2MakeRot(0.0f));
+        b2Body_SetTransform(this->g_bodyId, {this->getPosition().x + move.x, this->getPosition().y + move.y},
+                            b2MakeRot(0.0f));
 #endif
     }
     this->move(move);

@@ -1,26 +1,58 @@
 #pragma once
 
-#include "FastEngine/object/C_objSprite.hpp"
-#include "FastEngine/object/C_object.hpp"
-#include "FastEngine/object/C_objAnim.hpp"
-#include "FastEngine/object/C_objText.hpp"
 #include "FastEngine/C_scene.hpp"
+#include "FastEngine/object/C_objAnim.hpp"
+#include "FastEngine/object/C_objSprite.hpp"
+#include "FastEngine/object/C_objText.hpp"
+#include "FastEngine/object/C_object.hpp"
 #ifndef FGE_DEF_SERVER
-#include "box2d/box2d.h"
+    #include "box2d/box2d.h"
 #endif
 
 #define F_PLAYER_SPEED 30.0f
 #define F_BAIT_SPEED 2.0f
 #define F_BAIT_THROW_LENGTH 12.0f
 
-#define F_DIRECTION_UP fge::Vector2i{0, -1}
-#define F_DIRECTION_DOWN fge::Vector2i{0, 1}
-#define F_DIRECTION_LEFT fge::Vector2i{-1, 0}
-#define F_DIRECTION_RIGHT fge::Vector2i{1, 0}
-#define F_DIRECTION_UP_LEFT fge::Vector2i{-1, -1}
-#define F_DIRECTION_UP_RIGHT fge::Vector2i{1, -1}
-#define F_DIRECTION_DOWN_LEFT fge::Vector2i{-1, 1}
-#define F_DIRECTION_DOWN_RIGHT fge::Vector2i{1, 1}
+#define F_DIRECTION_UP                                                                                                 \
+    fge::Vector2i                                                                                                      \
+    {                                                                                                                  \
+        0, -1                                                                                                          \
+    }
+#define F_DIRECTION_DOWN                                                                                               \
+    fge::Vector2i                                                                                                      \
+    {                                                                                                                  \
+        0, 1                                                                                                           \
+    }
+#define F_DIRECTION_LEFT                                                                                               \
+    fge::Vector2i                                                                                                      \
+    {                                                                                                                  \
+        -1, 0                                                                                                          \
+    }
+#define F_DIRECTION_RIGHT                                                                                              \
+    fge::Vector2i                                                                                                      \
+    {                                                                                                                  \
+        1, 0                                                                                                           \
+    }
+#define F_DIRECTION_UP_LEFT                                                                                            \
+    fge::Vector2i                                                                                                      \
+    {                                                                                                                  \
+        -1, -1                                                                                                         \
+    }
+#define F_DIRECTION_UP_RIGHT                                                                                           \
+    fge::Vector2i                                                                                                      \
+    {                                                                                                                  \
+        1, -1                                                                                                          \
+    }
+#define F_DIRECTION_DOWN_LEFT                                                                                          \
+    fge::Vector2i                                                                                                      \
+    {                                                                                                                  \
+        -1, 1                                                                                                          \
+    }
+#define F_DIRECTION_DOWN_RIGHT                                                                                         \
+    fge::Vector2i                                                                                                      \
+    {                                                                                                                  \
+        1, 1                                                                                                           \
+    }
 
 class FishBait : public fge::Object
 {
@@ -32,12 +64,12 @@ public:
     FGE_OBJ_UPDATE_DECLARE
     FGE_OBJ_DRAW_DECLARE
 
-    void first(fge::Scene &scene) override;
+    void first(fge::Scene& scene) override;
 
-    void callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr) override;
+    void callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) override;
 
-    const char * getClassName() const override;
-    const char * getReadableClassName() const override;
+    char const* getClassName() const override;
+    char const* getReadableClassName() const override;
 
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
@@ -71,10 +103,10 @@ public:
     FGE_OBJ_UPDATE_DECLARE
     FGE_OBJ_DRAW_DECLARE
 
-    void first(fge::Scene &scene) override;
+    void first(fge::Scene& scene) override;
 
-    const char * getClassName() const override;
-    const char * getReadableClassName() const override;
+    char const* getClassName() const override;
+    char const* getReadableClassName() const override;
 
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
@@ -107,20 +139,20 @@ public:
     FGE_OBJ_UPDATE_DECLARE
     FGE_OBJ_DRAW_DECLARE
 
-    void first(fge::Scene &scene) override;
+    void first(fge::Scene& scene) override;
 
-    void callbackRegister(fge::Event &event, fge::GuiElementHandler *guiElementHandlerPtr) override;
+    void callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) override;
 
-    const char * getClassName() const override;
-    const char * getReadableClassName() const override;
+    char const* getClassName() const override;
+    char const* getReadableClassName() const override;
 
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
 
     void networkRegister() override;
 
-    void pack(fge::net::Packet &pck) override;
-    void unpack(const fge::net::Packet &pck) override;
+    void pack(fge::net::Packet& pck) override;
+    void unpack(fge::net::Packet const& pck) override;
 
     [[nodiscard]] States getState() const;
     [[nodiscard]] fge::Vector2i const& getDirection() const;
