@@ -15,6 +15,7 @@ Ducky::Ducky(fge::Vector2f const& position)
 FGE_OBJ_UPDATE_BODY(Ducky)
 {
     FGE_OBJ_UPDATE_CALL(this->g_objAnim);
+    FGE_OBJ_UPDATE_CALL(this->g_objAnimShadow);
 
     auto const delta = fge::DurationToSecondFloat(deltaTime);
 
@@ -45,6 +46,8 @@ FGE_OBJ_UPDATE_BODY(Ducky)
             }
             this->g_objAnim.getAnimation().setGroup("walk");
             this->g_objAnim.getAnimation().setFrame(0);
+            this->g_objAnimShadow.getAnimation().setGroup("walk");
+            this->g_objAnimShadow.getAnimation().setFrame(0);
             this->g_state = States::WALKING;
         }
         break;
@@ -55,6 +58,8 @@ FGE_OBJ_UPDATE_BODY(Ducky)
         {
             this->g_objAnim.getAnimation().setGroup("idle");
             this->g_objAnim.getAnimation().setFrame(0);
+            this->g_objAnimShadow.getAnimation().setGroup("idle");
+            this->g_objAnimShadow.getAnimation().setFrame(0);
             this->g_state = States::IDLE;
             break;
         }
@@ -62,6 +67,7 @@ FGE_OBJ_UPDATE_BODY(Ducky)
         auto const nextPosition = this->g_walkPath.front();
 
         this->g_objAnim.getAnimation().setHorizontalFlip(this->getPosition().x > nextPosition.x);
+        this->g_objAnimShadow.getAnimation().setHorizontalFlip(this->getPosition().x > nextPosition.x);
 
         this->setPosition(fge::ReachVector(this->getPosition(), nextPosition, F_DUCK_SPEED, delta));
 
@@ -96,6 +102,7 @@ FGE_OBJ_DRAW_BODY(Ducky)
     auto copyStates = states.copy();
     copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
 
+    this->g_objAnimShadow.draw(target, copyStates);
     this->g_objAnim.draw(target, copyStates);
 }
 
@@ -109,6 +116,15 @@ void Ducky::first(fge::Scene& scene)
     this->g_objAnim.getAnimation().setLoop(true);
     this->g_objAnim.scale(0.5f);
     this->g_objAnim.centerOriginFromLocalBounds();
+
+    this->g_objAnimShadow.setAnimation(fge::Animation{"ducky_1_shadow", "idle"});
+    this->g_objAnimShadow.getAnimation().setLoop(true);
+    this->g_objAnimShadow.centerOriginFromLocalBounds();
+    this->g_objAnimShadow.setRotation(20.0f);
+    this->g_objAnimShadow.move({4.0f, 0.0f});
+    this->g_objAnimShadow.scale(0.5f);
+    this->g_objAnimShadow.scale({0.8f, 0.7f});
+    this->g_objAnimShadow.setColor({255, 255, 255, 30});
 
     this->g_timeBeforeWalk = fge::_random.range(F_DUCK_WALK_TIME_MIN_S, F_DUCK_WALK_TIME_MAX_S);
 

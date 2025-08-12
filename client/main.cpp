@@ -121,6 +121,24 @@ public:
             humanAnimData->_ptr->_tilesetTexture->create(surface.get());
         }
 
+        //Create ducky shadow
+        {
+            fge::anim::gManager.duplicate("ducky_1", "ducky_1_shadow");
+            auto duckyAnimData = fge::anim::gManager.getElement("ducky_1_shadow");
+
+            fge::Surface surface(duckyAnimData->_ptr->_tilesetTexture->copyToSurface());
+            for (int i = 0; i < surface.getSize().x; ++i)
+            {
+                for (int j = 0; j < surface.getSize().y; ++j)
+                {
+                    auto color = fge::Color(0, 0, 0, surface.getPixel(i, j).value()._a);
+                    surface.setPixel(i, j, color);
+                }
+            }
+            duckyAnimData->_ptr->_tilesetTexture = std::make_shared<fge::TextureType>(fge::vulkan::GetActiveContext());
+            duckyAnimData->_ptr->_tilesetTexture->create(surface.get());
+        }
+
         //Load fonts
         fge::font::gManager.loadFromFile("default", "resources/fonts/ttf/monogram.ttf");
 

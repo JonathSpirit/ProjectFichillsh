@@ -34,6 +34,7 @@ private:
     void computeRandomWalkPath();
 
     fge::ObjAnimation g_objAnim;
+    fge::ObjAnimation g_objAnimShadow;
     enum class States
     {
         IDLE,
