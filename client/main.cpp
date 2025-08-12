@@ -35,12 +35,21 @@ public:
         nlohmann::json config;
         if (!fge::LoadJsonFromFile("server.json", config))
         {
-            std::cout << "Can't load server.json\n";
-            return;
+            std::cout << "Can't load server.json, continuing anyway\n";
         }
 
-        fge::net::IpAddress serverIp = config["ip"].get<std::string>();
-        fge::net::Port port = config["port"].get<fge::net::Port>();
+        fge::net::IpAddress serverIp = config.value<std::string>("ip", F_NET_DEFAULT_IP);
+        fge::net::Port serverPort = config.value<fge::net::Port>("port", F_NET_DEFAULT_PORT);
+        bool onlineMode = config.value<bool>("online", F_NET_DEFAULT_ONLINE_MODE);
+
+        config = nlohmann::json{{"ip", serverIp.toString().value_or(F_NET_DEFAULT_IP)},
+                                {"port", serverPort},
+                                {"online", onlineMode}};
+
+        if (!fge::SaveJsonToFile("server.json", config, 4))
+        {
+            std::cout << "Can't save server.json, continuing anyway\n";
+        }
 
         std::string const versioningString = F_NET_STRING_SEQ + fge::string::ToStr(F_NET_SERVER_COMPATIBILITY_VERSION);
 
@@ -301,7 +310,8 @@ public:
         });
 
         //Connect to the server
-        if (!network.start(0, fge::net::IpAddress::Ipv4Any, port, serverIp, fge::net::IpAddress::Types::Ipv4))
+        if (!onlineMode ||
+            !network.start(0, fge::net::IpAddress::Ipv4Any, serverPort, serverIp, fge::net::IpAddress::Types::Ipv4))
         {
             std::cout << "Can't start network\n";
         }

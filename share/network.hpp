@@ -2,6 +2,9 @@
 #include "FastEngine/manager/network_manager.hpp"
 #include "FastEngine/network/C_server.hpp"
 
+#define F_NET_DEFAULT_IP "127.0.0.1"
+#define F_NET_DEFAULT_PORT 27421
+#define F_NET_DEFAULT_ONLINE_MODE false
 #define F_NET_STRING_SEQ "ProjectFichillshGG"
 #define F_NET_CLIENT_HELLO "Hello"
 #define F_NET_SERVER_HELLO "Hi"
