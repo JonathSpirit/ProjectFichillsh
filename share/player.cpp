@@ -328,7 +328,6 @@ FGE_OBJ_UPDATE_BODY(Player)
 {
     FGE_OBJ_UPDATE_CALL(this->g_objAnim);
     FGE_OBJ_UPDATE_CALL(this->g_objAnimShadow);
-    FGE_OBJ_UPDATE_CALL(this->g_objChatText);
 
     if (!this->g_isUserControlled)
     {
@@ -582,14 +581,10 @@ FGE_OBJ_UPDATE_BODY(Player)
 FGE_OBJ_DRAW_BODY(Player)
 {
     auto copyStats = states.copy();
-    copyStats._resTransform.set(target.requestGlobalTransform(*this, copyStats._resTransform));
+    copyStats._resTransform.set(target.requestGlobalTransform(*this, states._resTransform));
 
     this->g_objAnimShadow.draw(target, copyStats);
     this->g_objAnim.draw(target, copyStats);
-    if (this->g_state == States::CHATTING)
-    {
-        this->g_objChatText.draw(target, copyStats);
-    }
 }
 #endif //FGE_DEF_SERVER
 
@@ -607,13 +602,17 @@ void Player::first(fge::Scene& scene)
     this->g_objAnimShadow.scale({0.8f, 0.7f});
     this->g_objAnimShadow.setColor({255, 255, 255, 30});
 
-    this->g_objChatText.setFont("default");
-    this->g_objChatText.setCharacterSize(44);
-    this->g_objChatText.scale(0.2f);
-    this->g_objChatText.setFillColor(fge::Color::White);
-    this->g_objChatText.setOutlineColor(fge::Color::Black);
-    this->g_objChatText.setOutlineThickness(1.0f);
-    this->g_objChatText.setPosition({0.0f, -20.0f});
+    this->g_objChatText->setFont("default");
+    this->g_objChatText->setCharacterSize(44);
+    this->g_objChatText->scale(0.2f);
+    this->g_objChatText->setFillColor(fge::Color::White);
+    this->g_objChatText->setOutlineColor(fge::Color::Black);
+    this->g_objChatText->setOutlineThickness(1.0f);
+    this->g_objChatText->setPosition({0.0f, -20.0f});
+
+    this->g_objChatText->_drawMode = DrawModes::DRAW_ALWAYS_HIDDEN;
+
+    this->g_objChatText.detach(this, FGE_SCENE_PLAN_TOP);
 
 #ifndef FGE_DEF_SERVER
     //Create the player's body
@@ -793,9 +792,10 @@ void Player::startChatting([[maybe_unused]] fge::Event& event)
 {
 #ifndef FGE_DEF_SERVER
     this->g_state = States::CHATTING;
-    this->g_objChatText.setString(">");
-    auto const posx = this->g_objChatText.getGlobalBounds()._width / 2.0f;
-    this->g_objChatText.setPosition({-posx, this->g_objChatText.getPosition().y});
+    this->g_objChatText->setString(">");
+    auto const posx = this->g_objChatText->getGlobalBounds()._width / 2.0f;
+    this->g_objChatText->setPosition({-posx, this->g_objChatText->getPosition().y});
+    this->g_objChatText->_drawMode = DrawModes::DRAW_ALWAYS_DRAWN;
 
     event._onTextInput.addLambda([&](fge::Event const& evt, SDL_TextInputEvent const& arg) {
         auto const key = evt.getKeyUnicode();
@@ -806,41 +806,42 @@ void Player::startChatting([[maybe_unused]] fge::Event& event)
             return;
         }
 
-        auto str = this->g_objChatText.getString();
+        auto str = this->g_objChatText->getString();
         if (str.size() - 1 < F_NET_CHAT_MAX_SIZE)
         {
             str += key;
-            this->g_objChatText.setString(std::move(str));
+            this->g_objChatText->setString(std::move(str));
         }
 
-        auto const posx = this->g_objChatText.getGlobalBounds()._width / 2.0f;
-        this->g_objChatText.setPosition({-posx, this->g_objChatText.getPosition().y});
+        auto const posx = this->g_objChatText->getGlobalBounds()._width / 2.0f;
+        this->g_objChatText->setPosition({-posx, this->g_objChatText->getPosition().y});
     }, this);
     event._onKeyDown.addLambda([&](fge::Event const& evt, SDL_KeyboardEvent const& arg) {
         if (arg.keysym.sym == SDLK_BACKSPACE)
         {
-            auto str = this->g_objChatText.getString();
+            auto str = this->g_objChatText->getString();
             if (str.size() > 1)
             {
                 str.pop_back();
-                this->g_objChatText.setString(std::move(str));
+                this->g_objChatText->setString(std::move(str));
             }
         }
         else if (arg.keysym.sym == SDLK_RETURN || arg.keysym.sym == SDLK_ESCAPE)
         {
             this->g_state = States::WALKING;
+            this->g_objChatText->_drawMode = DrawModes::DRAW_ALWAYS_HIDDEN;
             evt._onTextInput.delSub(this);
             evt._onKeyDown.delSub(this);
-            auto str = this->g_objChatText.getString();
-            if (this->g_objChatText.getString().size() > 1)
+            auto str = this->g_objChatText->getString();
+            if (this->g_objChatText->getString().size() > 1)
             {
                 str.erase(0, 1); //Remove the '>' character
                 gGameHandler->pushChatEvent(str.cpp_str());
             }
         }
 
-        auto const posx = this->g_objChatText.getGlobalBounds()._width / 2.0f;
-        this->g_objChatText.setPosition({-posx, this->g_objChatText.getPosition().y});
+        auto const posx = this->g_objChatText->getGlobalBounds()._width / 2.0f;
+        this->g_objChatText->setPosition({-posx, this->g_objChatText->getPosition().y});
     }, this);
 #endif // FGE_DEF_SERVER
 }
