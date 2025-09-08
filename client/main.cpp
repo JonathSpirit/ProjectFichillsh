@@ -98,6 +98,9 @@ public:
         fge::texture::gManager.loadFromFile("fishingIcon", "resources/sprites/fishingIcon.png");
         fge::texture::gManager.loadFromFile("stars", "resources/sprites/stars.png");
         fge::texture::gManager.loadFromFile("hearts", "resources/sprites/hearts.png");
+        fge::texture::gManager.loadFromFile("book_1", "resources/sprites/book_1.png");
+        fge::texture::gManager.loadFromFile("arrows", "resources/sprites/arrows.png");
+        fge::texture::gManager.loadFromFile("close_1", "resources/sprites/close_1.png");
 
         //Load animations
         fge::anim::gManager.loadFromFile("human_1", "resources/sprites/human_1.json");
@@ -285,6 +288,21 @@ public:
             }
         }
 
+        //Load player collection
+        if (!gGameHandler->loadPlayerCollectionFromFile())
+        {
+            std::cout << "Can't load player collection\n";
+        }
+
+        //Setup events
+        event._onKeyUp.addLambda([](fge::Event const& evt, SDL_KeyboardEvent const& arg) {
+            if (arg.keysym.sym == SDLK_b)
+            {
+                gGameHandler->openPlayerCollection();
+            }
+        });
+
+        //Setup network events
         network._onClientDisconnected.addLambda([&](fge::net::ClientSideNetUdp& net) {
             std::cout << "Connection lost ! (disconnected from server)" << std::endl;
             this->stopNetwork(network);

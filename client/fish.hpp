@@ -55,3 +55,6 @@ public:
 };
 
 extern FishManager gFishManager;
+
+void to_json(nlohmann::json& j, FishInstance const& p);
+void from_json(nlohmann::json const& j, FishInstance& p);

@@ -539,6 +539,7 @@ FGE_OBJ_UPDATE_BODY(Player)
     //Update position
     auto const bpos = b2Body_GetPosition(this->g_bodyId);
     this->setPosition({bpos.x, bpos.y});
+    this->g_serverPosition = this->getPosition();
 
     //Update plan
     float distanceDown = std::numeric_limits<float>::max();

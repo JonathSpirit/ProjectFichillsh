@@ -7,6 +7,7 @@
 #include "FastEngine/object/C_objSpriteBatches.hpp"
 #include "FastEngine/object/C_objText.hpp"
 #include "FastEngine/object/C_object.hpp"
+#include "FastEngine/object/C_objButton.hpp"
 
 #include "../share/network.hpp"
 #include "box2d/box2d.h"
@@ -28,6 +29,7 @@
 #define F_OWNER "JonathSpirit"
 #define F_REPO "ProjectFichillsh"
 #define F_TEMP_DIR "temp/"
+#define F_COLLECTION_FILE "fish_collection.json"
 
 #define F_TESTING_MINIGAME 0 // Set to 1 to test the minigame without waiting for the fish countdown
 
@@ -58,11 +60,16 @@
 #define F_MINIGAME_LOOSING_HEARTS_SPEED 2.0f
 #define F_MINIGAME_HEARTS_COUNT 3
 
+#define F_COLLECTION_MAX_COL 2
+#define F_COLLECTION_MAX_ROW 3
+
 class Player;
 
 class GameHandler
 {
 public:
+    using FishCollectionData = std::unordered_map<std::string, FishInstance>;
+
     GameHandler(fge::Scene& scene, fge::net::ClientSideNetUdp& network);
     ~GameHandler();
 
@@ -79,12 +86,30 @@ public:
     void pushCaughtFishEvent(std::string const& fishName) const;
     void pushChatEvent(std::string const& chat) const;
 
+    bool loadPlayerCollectionFromFile();
+    void savePlayerCollectionToFile() const;
+    [[nodiscard]] FishCollectionData const& getFishPlayerCollection() const;
+
+    enum NewRecords : uint8_t
+    {
+        RECORD_NONE = 0,
+        RECORD_STARS = 1 << 0,
+        RECORD_WEIGHT = 1 << 1,
+        RECORD_LENGTH = 1 << 2,
+        RECORD_ALL = RECORD_STARS | RECORD_WEIGHT | RECORD_LENGTH
+    };
+    using NewRecords_t = std::underlying_type_t<NewRecords>;
+    NewRecords_t addFishToPlayerCollection(FishInstance const& fish);
+
+    void openPlayerCollection();
+
 private:
     b2WorldId g_bworld{};
     fge::DeltaTime g_checkTime{0};
     fge::Scene* g_scene;
     fge::net::ClientSideNetUdp* g_network;
     unsigned int g_fishCountDown = 0;
+    FishCollectionData g_fishPlayerCollection;
 };
 
 extern std::unique_ptr<GameHandler> gGameHandler;
@@ -129,7 +154,7 @@ class FishAward : public fge::Object
 {
 public:
     FishAward() = default;
-    FishAward(FishInstance const& fishReward);
+    FishAward(FishInstance const& fishReward, GameHandler::NewRecords_t newRecords);
     ~FishAward() override = default;
 
     FGE_OBJ_UPDATE_DECLARE
@@ -151,6 +176,9 @@ private:
     fge::ObjSpriteBatches g_stars;
     fge::ObjText g_text;
     fge::ObjText g_textFishAttributes;
+    fge::ObjText g_newRecordsText;
+    fge::ObjText g_newStarsRecordText;
+    GameHandler::NewRecords_t g_newRecords;
     float g_currentTime = 0.0f;
     fge::Vector2f g_positionGoal;
 };
@@ -180,4 +208,40 @@ private:
     fge::ObjText g_text;
     float g_currentTime = 0.0f;
     fge::Vector2f g_positionGoal;
+};
+
+class FishCollection : public fge::Object
+{
+public:
+    FishCollection() = default;
+    ~FishCollection() override = default;
+
+    FGE_OBJ_UPDATE_DECLARE
+    FGE_OBJ_DRAW_DECLARE
+
+    void first(fge::Scene& scene) override;
+
+    void callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) override;
+
+    char const* getClassName() const override;
+    char const* getReadableClassName() const override;
+
+    [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
+    [[nodiscard]] fge::RectFloat getLocalBounds() const override;
+
+private:
+    struct FishEntry
+    {
+        fge::ObjSprite _sprite;
+        fge::ObjText _textName;
+        fge::ObjText _textAttributes;
+    };
+
+    fge::ObjSprite g_book;
+    fge::DeclareChild<fge::ObjButton> g_buttonNextPage{this};
+    fge::DeclareChild<fge::ObjButton> g_buttonLastPage{this};
+    fge::DeclareChild<fge::ObjButton> g_buttonClose{this};
+    std::vector<FishEntry> g_fishEntries;
+    std::size_t g_currentPage = 0;
+    std::size_t g_maxPage = 0;
 };

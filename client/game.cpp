@@ -112,6 +112,99 @@ void GameHandler::pushChatEvent(std::string const& chat) const
     this->g_network->endReturnEvent();
 }
 
+bool GameHandler::loadPlayerCollectionFromFile()
+{
+    this->g_fishPlayerCollection.clear();
+
+    nlohmann::json jsonFish;
+    if (!fge::LoadJsonFromFile(F_COLLECTION_FILE, jsonFish))
+    {
+        return false;
+    }
+
+    for (auto const& [name, instance] : jsonFish.items())
+    {
+        auto const fishInstance = instance.get<FishInstance>();
+        this->g_fishPlayerCollection[name] = fishInstance;
+        if (name != fishInstance._name)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+void GameHandler::savePlayerCollectionToFile() const
+{
+    nlohmann::json jsonFish;
+
+    for (auto const& [name , instance] : this->g_fishPlayerCollection)
+    {
+        jsonFish[name] = instance;
+    }
+
+    fge::SaveJsonToFile(F_COLLECTION_FILE, jsonFish);
+}
+GameHandler::FishCollectionData const& GameHandler::getFishPlayerCollection() const
+{
+    return this->g_fishPlayerCollection;
+}
+GameHandler::NewRecords_t GameHandler::addFishToPlayerCollection(FishInstance const& fish)
+{
+    auto const it = this->g_fishPlayerCollection.find(fish._name);
+    if (it == this->g_fishPlayerCollection.end())
+    {
+        this->g_fishPlayerCollection.emplace(fish._name, fish);
+        this->savePlayerCollectionToFile();
+        return RECORD_ALL;
+    }
+
+    NewRecords_t newRecords = RECORD_NONE;
+    if (fish._length > it->second._length)
+    {
+        //New record for length
+        it->second._length = fish._length;
+        newRecords |= RECORD_LENGTH;
+    }
+
+    if (fish._weight > it->second._weight)
+    {
+        //New record for weight
+        it->second._weight = fish._weight;
+        newRecords |= RECORD_WEIGHT;
+    }
+
+    if (fish._starCount > it->second._starCount)
+    {
+        //New record for star count
+        it->second._starCount = fish._starCount;
+        newRecords |= RECORD_STARS;
+    }
+
+    if (newRecords != RECORD_NONE)
+    {
+        this->savePlayerCollectionToFile();
+    }
+    return newRecords;
+}
+
+void GameHandler::openPlayerCollection()
+{
+    if (this->g_scene->getFirstObj_ByClass("FISH_COLLECTION"))
+    {
+        return;
+    }
+
+    auto player = this->getPlayer();
+    if (player->getState() != Player::States::WALKING)
+    {
+        return;
+    }
+    player->setState(Player::States::IDLE);
+
+    this->g_scene->newObject<FishCollection>({FGE_SCENE_PLAN_HIGH_TOP + 1});
+}
+
 std::unique_ptr<GameHandler> gGameHandler;
 
 //Minigame
@@ -199,8 +292,12 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         if (this->g_fishRemainingTime <= 0.0f)
         {
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("victory_fish")->_ptr.get(), 0);
-            scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, this->g_fishReward);
+
+            auto const result = gGameHandler->addFishToPlayerCollection(this->g_fishReward);
+
+            scene.newObject<FishAward>({FGE_SCENE_PLAN_HIGH_TOP + 2}, this->g_fishReward, result);
             gGameHandler->pushCaughtFishEvent(this->g_fishReward._name);
+
             scene.delUpdatedObject();
             return;
         }
@@ -361,8 +458,9 @@ fge::RectFloat Minigame::getLocalBounds() const
 
 //FishAward
 
-FishAward::FishAward(FishInstance const& fishReward)
+FishAward::FishAward(FishInstance const& fishReward, GameHandler::NewRecords_t newRecords)
 {
+    this->g_newRecords = newRecords;
     this->g_fishReward = fishReward;
 
     auto const fish = gFishManager.getElement(this->g_fishReward._name);
@@ -403,6 +501,10 @@ void FishAward::update(fge::RenderTarget& target, fge::Event& event, fge::DeltaT
         this->g_text.setOutlineColor(fge::SetAlpha(this->g_text.getOutlineColor(), alpha));
         this->g_textFishAttributes.setFillColor(fge::SetAlpha(this->g_textFishAttributes.getFillColor(), alpha));
         this->g_textFishAttributes.setOutlineColor(fge::SetAlpha(this->g_textFishAttributes.getOutlineColor(), alpha));
+        this->g_newRecordsText.setFillColor(fge::SetAlpha(this->g_newRecordsText.getFillColor(), alpha));
+        this->g_newRecordsText.setOutlineColor(fge::SetAlpha(this->g_newRecordsText.getOutlineColor(), alpha));
+        this->g_newStarsRecordText.setFillColor(fge::SetAlpha(this->g_newStarsRecordText.getFillColor(), alpha));
+        this->g_newStarsRecordText.setOutlineColor(fge::SetAlpha(this->g_newStarsRecordText.getOutlineColor(), alpha));
 
         if (this->g_fish.getColor()._a == 0)
         {
@@ -423,6 +525,8 @@ void FishAward::draw(fge::RenderTarget& target, fge::RenderStates const& states)
     this->g_stars.draw(target, copyStates);
     this->g_text.draw(target, copyStates);
     this->g_textFishAttributes.draw(target, copyStates);
+    this->g_newRecordsText.draw(target, copyStates);
+    this->g_newStarsRecordText.draw(target, copyStates);
 
     target.setView(backupView);
 }
@@ -492,6 +596,40 @@ void FishAward::first(fge::Scene& scene)
                                                      this->g_fishReward._weight, this->g_fishReward._length));
     this->g_textFishAttributes.centerOriginFromLocalBounds();
     this->g_textFishAttributes.setPosition({0.0f, 250.0f});
+
+    this->g_newRecordsText.setFont("default");
+    this->g_newRecordsText.setCharacterSize(25);
+    this->g_newRecordsText.setFillColor(fge::Color::Yellow);
+    this->g_newRecordsText.setOutlineColor(fge::Color::Black);
+    this->g_newRecordsText.setOutlineThickness(1.0f);
+
+    tiny_utf8::string newRecordsStr;
+    if ((this->g_newRecords & GameHandler::RECORD_WEIGHT) > 0)
+    {
+        newRecordsStr += "*new*";
+    }
+    if ((this->g_newRecords & GameHandler::RECORD_LENGTH) > 0)
+    {
+        newRecordsStr += "           *new*";
+    }
+    this->g_newRecordsText.setString(std::move(newRecordsStr));
+    this->g_newRecordsText.centerOriginFromLocalBounds();
+    this->g_newRecordsText.setPosition({0.0f, 270.0f});
+
+    this->g_newStarsRecordText.setFont("default");
+    this->g_newStarsRecordText.setCharacterSize(25);
+    this->g_newStarsRecordText.setFillColor(fge::Color::Yellow);
+    this->g_newStarsRecordText.setOutlineColor(fge::Color::Black);
+    this->g_newStarsRecordText.setOutlineThickness(1.0f);
+    if ((this->g_newRecords & GameHandler::RECORD_STARS) > 0)
+    {
+        this->g_newStarsRecordText.setString("*new*");
+    }
+    else
+    {
+        this->g_newStarsRecordText.setString("");
+    }
+    this->g_newStarsRecordText.setPosition({static_cast<float>(this->g_fishReward._starCount) * starsInterval / 2.0f, 120.0f});
 }
 
 void FishAward::callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) {}
@@ -601,6 +739,184 @@ fge::RectFloat MultiplayerFishAward::getGlobalBounds() const
 }
 
 fge::RectFloat MultiplayerFishAward::getLocalBounds() const
+{
+    return Object::getLocalBounds();
+}
+
+//FishCollection
+
+FGE_OBJ_UPDATE_BODY(FishCollection)
+{
+}
+
+FGE_OBJ_DRAW_BODY(FishCollection)
+{
+    auto const viewBackup = target.getView();
+    target.setView(target.getDefaultView());
+
+    auto copyStates = states.copy();
+    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+
+    this->g_book.draw(target, copyStates);
+    this->g_buttonNextPage->draw(target, copyStates);
+    this->g_buttonLastPage->draw(target, copyStates);
+    this->g_buttonClose->draw(target, copyStates);
+
+    auto const startIndex = this->g_currentPage * (F_COLLECTION_MAX_COL * F_COLLECTION_MAX_ROW);
+    auto const endIndex = startIndex + F_COLLECTION_MAX_COL * F_COLLECTION_MAX_ROW * 2;
+
+    for (std::size_t i = startIndex; i<endIndex; ++i)
+    {
+        if (i >= this->g_fishEntries.size())
+        {
+            break;
+        }
+
+        auto const& entry = this->g_fishEntries[i];
+        entry._sprite.draw(target, copyStates);
+    }
+    for (std::size_t i = startIndex; i<endIndex; ++i)
+    {
+        if (i >= this->g_fishEntries.size())
+        {
+            break;
+        }
+
+        auto const& entry = this->g_fishEntries[i];
+        entry._textName.draw(target, copyStates);
+        entry._textAttributes.draw(target, copyStates);
+    }
+
+    target.setView(viewBackup);
+}
+
+void FishCollection::first(fge::Scene& scene)
+{
+    this->_drawMode = DrawModes::DRAW_ALWAYS_DRAWN;
+
+    auto const screenCenter = static_cast<fge::Vector2f>(scene.getLinkedRenderTarget()->getSize()) / 2.0f;
+
+    this->g_book.setTexture("book_1");
+    this->g_book.scale(14.0f);
+    this->g_book.centerOriginFromLocalBounds();
+    this->g_book.setPosition(screenCenter);
+
+    this->g_buttonClose->setTexture("close_1");
+    this->g_buttonClose->setPosition(screenCenter + fge::Vector2f{550.0f, -320.0f});
+    this->g_buttonClose->scale(4.0f);
+    this->g_buttonClose->ownViewExplicitlySetDefaultView(true);
+    this->g_buttonClose->centerOriginFromLocalBounds();
+    this->g_buttonClose->_onButtonPressed.addLambda([&](fge::ObjButton* button) {
+        if (auto const objectData = this->_myObjectData.lock())
+        {
+            gGameHandler->getPlayer()->setState(Player::States::WALKING);
+            objectData->getScene()->delObject(objectData->getSid());
+        }
+    });
+
+    this->g_buttonNextPage->setTexture("arrows");
+    this->g_buttonNextPage->setTextureOnRect({{16, 0}, {16, 16}});
+    this->g_buttonNextPage->setTextureOffRect({{16, 0}, {16, 16}});
+    this->g_buttonNextPage->setPosition(screenCenter + fge::Vector2f{560.0f, 170.0f});
+    this->g_buttonNextPage->scale(5.0f);
+    this->g_buttonNextPage->ownViewExplicitlySetDefaultView(true);
+    this->g_buttonNextPage->centerOriginFromLocalBounds();
+    this->g_buttonNextPage->_onButtonPressed.addLambda([&](fge::ObjButton* button) {
+        if (this->g_currentPage + 2 >= this->g_maxPage)
+        {
+            return;
+        }
+        this->g_currentPage += 2;
+    });
+
+    this->g_buttonLastPage->setTexture("arrows");
+    this->g_buttonLastPage->setTextureOnRect({{0, 0}, {16, 16}});
+    this->g_buttonLastPage->setTextureOffRect({{0, 0}, {16, 16}});
+    this->g_buttonLastPage->setPosition(screenCenter + fge::Vector2f{-560.0f, 170.0f});
+    this->g_buttonLastPage->scale(5.0f);
+    this->g_buttonLastPage->ownViewExplicitlySetDefaultView(true);
+    this->g_buttonLastPage->centerOriginFromLocalBounds();
+    this->g_buttonLastPage->_onButtonPressed.addLambda([&](fge::ObjButton* button) {
+        this->g_currentPage -= std::min(this->g_currentPage, static_cast<std::size_t>(2));
+    });
+
+    auto const& fishCollection = gGameHandler->getFishPlayerCollection();
+    std::size_t index = 0;
+    bool leftPage = true;
+    for (auto const& [name, instance] : fishCollection)
+    {
+        auto& entry = this->g_fishEntries.emplace_back();
+
+        std::cout << "FishCollection: adding fish " << name << " at index " << index << std::endl;
+        std::cout << "\tcol: " << (index % F_COLLECTION_MAX_COL) << " row: " << (index / F_COLLECTION_MAX_COL) << std::endl;
+
+        auto fishData = gFishManager.getElement(instance._name);
+
+        fge::Vector2f positionOffset = {-450.0f, -240.0f};
+        if (!leftPage)
+        {
+            positionOffset.x = 200.0f;
+        }
+
+        entry._sprite.setTexture(fishData->_ptr->_textureName);
+        entry._sprite.setTextureRect(fishData->_ptr->_textureRect);
+        entry._sprite.centerOriginFromLocalBounds();
+        entry._sprite.scale(8.0f);
+        entry._sprite.setPosition(screenCenter + positionOffset + fge::Vector2f{
+            static_cast<float>(index % F_COLLECTION_MAX_COL) * 240.0f,
+            static_cast<float>(index / F_COLLECTION_MAX_COL) * 150.0f});
+
+        entry._textName.setString(instance._name);
+        entry._textName.setFont("default");
+        entry._textName.setCharacterSize(24);
+        entry._textName.setFillColor(fge::Color::Black);
+        entry._textName.setPosition(entry._sprite.getPosition() + fge::Vector2f{-70.0f, 30.0f});
+
+        entry._textAttributes.setString(std::format("Length: {:.2f} cm\nWeight: {:.3f} kg\nStars: {}",
+                                                     instance._length, instance._weight, instance._starCount));
+        entry._textAttributes.setFont("default");
+        entry._textAttributes.setCharacterSize(24);
+        entry._textAttributes.setFillColor(fge::Color::Black);
+        entry._textAttributes.setPosition(entry._sprite.getPosition() + fge::Vector2f{-70.0f, 50.0f});
+
+        ++index;
+
+        if (index >= F_COLLECTION_MAX_COL * F_COLLECTION_MAX_ROW)
+        {
+            leftPage = !leftPage;
+            index = 0;
+        }
+    }
+    this->g_maxPage = fishCollection.size() / (F_COLLECTION_MAX_COL * F_COLLECTION_MAX_ROW);
+    this->g_currentPage = 0;
+
+    std::cout << "current: " << this->g_currentPage << " max: " << this->g_maxPage << std::endl;
+
+}
+
+void FishCollection::callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr)
+{
+    this->g_buttonNextPage->callbackRegister(event, guiElementHandlerPtr);
+    this->g_buttonLastPage->callbackRegister(event, guiElementHandlerPtr);
+    this->g_buttonClose->callbackRegister(event, guiElementHandlerPtr);
+}
+
+char const* FishCollection::getClassName() const
+{
+    return "FISH_COLLECTION";
+}
+
+char const* FishCollection::getReadableClassName() const
+{
+    return "fish player collection";
+}
+
+fge::RectFloat FishCollection::getGlobalBounds() const
+{
+    return Object::getGlobalBounds();
+}
+
+fge::RectFloat FishCollection::getLocalBounds() const
 {
     return Object::getLocalBounds();
 }
