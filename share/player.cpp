@@ -546,7 +546,7 @@ FGE_OBJ_UPDATE_BODY(Player)
     float distanceUp = std::numeric_limits<float>::max();
     for (auto const& y: this->g_transitionYPoints)
     {
-        auto const distance = y - (this->getPosition().y + this->g_objAnim.getOrigin().y/2.0f);
+        auto const distance = y - (this->getPosition().y + this->g_objAnim.getOrigin().y / 2.0f);
         if (distance > 0.0f)
         {
             if (distance < distanceDown)
@@ -562,7 +562,8 @@ FGE_OBJ_UPDATE_BODY(Player)
             }
         }
     }
-    distanceUp -= 4.0f; //TODO: this offset is here to mitigate the effect when 2 rocks are very close, find a better solution
+    distanceUp -=
+            4.0f; //TODO: this offset is here to mitigate the effect when 2 rocks are very close, find a better solution
     if (distanceUp < distanceDown)
     {
         if (!this->g_transitionLast)
@@ -654,7 +655,8 @@ void Player::first(fge::Scene& scene)
                 tileSize = tile.getTileSet()->getTileSize();
             }
 
-            auto const position = mapDepthObjects->getPosition() + tile.getPosition() + static_cast<fge::Vector2f>(tileSize)/2.0f;
+            auto const position =
+                    mapDepthObjects->getPosition() + tile.getPosition() + static_cast<fge::Vector2f>(tileSize) / 2.0f;
             this->g_transitionYPoints.emplace_back(position.y);
         }
     }

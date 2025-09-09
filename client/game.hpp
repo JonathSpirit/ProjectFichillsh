@@ -2,12 +2,12 @@
 
 #include "FastEngine/C_scene.hpp"
 #include "FastEngine/network/C_server.hpp"
+#include "FastEngine/object/C_objButton.hpp"
 #include "FastEngine/object/C_objRectangleShape.hpp"
 #include "FastEngine/object/C_objSprite.hpp"
 #include "FastEngine/object/C_objSpriteBatches.hpp"
 #include "FastEngine/object/C_objText.hpp"
 #include "FastEngine/object/C_object.hpp"
-#include "FastEngine/object/C_objButton.hpp"
 
 #include "../share/network.hpp"
 #include "box2d/box2d.h"

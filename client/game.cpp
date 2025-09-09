@@ -122,7 +122,7 @@ bool GameHandler::loadPlayerCollectionFromFile()
         return false;
     }
 
-    for (auto const& [name, instance] : jsonFish.items())
+    for (auto const& [name, instance]: jsonFish.items())
     {
         auto const fishInstance = instance.get<FishInstance>();
         this->g_fishPlayerCollection[name] = fishInstance;
@@ -138,7 +138,7 @@ void GameHandler::savePlayerCollectionToFile() const
 {
     nlohmann::json jsonFish;
 
-    for (auto const& [name , instance] : this->g_fishPlayerCollection)
+    for (auto const& [name, instance]: this->g_fishPlayerCollection)
     {
         jsonFish[name] = instance;
     }
@@ -633,7 +633,8 @@ void FishAward::first(fge::Scene& scene)
     {
         this->g_newStarsRecordText.setString("");
     }
-    this->g_newStarsRecordText.setPosition({static_cast<float>(this->g_fishReward._starCount) * starsInterval / 2.0f, 120.0f});
+    this->g_newStarsRecordText.setPosition(
+            {static_cast<float>(this->g_fishReward._starCount) * starsInterval / 2.0f, 120.0f});
 }
 
 void FishAward::callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) {}
@@ -749,9 +750,7 @@ fge::RectFloat MultiplayerFishAward::getLocalBounds() const
 
 //FishCollection
 
-FGE_OBJ_UPDATE_BODY(FishCollection)
-{
-}
+FGE_OBJ_UPDATE_BODY(FishCollection) {}
 
 FGE_OBJ_DRAW_BODY(FishCollection)
 {
@@ -769,7 +768,7 @@ FGE_OBJ_DRAW_BODY(FishCollection)
     auto const startIndex = this->g_currentPage * (F_COLLECTION_MAX_COL * F_COLLECTION_MAX_ROW);
     auto const endIndex = startIndex + F_COLLECTION_MAX_COL * F_COLLECTION_MAX_ROW * 2;
 
-    for (std::size_t i = startIndex; i<endIndex; ++i)
+    for (std::size_t i = startIndex; i < endIndex; ++i)
     {
         if (i >= this->g_fishEntries.size())
         {
@@ -779,7 +778,7 @@ FGE_OBJ_DRAW_BODY(FishCollection)
         auto const& entry = this->g_fishEntries[i];
         entry._sprite.draw(target, copyStates);
     }
-    for (std::size_t i = startIndex; i<endIndex; ++i)
+    for (std::size_t i = startIndex; i < endIndex; ++i)
     {
         if (i >= this->g_fishEntries.size())
         {
@@ -847,12 +846,13 @@ void FishCollection::first(fge::Scene& scene)
     auto const& fishCollection = gGameHandler->getFishPlayerCollection();
     std::size_t index = 0;
     bool leftPage = true;
-    for (auto const& [name, instance] : fishCollection)
+    for (auto const& [name, instance]: fishCollection)
     {
         auto& entry = this->g_fishEntries.emplace_back();
 
         std::cout << "FishCollection: adding fish " << name << " at index " << index << std::endl;
-        std::cout << "\tcol: " << (index % F_COLLECTION_MAX_COL) << " row: " << (index / F_COLLECTION_MAX_COL) << std::endl;
+        std::cout << "\tcol: " << (index % F_COLLECTION_MAX_COL) << " row: " << (index / F_COLLECTION_MAX_COL)
+                  << std::endl;
 
         auto fishData = gFishManager.getElement(instance._name);
 
@@ -866,9 +866,9 @@ void FishCollection::first(fge::Scene& scene)
         entry._sprite.setTextureRect(fishData->_ptr->_textureRect);
         entry._sprite.centerOriginFromLocalBounds();
         entry._sprite.scale(8.0f);
-        entry._sprite.setPosition(screenCenter + positionOffset + fge::Vector2f{
-            static_cast<float>(index % F_COLLECTION_MAX_COL) * 240.0f,
-            static_cast<float>(index / F_COLLECTION_MAX_COL) * 150.0f});
+        entry._sprite.setPosition(screenCenter + positionOffset +
+                                  fge::Vector2f{static_cast<float>(index % F_COLLECTION_MAX_COL) * 240.0f,
+                                                static_cast<float>(index / F_COLLECTION_MAX_COL) * 150.0f});
 
         entry._textName.setString(instance._name);
         entry._textName.setFont("default");
@@ -876,8 +876,8 @@ void FishCollection::first(fge::Scene& scene)
         entry._textName.setFillColor(fge::Color::Black);
         entry._textName.setPosition(entry._sprite.getPosition() + fge::Vector2f{-70.0f, 30.0f});
 
-        entry._textAttributes.setString(std::format("Length: {:.2f} cm\nWeight: {:.3f} kg\nStars: {}",
-                                                     instance._length, instance._weight, instance._starCount));
+        entry._textAttributes.setString(std::format("Length: {:.2f} cm\nWeight: {:.3f} kg\nStars: {}", instance._length,
+                                                    instance._weight, instance._starCount));
         entry._textAttributes.setFont("default");
         entry._textAttributes.setCharacterSize(24);
         entry._textAttributes.setFillColor(fge::Color::Black);
@@ -895,7 +895,6 @@ void FishCollection::first(fge::Scene& scene)
     this->g_currentPage = 0;
 
     std::cout << "current: " << this->g_currentPage << " max: " << this->g_maxPage << std::endl;
-
 }
 
 void FishCollection::callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr)
@@ -952,7 +951,8 @@ FGE_OBJ_UPDATE_BODY(FishCollectionIcon)
         }
         break;
     case States::HIDING:
-        this->setOrigin(fge::ReachVector(this->getOrigin(), {0.0f, 16.0f*this->g_button->getScale().x}, 300.0f, delta));
+        this->setOrigin(
+                fge::ReachVector(this->getOrigin(), {0.0f, 16.0f * this->g_button->getScale().x}, 300.0f, delta));
         if (this->g_time >= 1.0f)
         {
             this->g_time = 0.0f;
@@ -985,9 +985,7 @@ void FishCollectionIcon::first(fge::Scene& scene)
     this->g_button->ownViewExplicitlySetDefaultView(true);
     this->g_button->centerOriginFromLocalBounds();
     this->g_button->setColor(fge::SetAlpha(fge::Color::White, 240));
-    this->g_button->_onButtonPressed.addLambda([&](fge::ObjButton* button) {
-        gGameHandler->openPlayerCollection();
-    });
+    this->g_button->_onButtonPressed.addLambda([&](fge::ObjButton* button) { gGameHandler->openPlayerCollection(); });
     this->g_button->setPriority(1);
 
     this->g_text->setFont("default");
@@ -999,9 +997,8 @@ void FishCollectionIcon::first(fge::Scene& scene)
     this->g_text->setString("B");
     this->g_text->centerOriginFromLocalBounds();
 
-    this->setAnchor(
-        Anchor::Types::ANCHOR_UPRIGHT_CORNER,
-        { Anchor::Shifts::SHIFT_NEGATIVE_BOUNDS, Anchor::Shifts::SHIFT_NONE });
+    this->setAnchor(Anchor::Types::ANCHOR_UPRIGHT_CORNER,
+                    {Anchor::Shifts::SHIFT_NEGATIVE_BOUNDS, Anchor::Shifts::SHIFT_NONE});
     this->updateAnchor();
     this->g_text->setPosition(this->g_button->getPosition() + fge::Vector2f{-20.0f, 20.0f});
 }

@@ -112,17 +112,17 @@ FishInstance FishManager::generateRandomFish() const
     return fishInstance;
 }
 
-void to_json(nlohmann::json &j, FishInstance const &p)
+void to_json(nlohmann::json& j, FishInstance const& p)
 {
     j = nlohmann::json{
-        {"name", p._name},
-        {"weight", p._weight},
-        {"length", p._length},
-        {"starCount", p._starCount},
+            {"name", p._name},
+            {"weight", p._weight},
+            {"length", p._length},
+            {"starCount", p._starCount},
     };
 }
 
-void from_json(nlohmann::json const &j, FishInstance &p)
+void from_json(nlohmann::json const& j, FishInstance& p)
 {
     j.at("name").get_to(p._name);
     j.at("weight").get_to(p._weight);
