@@ -99,6 +99,7 @@ public:
         fge::texture::gManager.loadFromFile("stars", "resources/sprites/stars.png");
         fge::texture::gManager.loadFromFile("hearts", "resources/sprites/hearts.png");
         fge::texture::gManager.loadFromFile("book_1", "resources/sprites/book_1.png");
+        fge::texture::gManager.loadFromFile("book_3", "resources/sprites/book_3.png");
         fge::texture::gManager.loadFromFile("arrows", "resources/sprites/arrows.png");
         fge::texture::gManager.loadFromFile("close_1", "resources/sprites/close_1.png");
 
@@ -208,6 +209,8 @@ public:
         objTopMap->setClearColor(fge::Color{50, 50, 50, 140});
         objTopMap->_tags.add("topMap");
         objTopMap->_drawMode = fge::Object::DrawModes::DRAW_ALWAYS_HIDDEN;
+
+        this->newObject<FishCollectionIcon>({FGE_SCENE_PLAN_HIGH_TOP});
 
         // Create a tileMap object
         auto tilemap = fge::TileMap::create();

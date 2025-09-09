@@ -102,6 +102,7 @@ public:
     NewRecords_t addFishToPlayerCollection(FishInstance const& fish);
 
     void openPlayerCollection();
+    [[nodiscard]] bool isPlayerCollectionOpen() const;
 
 private:
     b2WorldId g_bworld{};
@@ -244,4 +245,36 @@ private:
     std::vector<FishEntry> g_fishEntries;
     std::size_t g_currentPage = 0;
     std::size_t g_maxPage = 0;
+};
+
+class FishCollectionIcon : public fge::Object
+{
+public:
+    FishCollectionIcon() = default;
+    ~FishCollectionIcon() override = default;
+
+    FGE_OBJ_UPDATE_DECLARE
+    FGE_OBJ_DRAW_DECLARE
+
+    void first(fge::Scene& scene) override;
+
+    void callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) override;
+
+    char const* getClassName() const override;
+    char const* getReadableClassName() const override;
+
+    [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
+    [[nodiscard]] fge::RectFloat getLocalBounds() const override;
+
+private:
+    fge::DeclareChild<fge::ObjButton> g_button{this};
+    fge::DeclareChild<fge::ObjText> g_text{this};
+    enum class States
+    {
+        IDLE_HIDDEN,
+        SHOWING,
+        IDLE_SHOWN,
+        HIDING
+    } g_state = States::SHOWING;
+    float g_time = 0.0f;
 };

@@ -190,7 +190,7 @@ GameHandler::NewRecords_t GameHandler::addFishToPlayerCollection(FishInstance co
 
 void GameHandler::openPlayerCollection()
 {
-    if (this->g_scene->getFirstObj_ByClass("FISH_COLLECTION"))
+    if (this->isPlayerCollectionOpen())
     {
         return;
     }
@@ -203,6 +203,10 @@ void GameHandler::openPlayerCollection()
     player->setState(Player::States::IDLE);
 
     this->g_scene->newObject<FishCollection>({FGE_SCENE_PLAN_HIGH_TOP + 1});
+}
+bool GameHandler::isPlayerCollectionOpen() const
+{
+    return this->g_scene->getFirstObj_ByClass("FISH_COLLECTION") != nullptr;
 }
 
 std::unique_ptr<GameHandler> gGameHandler;
@@ -919,4 +923,128 @@ fge::RectFloat FishCollection::getGlobalBounds() const
 fge::RectFloat FishCollection::getLocalBounds() const
 {
     return Object::getLocalBounds();
+}
+
+//FishCollectionIcon
+
+FGE_OBJ_UPDATE_BODY(FishCollectionIcon)
+{
+    float const delta = fge::DurationToSecondFloat(deltaTime);
+    this->g_time += delta;
+
+    switch (this->g_state)
+    {
+    case States::IDLE_HIDDEN:
+        break;
+    case States::SHOWING:
+        this->setOrigin(fge::ReachVector(this->getOrigin(), {0.0f, 0.0f}, 300.0f, delta));
+        if (this->g_time >= 1.0f)
+        {
+            this->g_time = 0.0f;
+            this->g_state = States::IDLE_SHOWN;
+        }
+        break;
+    case States::IDLE_SHOWN:
+        if (this->g_time >= 3.0f)
+        {
+            this->g_time = 0.0f;
+            this->g_state = States::HIDING;
+        }
+        break;
+    case States::HIDING:
+        this->setOrigin(fge::ReachVector(this->getOrigin(), {0.0f, 16.0f*this->g_button->getScale().x}, 300.0f, delta));
+        if (this->g_time >= 1.0f)
+        {
+            this->g_time = 0.0f;
+            this->g_state = States::IDLE_HIDDEN;
+        }
+        break;
+    }
+}
+
+FGE_OBJ_DRAW_BODY(FishCollectionIcon)
+{
+    auto const viewBackup = target.getView();
+    target.setView(target.getDefaultView());
+
+    auto copyStates = states.copy();
+    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+
+    this->g_button->draw(target, copyStates);
+    this->g_text->draw(target, copyStates);
+
+    target.setView(viewBackup);
+}
+
+void FishCollectionIcon::first(fge::Scene& scene)
+{
+    this->_drawMode = DrawModes::DRAW_ALWAYS_DRAWN;
+
+    this->g_button->setTexture("book_3");
+    this->g_button->scale(7.0f);
+    this->g_button->ownViewExplicitlySetDefaultView(true);
+    this->g_button->centerOriginFromLocalBounds();
+    this->g_button->setColor(fge::SetAlpha(fge::Color::White, 240));
+    this->g_button->_onButtonPressed.addLambda([&](fge::ObjButton* button) {
+        gGameHandler->openPlayerCollection();
+    });
+    this->g_button->setPriority(1);
+
+    this->g_text->setFont("default");
+    this->g_text->setCharacterSize(80);
+    this->g_text->scale(1.2f);
+    this->g_text->setFillColor(fge::SetAlpha(fge::Color::White, 240));
+    this->g_text->setOutlineColor(fge::SetAlpha(fge::Color::Black, 240));
+    this->g_text->setOutlineThickness(1.0f);
+    this->g_text->setString("B");
+    this->g_text->centerOriginFromLocalBounds();
+
+    this->setAnchor(
+        Anchor::Types::ANCHOR_UPRIGHT_CORNER,
+        { Anchor::Shifts::SHIFT_NEGATIVE_BOUNDS, Anchor::Shifts::SHIFT_NONE });
+    this->updateAnchor();
+    this->g_text->setPosition(this->g_button->getPosition() + fge::Vector2f{-20.0f, 20.0f});
+}
+
+void FishCollectionIcon::callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr)
+{
+    this->g_button->callbackRegister(event, guiElementHandlerPtr);
+
+    guiElementHandlerPtr->_onGuiResized.addLambda([&](fge::GuiElementHandler const& gui, fge::Vector2f const& arg) {
+        this->updateAnchor();
+        this->g_text->setPosition(this->g_button->getPosition() + fge::Vector2f{-20.0f, 20.0f});
+    });
+
+    event._onMouseMotion.addLambda([&](fge::Event const& evt, SDL_MouseMotionEvent const& arg) {
+        if (gGameHandler->isPlayerCollectionOpen())
+        {
+            return;
+        }
+
+        if (this->g_state == States::HIDING || this->g_state == States::IDLE_HIDDEN)
+        {
+            this->g_state = States::SHOWING;
+        }
+        this->g_time = 0.0f;
+    });
+}
+
+char const* FishCollectionIcon::getClassName() const
+{
+    return "FISH_COLLECTION_ICON";
+}
+
+char const* FishCollectionIcon::getReadableClassName() const
+{
+    return "fish player collection icon";
+}
+
+fge::RectFloat FishCollectionIcon::getGlobalBounds() const
+{
+    return this->getTransform() * this->g_button->getGlobalBounds();
+}
+
+fge::RectFloat FishCollectionIcon::getLocalBounds() const
+{
+    return this->g_button->getLocalBounds();
 }
