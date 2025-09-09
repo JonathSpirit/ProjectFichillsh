@@ -546,7 +546,7 @@ FGE_OBJ_UPDATE_BODY(Player)
     float distanceUp = std::numeric_limits<float>::max();
     for (auto const& y: this->g_transitionYPoints)
     {
-        auto const distance = y - this->getPosition().y;
+        auto const distance = y - (this->getPosition().y + this->g_objAnim.getOrigin().y/2.0f);
         if (distance > 0.0f)
         {
             if (distance < distanceDown)
@@ -562,6 +562,7 @@ FGE_OBJ_UPDATE_BODY(Player)
             }
         }
     }
+    distanceUp -= 4.0f; //TODO: this offset is here to mitigate the effect when 2 rocks are very close, find a better solution
     if (distanceUp < distanceDown)
     {
         if (!this->g_transitionLast)
@@ -642,12 +643,18 @@ void Player::first(fge::Scene& scene)
     this->g_transitionYPoints.clear();
     auto const tilemap = scene.getFirstObj_ByTag("map")->getObject<fge::ObjTileLayer>()->getTileMap();
     auto const mapDepthObjects = tilemap->findLayerName("DepthObjects")->get()->as<fge::TileLayer>();
+    fge::Vector2i tileSize{0, 0};
     for (auto const& tile: mapDepthObjects->getTiles())
     {
         auto const gid = tile.getGid();
         if (gid != FGE_LAYER_BAD_ID)
         {
-            auto const position = mapDepthObjects->getPosition() + tile.getPosition();
+            if (tileSize.x == 0 && tileSize.y == 0)
+            {
+                tileSize = tile.getTileSet()->getTileSize();
+            }
+
+            auto const position = mapDepthObjects->getPosition() + tile.getPosition() + static_cast<fge::Vector2f>(tileSize)/2.0f;
             this->g_transitionYPoints.emplace_back(position.y);
         }
     }
@@ -737,6 +744,24 @@ void Player::setDirection(fge::Vector2i const& direction)
 void Player::setState(States state)
 {
     this->g_state = state;
+    if (state == States::IDLE)
+    {
+        auto animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
+        animationName = animationName.substr(animationName.find('_'));
+        animationName = "idle" + animationName;
+        if (this->g_audioWalking != -1)
+        {
+            if (Mix_Playing(this->g_audioWalking) != 0)
+            {
+                Mix_HaltChannel(this->g_audioWalking);
+            }
+            this->g_audioWalking = -1;
+        }
+
+        b2Body_SetLinearVelocity(this->g_bodyId, {0.0f, 0.0f});
+        this->g_objAnim.getAnimation().setGroup(animationName);
+        this->g_objAnimShadow.getAnimation().setGroup(animationName);
+    }
 }
 void Player::setServerPosition(fge::Vector2f const& position)
 {
