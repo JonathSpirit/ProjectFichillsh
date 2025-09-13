@@ -156,6 +156,8 @@ public:
         fge::audio::gManager.loadFromFile("splash", "resources/audio/splash_1.ogg");
         fge::audio::gManager.loadFromFile("victory_fish", "resources/audio/positive_1.ogg");
         fge::audio::gManager.loadFromFile("ducky", "resources/audio/duck_1.ogg");
+        fge::audio::gManager.loadFromFile("jingle", "resources/audio/jingle_1.ogg");
+        fge::audio::gManager.loadFromFile("fish_is_here", "resources/audio/fish_is_here_1.ogg");
 
         //Load fishes
         gFishManager.loadFromFile("algae", 10.0f, 50.0f, 1.0f, 5.0f, FishData::Rarity::COMMON,

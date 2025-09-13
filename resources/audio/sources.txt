@@ -32,3 +32,8 @@ Original name : Duck quacking
     URL : https://pixabay.com/sound-effects/duck-quacking-37392/
     Author : DigPro120 (Freesound)
     Original license : Pixabay Content License
+
+Original name : WinSquare
+    URL : https://pixabay.com/sound-effects/winsquare-6993/
+    Author : Fupicat (Freesound)
+    Original license : Pixabay Content License

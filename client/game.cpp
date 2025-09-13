@@ -239,6 +239,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         {
             this->g_currentTime = 0.0f;
             this->g_state = States::FISH_TIME;
+            Mix_PlayChannel(-1, fge::audio::gManager.getElement("jingle")->_ptr.get(), 0);
             return;
         }
 
@@ -516,6 +517,8 @@ void Minigame::first(fge::Scene& scene)
     }
     auto player = gGameHandler->getPlayer();
     player->catchingFish();
+
+    Mix_PlayChannel(-1, fge::audio::gManager.getElement("fish_is_here")->_ptr.get(), 0);
 }
 void Minigame::removed(fge::Scene& scene)
 {
