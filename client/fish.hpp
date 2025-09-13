@@ -4,6 +4,8 @@
 #include "FastEngine/manager/C_baseManager.hpp"
 
 #define F_FISH_STAR_MAX 5
+#define F_FISH_FORCE_FISH 0
+#define F_FISH_FORCE_FISHNAME "duck-fish" // Set the fish to give in minigame when F_FISH_FORCE_FISH is 1
 
 struct FishData
 {

@@ -79,7 +79,11 @@ std::string const& FishManager::getRandomFishName() const
 FishInstance FishManager::generateRandomFish() const
 {
     FishInstance fishInstance;
+#if F_FISH_FORCE_FISH == 1
+    fishInstance._name = F_FISH_FORCE_FISHNAME;
+#else
     fishInstance._name = this->getRandomFishName();
+#endif
     auto const& fishData = this->getElement(fishInstance._name);
 
     fishInstance._weight = fge::_random.range(fishData->_ptr->_weightMin, fishData->_ptr->_weightMax);
