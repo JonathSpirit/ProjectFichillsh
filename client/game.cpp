@@ -687,7 +687,7 @@ void FishAward::first(fge::Scene& scene)
     this->g_textFishAttributes.setOutlineColor(fge::Color::Black);
     this->g_textFishAttributes.setOutlineThickness(1.0f);
 
-    this->g_textFishAttributes.setString(std::format("Weight: {:.3f} kg\t\tLength: {:.2f} cm",
+    this->g_textFishAttributes.setString(std::format("Weight: {:.2f} g\t\tLength: {:.2f} cm",
                                                      this->g_fishReward._weight, this->g_fishReward._length));
     this->g_textFishAttributes.centerOriginFromLocalBounds();
     this->g_textFishAttributes.setPosition({0.0f, 250.0f});
@@ -967,7 +967,7 @@ void FishCollection::first(fge::Scene& scene)
         entry._textName.setFillColor(fge::Color::Black);
         entry._textName.setPosition(entry._sprite.getPosition() + fge::Vector2f{-70.0f, 30.0f});
 
-        entry._textAttributes.setString(std::format("Length: {:.2f} cm\nWeight: {:.3f} kg\nStars: {}", instance._length,
+        entry._textAttributes.setString(std::format("Length: {:.2f} cm\nWeight: {:.2f} g\nStars: {}", instance._length,
                                                     instance._weight, instance._starCount));
         entry._textAttributes.setFont("default");
         entry._textAttributes.setCharacterSize(24);
