@@ -170,8 +170,6 @@ public:
                                   "resources/sprites/fishes/fish-halfbeak.png");
         gFishManager.loadFromFile("herring", 40.0f, 150.0f, 3.0f, 11.0f, FishData::Rarity::COMMON,
                                   "resources/sprites/fishes/fish-herring.png");
-        gFishManager.loadFromFile("pollock", 200.0f, 1000.0f, 10.0f, 40.0f, FishData::Rarity::UNCOMMON,
-                                  "resources/sprites/fishes/fish-pollock.png");
         gFishManager.loadFromFile("sandlance", 10.0f, 70.0f, 1.5f, 7.0f, FishData::Rarity::COMMON,
                                   "resources/sprites/fishes/fish-sandlance.png");
         gFishManager.loadFromFile("sardine", 20.0f, 90.0f, 2.0f, 9.0f, FishData::Rarity::COMMON,
@@ -185,6 +183,8 @@ public:
         gFishManager.loadFromFile("krill-1", 1.0f, 5.0f, 0.2f, 6.0f, FishData::Rarity::COMMON,
                                   "resources/sprites/fishes/krill-1.png");
 
+        gFishManager.loadFromFile("pollock", 200.0f, 1000.0f, 10.0f, 40.0f, FishData::Rarity::UNCOMMON,
+                                  "resources/sprites/fishes/fish-pollock.png");
         gFishManager.loadFromFile("bronze-striped-grunt", 100.0f, 500.0f, 5.0f, 20.0f, FishData::Rarity::UNCOMMON,
                                   "resources/sprites/fishes/fish-bronze-striped-grunt.png");
         gFishManager.loadFromFile("krill-2", 1.0f, 5.0f, 1.0f, 10.0f, FishData::Rarity::UNCOMMON,
@@ -198,6 +198,10 @@ public:
                                   "resources/sprites/fishes/krill-3.png");
         gFishManager.loadFromFile("squid-reef", 100.0f, 500.0f, 5.0f, 20.0f, FishData::Rarity::RARE,
                                   "resources/sprites/fishes/squid-reef.png");
+        gFishManager.loadFromFile("bubble-eyes", 110.0f, 170.0f, 12.0f, 30.0f, FishData::Rarity::RARE,
+                                  "resources/sprites/fishes/bubble-eyes.png");
+        gFishManager.loadFromFile("duck-fish", 500.0f, 1600.0f, 30.0f, 70.0f, FishData::Rarity::RARE,
+                                  "resources/sprites/fishes/duck-fish.png");
 
         //Prepare the view
         auto view = renderWindow.getView();
