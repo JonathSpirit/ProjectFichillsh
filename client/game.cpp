@@ -237,7 +237,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
                     fge::Surface::AngleDirections::CounterClockwise, {140, 140, 140, 200});
                 this->g_keyToPressTexture->update(this->g_keyToPressSurface.get(), {0,0});
 
-                if (event.isKeyPressed(SDLK_a))
+                if (event.getKeyUnicode() == this->g_unicodeKeyToPress)
                 {
                     this->g_currentTime = 0.0f;
                     this->g_state = States::FISH_TIME;
@@ -423,9 +423,13 @@ void Minigame::first(fge::Scene& scene)
     this->g_fishTime.setPosition(gGameHandler->getPlayer()->getPosition());
     this->g_fishTime.setScale(0.0f);
 
+    this->g_unicodeKeyToPress = fge::_random.range<uint32_t>(U'a', U'z');
+
     this->g_keyToPress.setFont("default");
     this->g_keyToPress.setCharacterSize(48);
-    this->g_keyToPress.setString("A");
+    tiny_utf8::string str;
+    str += this->g_unicodeKeyToPress - 32;
+    this->g_keyToPress.setString(std::move(str));
     this->g_keyToPress.setFillColor(fge::Color::White);
     this->g_keyToPress.setOutlineColor(fge::Color::Black);
     this->g_keyToPress.setOutlineThickness(1.0f);

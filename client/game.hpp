@@ -161,6 +161,7 @@ private:
     std::shared_ptr<fge::vulkan::TextureImage> g_keyToPressTexture;
     fge::Surface g_keyToPressSurface;
     float g_keyToPressAngle = 0.0f;
+    uint32_t g_unicodeKeyToPress = 0;
 
     float g_sliderVelocity = 0.0f;
 };
