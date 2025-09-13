@@ -136,6 +136,14 @@ public:
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
 
 private:
+    enum class States
+    {
+        POPPING_KEY,
+        WAITING_INPUT,
+        FISH_TIME,
+        GAMING
+    } g_state = States::POPPING_KEY;
+
     FishInstance g_fishReward;
     float g_difficulty{0.0f};
     std::function<float(float)> g_sinusFunction;
@@ -147,6 +155,12 @@ private:
     fge::ObjRectangleShape g_gaugeSlider;
     fge::ObjSprite g_frame;
     fge::ObjSprite g_fish;
+    fge::ObjSprite g_fishTime;
+    fge::ObjText g_keyToPress;
+    fge::ObjSprite g_keyToPressCircle;
+    std::shared_ptr<fge::vulkan::TextureImage> g_keyToPressTexture;
+    fge::Surface g_keyToPressSurface;
+    float g_keyToPressAngle = 0.0f;
 
     float g_sliderVelocity = 0.0f;
 };

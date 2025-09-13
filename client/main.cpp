@@ -96,6 +96,7 @@ public:
         fge::texture::gManager.loadFromFile("fishBait_1", "resources/sprites/fishBait_1.png");
         fge::texture::gManager.loadFromFile("fishingFrame", "resources/sprites/fishingFrame.png");
         fge::texture::gManager.loadFromFile("fishingIcon", "resources/sprites/fishingIcon.png");
+        fge::texture::gManager.loadFromFile("fishTime", "resources/sprites/fishTime.png");
         fge::texture::gManager.loadFromFile("stars", "resources/sprites/stars.png");
         fge::texture::gManager.loadFromFile("hearts", "resources/sprites/hearts.png");
         fge::texture::gManager.loadFromFile("book_1", "resources/sprites/book_1.png");
@@ -505,6 +506,8 @@ public:
 
         network.disconnect().wait();
         network.stop();
+
+        this->clear();
 
         fge::texture::gManager.uninitialize();
         fge::font::gManager.uninitialize();
