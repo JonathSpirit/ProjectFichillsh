@@ -230,7 +230,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         return;
     case States::WAITING_INPUT:
     {
-        auto const newAngle = fge::ConvertRange(this->g_currentTime, 0.0f, 1.0f, 0.0f, 360.0f);
+        auto const newAngle = fge::ConvertRange(this->g_currentTime, 0.0f, F_MINIGAME_WAITING_KEY_TIME, 0.0f, 360.0f);
         this->g_keyToPressSurface.addUnfilledHollowCircle(
                 32, 32, 0.0f, newAngle, 20, 32, fge::Surface::AngleDirections::CounterClockwise, {140, 140, 140, 200});
         this->g_keyToPressTexture->update(this->g_keyToPressSurface.get(), {0, 0});
@@ -242,7 +242,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
             return;
         }
 
-        if (this->g_currentTime >= 1.0f)
+        if (this->g_currentTime >= F_MINIGAME_WAITING_KEY_TIME)
         { //Failed
             scene.delUpdatedObject();
             Mix_PlayChannel(-1, fge::audio::gManager.getElement("loose_fish")->_ptr.get(), 0);
