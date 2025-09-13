@@ -220,48 +220,47 @@ FGE_OBJ_UPDATE_BODY(Minigame)
 
     switch (this->g_state)
     {
-        case States::POPPING_KEY:
-            this->g_keyToPress.setScale(fge::ReachValue(this->g_keyToPress.getScale().x, 0.3f, 2.0f, delta));
-            if (this->g_keyToPress.getScale().x >= 0.3f)
-            {
-                this->g_currentTime = 0.0f;
-                this->g_state = States::WAITING_INPUT;
-            }
-            return;
-        case States::WAITING_INPUT:
-            {
-                auto const newAngle = fge::ConvertRange(this->g_currentTime, 0.0f, 1.0f, 0.0f, 360.0f);
-                this->g_keyToPressSurface.addUnfilledHollowCircle(32, 32,
-                    0.0f, newAngle,
-                    20, 32,
-                    fge::Surface::AngleDirections::CounterClockwise, {140, 140, 140, 200});
-                this->g_keyToPressTexture->update(this->g_keyToPressSurface.get(), {0,0});
+    case States::POPPING_KEY:
+        this->g_keyToPress.setScale(fge::ReachValue(this->g_keyToPress.getScale().x, 0.3f, 2.0f, delta));
+        if (this->g_keyToPress.getScale().x >= 0.3f)
+        {
+            this->g_currentTime = 0.0f;
+            this->g_state = States::WAITING_INPUT;
+        }
+        return;
+    case States::WAITING_INPUT:
+    {
+        auto const newAngle = fge::ConvertRange(this->g_currentTime, 0.0f, 1.0f, 0.0f, 360.0f);
+        this->g_keyToPressSurface.addUnfilledHollowCircle(
+                32, 32, 0.0f, newAngle, 20, 32, fge::Surface::AngleDirections::CounterClockwise, {140, 140, 140, 200});
+        this->g_keyToPressTexture->update(this->g_keyToPressSurface.get(), {0, 0});
 
-                if (event.getKeyUnicode() == this->g_unicodeKeyToPress)
-                {
-                    this->g_currentTime = 0.0f;
-                    this->g_state = States::FISH_TIME;
-                    return;
-                }
+        if (event.getKeyUnicode() == this->g_unicodeKeyToPress)
+        {
+            this->g_currentTime = 0.0f;
+            this->g_state = States::FISH_TIME;
+            return;
+        }
 
-                if (this->g_currentTime >= 1.0f)
-                {//Failed
-                    scene.delUpdatedObject();
-                    Mix_PlayChannel(-1, fge::audio::gManager.getElement("loose_fish")->_ptr.get(), 0);
-                    return;
-                }
-            }
+        if (this->g_currentTime >= 1.0f)
+        { //Failed
+            scene.delUpdatedObject();
+            Mix_PlayChannel(-1, fge::audio::gManager.getElement("loose_fish")->_ptr.get(), 0);
             return;
-        case States::FISH_TIME:
-            this->g_fishTime.setScale((std::sinf(2.0f * static_cast<float>(FGE_MATH_PI) * 0.7f * this->g_currentTime)+1.0f) / 2.0f);
-            if (this->g_currentTime >= 1.0f/(0.7f*static_cast<float>(FGE_MATH_PI)/2.0f))
-            {
-                this->g_currentTime = 0.0f;
-                this->g_state = States::GAMING;
-            }
-            return;
-        case States::GAMING:
-            break;
+        }
+    }
+        return;
+    case States::FISH_TIME:
+        this->g_fishTime.setScale(
+                (std::sinf(2.0f * static_cast<float>(FGE_MATH_PI) * 0.7f * this->g_currentTime) + 1.0f) / 2.0f);
+        if (this->g_currentTime >= 1.0f / (0.7f * static_cast<float>(FGE_MATH_PI) / 2.0f))
+        {
+            this->g_currentTime = 0.0f;
+            this->g_state = States::GAMING;
+        }
+        return;
+    case States::GAMING:
+        break;
     }
 
     //Update slider
@@ -362,18 +361,18 @@ FGE_OBJ_DRAW_BODY(Minigame)
 {
     switch (this->g_state)
     {
-        case States::POPPING_KEY:
-            this->g_keyToPress.draw(target, states);
-            return;
-        case States::WAITING_INPUT:
-            this->g_keyToPressCircle.draw(target, states);
-            this->g_keyToPress.draw(target, states);
-            return;
-        case States::FISH_TIME:
-            this->g_fishTime.draw(target, states);
-            return;
-        case States::GAMING:
-            break;
+    case States::POPPING_KEY:
+        this->g_keyToPress.draw(target, states);
+        return;
+    case States::WAITING_INPUT:
+        this->g_keyToPressCircle.draw(target, states);
+        this->g_keyToPress.draw(target, states);
+        return;
+    case States::FISH_TIME:
+        this->g_fishTime.draw(target, states);
+        return;
+    case States::GAMING:
+        break;
     }
 
     auto copyStates = states.copy();
