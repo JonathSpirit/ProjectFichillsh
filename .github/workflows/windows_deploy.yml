@@ -7,16 +7,13 @@ on:
 
 env:
   BUILD_TYPE: Release
+  MSYS_SYS: ucrt64
+  MSYS_ENV env: ucrt-x86_64
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { sys: ucrt64, env: ucrt-x86_64 }
-    
     runs-on: windows-latest
+    
     defaults:
       run:
         shell: msys2 {0}
@@ -38,15 +35,15 @@ jobs:
       with:
         msystem: ${{matrix.sys}}
         update: true
-        install: curl git mingw-w64-${{matrix.env}}-gcc mingw-w64-${{matrix.env}}-make
+        install: curl git mingw-w64-${{MSYS_ENV}}-gcc mingw-w64-${{MSYS_ENV}}-make
     
     - name: Downloading cmake
       run: |
-        curl -O "https://repo.msys2.org/mingw/${{matrix.sys}}/mingw-w64-${{matrix.env}}-cmake-3.30.5-1-any.pkg.tar.zst"
+        curl -O "https://repo.msys2.org/mingw/${{MSYS_SYS}}/mingw-w64-${{MSYS_ENV}}-cmake-3.30.5-1-any.pkg.tar.zst"
     
     - name: Installing cmake
       run: |
-        pacman -U --noconfirm "mingw-w64-${{matrix.env}}-cmake-3.30.5-1-any.pkg.tar.zst"
+        pacman -U --noconfirm "mingw-w64-${{MSYS_SYS}}-cmake-3.30.5-1-any.pkg.tar.zst"
     
     - name: Create Build Environment
       run: cmake -E make_directory "${{github.workspace}}\build"
