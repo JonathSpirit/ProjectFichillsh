@@ -26,7 +26,8 @@ jobs:
       with:
         submodules: 'recursive'
     
-    - uses: robinraju/release-downloader@v1
+    - id: download
+      uses: robinraju/release-downloader@v1
       with:
         repository: 'JonathSpirit/FastEngine'
         fileName: 'FastEngine-windows-ucrt-x86_64-ucrt64.zip'
@@ -35,7 +36,7 @@ jobs:
         extract: true
     
     - name: test
-      run: echo ${{ steps.<step-id>.outputs.downloaded_files }}
+      run: echo ${{ steps.download.outputs.downloaded_files }}
     
     - uses: msys2/setup-msys2@v2
       with:
@@ -60,7 +61,7 @@ jobs:
     
     - name: Configure CMake
       working-directory: ${{github.workspace}}\build
-      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D CMAKE_MODULE_PATH="$GITHUB_WORKSPACE/${{ fromJson(steps.<step-id>.outputs.downloaded_files)[0] }}"
+      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D CMAKE_MODULE_PATH="$GITHUB_WORKSPACE/${{ fromJson(steps.download.outputs.downloaded_files)[0] }}"
     
     - name: Build
       working-directory: ${{github.workspace}}\build
