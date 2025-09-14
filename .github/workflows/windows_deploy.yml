@@ -58,7 +58,7 @@ jobs:
     
     - name: Configure CMake
       working-directory: ${{github.workspace}}\build
-      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D CMAKE_MODULE_PATH="${{github.workspace}}/FastEngine_Windows_64_Release_0.9.3-dirty"
+      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D CMAKE_MODULE_PATH="'${{github.workspace}}\\FastEngine_Windows_64_Release_0.9.3-dirty'"
     
     - name: Build
       working-directory: ${{github.workspace}}\build
