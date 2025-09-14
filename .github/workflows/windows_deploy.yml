@@ -58,11 +58,11 @@ jobs:
       
     - name: I love using multiple path seperator
       shell: powershell
-      run: echo ("FGE_PATH=" + "${{github.workspace}}\FastEngine_Windows_64_Release_0.9.3-dirty".replace('\', '/')) >> $env:GITHUB_ENV
+      run: echo "${{ replace(github.workspace, '\\', '/') }}/FastEngine_Windows_64_Release_0.9.3-dirty"
     
     - name: Configure CMake
       working-directory: ${{github.workspace}}\build
-      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D CMAKE_MODULE_PATH="$FGE_PATH"
+      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D CMAKE_MODULE_PATH="${{ replace(github.workspace, '\\', '/') }}/FastEngine_Windows_64_Release_0.9.3-dirty"
     
     - name: Build
       working-directory: ${{github.workspace}}\build
