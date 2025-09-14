@@ -58,7 +58,7 @@ jobs:
       
     - name: I love using multiple path seperator
       shell: powershell
-      run: echo ("FGE_PATH=" + "${{github.workspace}}\\FastEngine_Windows_64_Release_0.9.3-dirty") >> $env:GITHUB_ENV
+      run: echo ("FGE_PATH=" + "${{github.workspace}}\FastEngine_Windows_64_Release_0.9.3-dirty".replace('\', '/')) >> $env:GITHUB_ENV
     
     - name: Configure CMake
       working-directory: ${{github.workspace}}\build
