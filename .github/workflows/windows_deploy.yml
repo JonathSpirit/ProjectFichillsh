@@ -36,6 +36,7 @@ jobs:
         extract: true
     
     - name: test
+      shell: bash
       run: echo ${{ steps.download.outputs.downloaded_files }}
     
     - uses: msys2/setup-msys2@v2
