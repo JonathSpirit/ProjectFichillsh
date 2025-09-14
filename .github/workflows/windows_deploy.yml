@@ -35,10 +35,6 @@ jobs:
         preRelease: true
         extract: true
     
-    - name: test
-      shell: bash
-      run: echo ${{ steps.download.outputs.downloaded_files }}
-    
     - uses: msys2/setup-msys2@v2
       with:
         msystem: ${{matrix.sys}}
@@ -62,7 +58,7 @@ jobs:
     
     - name: Configure CMake
       working-directory: ${{github.workspace}}\build
-      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D CMAKE_MODULE_PATH="$GITHUB_WORKSPACE/${{ fromJson(steps.download.outputs.downloaded_files)[0] }}"
+      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D CMAKE_MODULE_PATH="$GITHUB_WORKSPACE\FastEngine_Windows_64_Release_0.9.3-dirty\"
     
     - name: Build
       working-directory: ${{github.workspace}}\build
