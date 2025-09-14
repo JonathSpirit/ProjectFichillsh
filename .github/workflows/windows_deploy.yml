@@ -8,7 +8,7 @@ on:
 env:
   BUILD_TYPE: Release
   MSYS_SYS: ucrt64
-  MSYS_ENV env: ucrt-x86_64
+  MSYS_ENV: ucrt-x86_64
 
 jobs:
   build:
