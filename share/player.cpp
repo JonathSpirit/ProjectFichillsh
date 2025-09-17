@@ -753,14 +753,18 @@ void Player::setState(States state)
         animationName = "idle" + animationName;
         if (this->g_audioWalking != -1)
         {
+#ifndef FGE_DEF_SERVER
             if (Mix_Playing(this->g_audioWalking) != 0)
             {
                 Mix_HaltChannel(this->g_audioWalking);
             }
+#endif
             this->g_audioWalking = -1;
         }
 
+#ifndef FGE_DEF_SERVER
         b2Body_SetLinearVelocity(this->g_bodyId, {0.0f, 0.0f});
+#endif
         this->g_objAnim.getAnimation().setGroup(animationName);
         this->g_objAnimShadow.getAnimation().setGroup(animationName);
     }

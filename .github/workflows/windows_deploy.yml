@@ -1,0 +1,122 @@
+name: windows_deploy_mingw-w64
+
+on: workflow_dispatch
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { sys: ucrt64, env: ucrt-x86_64 }
+    
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        submodules: 'recursive'
+    
+    - name: Checkout depsRetriever repo
+      uses: actions/checkout@v5
+      with:
+        repository: JonathSpirit/depsRetriever
+        path: depsRetriever
+    
+    - id: download
+      uses: robinraju/release-downloader@v1
+      with:
+        repository: 'JonathSpirit/FastEngine'
+        fileName: 'FastEngine-windows-ucrt-x86_64-ucrt64.zip'
+        tag: 'v0.9.4'
+        preRelease: true
+        extract: true
+    
+    - uses: msys2/setup-msys2@v2
+      id: msys2
+      with:
+        msystem: ${{matrix.sys}}
+        update: true
+        install: curl git mingw-w64-${{matrix.env}}-gcc mingw-w64-${{matrix.env}}-make mingw-w64-${{matrix.env}}-libzip
+    
+    - env:
+        MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
+      run: echo "$env:MSYS2_LOCATION"
+    
+    - name: put msys2 bin to path
+      shell: bash
+      run: echo "${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin" >> $GITHUB_PATH
+    
+    - name: Downloading cmake
+      run: |
+        curl -O "https://repo.msys2.org/mingw/${{matrix.sys}}/mingw-w64-${{matrix.env}}-cmake-3.30.5-1-any.pkg.tar.zst"
+    
+    - name: Installing cmake
+      run: |
+        pacman -U --noconfirm "mingw-w64-${{matrix.env}}-cmake-3.30.5-1-any.pkg.tar.zst"
+    
+    - run: ls
+    
+    - name: Create Build Environment
+      run: cmake -E make_directory "${{github.workspace}}\build"
+    
+    - name: Get number of CPU cores
+      uses: SimenB/github-actions-cpu-cores@v2
+      id: cpu-cores
+      
+    - name: I love using multiple path seperator
+      shell: powershell
+      run: |
+        $path = "${{ github.workspace }}\FastEngine_Windows_64_Release_0.9.4-dirty\share\cmake\FastEngine".replace('\','/')
+        echo "FGE_PATH=$path" >> $env:GITHUB_ENV
+    
+    - name: I love using multiple path seperator 2
+      shell: powershell
+      run: |
+        $path = "${{ github.workspace }}\install".replace('\','/')
+        echo "INSTALL_PATH=$path" >> $env:GITHUB_ENV
+    
+    - name: Configure CMake
+      working-directory: ${{github.workspace}}\build
+      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D FastEngine_DIR="${{env.FGE_PATH}}" -DCMAKE_INSTALL_PREFIX="${{env.INSTALL_PATH}}"
+    
+    - name: Build
+      working-directory: ${{github.workspace}}\build
+      run: cmake --build . -j ${{steps.cpu-cores.outputs.count}} --config $BUILD_TYPE
+    
+    - name: Installing
+      working-directory: ${{github.workspace}}\build
+      run: cmake --install .
+    
+    - name: Now building depsRetriever
+      run: ls
+    
+    - name: Create Build Environment
+      run: cmake -E make_directory "${{github.workspace}}\depsRetriever\build"
+    
+    - name: Configure CMake
+      working-directory: ${{github.workspace}}\depsRetriever\build
+      run: cmake .. -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE
+    
+    - name: Build
+      working-directory: ${{github.workspace}}\depsRetriever\build
+      run: cmake --build . -j ${{steps.cpu-cores.outputs.count}} --config $BUILD_TYPE
+    
+    - name: Run
+      shell: powershell
+      working-directory: ${{github.workspace}}\depsRetriever\build
+      run: ./depsRetriever.exe -f ${{github.workspace}}\install\Fichillsh\libGRUpdater.dll -r --ignoreWindows -c ${{github.workspace}}\install\Fichillsh
+    
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Windows64
+        path: ${{github.workspace}}\install\Fichillsh
+        if-no-files-found: error
+        retention-days: 3
+        compression-level: 9
