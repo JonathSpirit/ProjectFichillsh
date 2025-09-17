@@ -110,11 +110,11 @@ endif()
 #Installation
 include(GNUInstallDirs)
 
-set(ProjectInstallBinDir ${PROJECT_NAME}/${CMAKE_INSTALL_BINDIR})
+set(ProjectInstallBinDir ${PROJECT_NAME})
 
 install(TARGETS ${PROJECT_CLIENT} RUNTIME DESTINATION ${ProjectInstallBinDir})
 install(TARGETS ${PROJECT_SERVER} RUNTIME DESTINATION ${ProjectInstallBinDir})
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources DESTINATION ${ProjectInstallBinDir})
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${ProjectInstallBinDir})
 install(FILES ${CMAKE_SOURCE_DIR}/README.md DESTINATION ${ProjectInstallBinDir})
 install(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION ${ProjectInstallBinDir})
 install(FILES ${CMAKE_SOURCE_DIR}/dynamicFiles.json DESTINATION ${ProjectInstallBinDir})
