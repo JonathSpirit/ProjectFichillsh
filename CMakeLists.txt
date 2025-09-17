@@ -117,6 +117,7 @@ install(TARGETS ${PROJECT_SERVER} RUNTIME DESTINATION ${ProjectInstallBinDir})
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${ProjectInstallBinDir})
 install(FILES ${CMAKE_SOURCE_DIR}/README.md DESTINATION ${ProjectInstallBinDir})
 install(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION ${ProjectInstallBinDir})
+install(FILES ${CMAKE_SOURCE_DIR}/RESOURCES_LICENSE DESTINATION ${ProjectInstallBinDir})
 install(FILES ${CMAKE_SOURCE_DIR}/dynamicFiles.json DESTINATION ${ProjectInstallBinDir})
 install(FILES ${CMAKE_SOURCE_DIR}/server.json DESTINATION ${ProjectInstallBinDir})
 
