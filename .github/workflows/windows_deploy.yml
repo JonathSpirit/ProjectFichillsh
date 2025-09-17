@@ -37,7 +37,7 @@ jobs:
       with:
         repository: 'JonathSpirit/FastEngine'
         fileName: 'FastEngine-windows-ucrt-x86_64-ucrt64.zip'
-        latest: true
+        tag: 'v0.9.4'
         preRelease: true
         extract: true
     
@@ -67,7 +67,7 @@ jobs:
     - name: I love using multiple path seperator
       shell: powershell
       run: |
-        $path = "${{ github.workspace }}\FastEngine_Windows_64_Release_0.9.3-dirty\share\cmake\FastEngine".replace('\','/')
+        $path = "${{ github.workspace }}\FastEngine_Windows_64_Release_0.9.4-dirty\share\cmake\FastEngine".replace('\','/')
         echo "FGE_PATH=$path" >> $env:GITHUB_ENV
     
     - name: I love using multiple path seperator 2
