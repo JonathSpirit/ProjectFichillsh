@@ -24,6 +24,7 @@ FetchContent_Declare(
         GRUpdater
         GIT_REPOSITORY https://github.com/JonathSpirit/GRUpdater.git
         GIT_TAG master
+        EXCLUDE_FROM_ALL
 )
 
 FetchContent_MakeAvailable(GRUpdater)
@@ -33,6 +34,7 @@ FetchContent_Declare(
         box2d
         GIT_REPOSITORY https://github.com/erincatto/box2d.git
         GIT_TAG f0763aca7d4dfa8f1c19c2c4a9e66fa6e93ea32e
+        EXCLUDE_FROM_ALL
 )
 
 set(BOX2D_SAMPLES OFF)
@@ -102,5 +104,31 @@ if(WIN32)
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 $<TARGET_FILE:${FGE_LINK_LIBRARY}>
                 $<TARGET_FILE_DIR:${PROJECT_SERVER}>)
+    endforeach()
+endif()
+
+#Installation
+include(GNUInstallDirs)
+
+set(ProjectInstallBinDir ${PROJECT_NAME}/${CMAKE_INSTALL_BINDIR})
+
+install(TARGETS ${PROJECT_CLIENT} RUNTIME DESTINATION ${ProjectInstallBinDir})
+install(TARGETS ${PROJECT_SERVER} RUNTIME DESTINATION ${ProjectInstallBinDir})
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources DESTINATION ${ProjectInstallBinDir})
+install(FILES ${CMAKE_SOURCE_DIR}/README.md DESTINATION ${ProjectInstallBinDir})
+install(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION ${ProjectInstallBinDir})
+install(FILES ${CMAKE_SOURCE_DIR}/dynamicFiles.json DESTINATION ${ProjectInstallBinDir})
+install(FILES ${CMAKE_SOURCE_DIR}/server.json DESTINATION ${ProjectInstallBinDir})
+
+install(TARGETS GRUpdater RUNTIME DESTINATION ${ProjectInstallBinDir})
+install(TARGETS GRUpdaterCmd RUNTIME DESTINATION ${ProjectInstallBinDir})
+
+#Install all dlls dependencies on windows
+if(WIN32)
+    foreach (FGE_LINK_LIBRARY ${FGE_LINK_CLIENT_LIBRARIES})
+        install(FILES $<TARGET_FILE:${FGE_LINK_LIBRARY}> DESTINATION ${ProjectInstallBinDir})
+    endforeach()
+    foreach (FGE_LINK_LIBRARY ${FGE_LINK_SERVER_LIBRARIES})
+        install(FILES $<TARGET_FILE:${FGE_LINK_LIBRARY}> DESTINATION ${ProjectInstallBinDir})
     endforeach()
 endif()

@@ -22,9 +22,15 @@ jobs:
         shell: msys2 {0}
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: 'recursive'
+    
+    - name: Checkout depsRetriever repo
+      uses: actions/checkout@v5
+      with:
+        repository: JonathSpirit/depsRetriever
+        path: depsRetriever
     
     - id: download
       uses: robinraju/release-downloader@v1
@@ -64,9 +70,15 @@ jobs:
         $path = "${{ github.workspace }}\FastEngine_Windows_64_Release_0.9.3-dirty\share\cmake\FastEngine".replace('\','/')
         echo "FGE_PATH=$path" >> $env:GITHUB_ENV
     
+    - name: I love using multiple path seperator 2
+      shell: powershell
+      run: |
+        $path = "${{ github.workspace }}\install".replace('\','/')
+        echo "INSTALL_PATH=$path" >> $env:GITHUB_ENV
+    
     - name: Configure CMake
       working-directory: ${{github.workspace}}\build
-      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D FastEngine_DIR="${{env.FGE_PATH}}"
+      run: cmake $GITHUB_WORKSPACE -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D FastEngine_DIR="${{env.FGE_PATH}}" -DCMAKE_INSTALL_PREFIX="${{env.INSTALL_PATH}}"
     
     - name: Build
       working-directory: ${{github.workspace}}\build
@@ -75,6 +87,25 @@ jobs:
     - name: Installing
       working-directory: ${{github.workspace}}\build
       run: cmake --install .
+    
+    - name: Now building depsRetriever
+      run: ls
+    
+    - name: Create Build Environment
+      run: cmake -E make_directory "${{github.workspace}}\depsRetriever\build"
+    
+    - name: Configure CMake
+      working-directory: ${{github.workspace}}\depsRetriever\build
+      run: cmake .. -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=$BUILD_TYPE
+    
+    - name: Build
+      working-directory: ${{github.workspace}}\depsRetriever\build
+      run: cmake --build . -j ${{steps.cpu-cores.outputs.count}} --config $BUILD_TYPE
+    
+    - name: Run
+      shell: powershell
+      working-directory: ${{github.workspace}}\depsRetriever\build
+      run: ./depsRetriever.exe -f ${{github.workspace}}\install\Fichillsh\bin\Fichillsh_client.exe -r --ignoreWindows
     
     #- uses: actions/upload-artifact@v4
     #  with:
