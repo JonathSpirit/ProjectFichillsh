@@ -66,7 +66,7 @@ target_sources(${PROJECT_SERVER} PRIVATE share/network.hpp)
 target_sources(${PROJECT_SERVER} PRIVATE share/player.cpp share/player.hpp)
 
 #Dependencies
-add_dependencies(${PROJECT_CLIENT} box2d GRUpdater)
+add_dependencies(${PROJECT_CLIENT} box2d GRUpdater GRUpdaterCmd)
 
 target_link_libraries(${PROJECT_CLIENT} PRIVATE SDL2::SDL2main FastEngine::FastEngine)
 target_link_libraries(${PROJECT_CLIENT} PRIVATE box2d GRUpdater)
