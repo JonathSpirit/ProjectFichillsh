@@ -1,9 +1,6 @@
 name: windows_deploy_mingw-w64
 
-on:
-  push:
-  pull_request:
-    types: [workflow_dispatch]
+on: workflow_dispatch
 
 env:
   BUILD_TYPE: Release
