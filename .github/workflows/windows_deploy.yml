@@ -113,8 +113,8 @@ jobs:
       working-directory: ${{github.workspace}}\depsRetriever\build
       run: ./depsRetriever.exe -f ${{github.workspace}}\install\Fichillsh\libGRUpdater.dll -r --ignoreWindows -c ${{github.workspace}}\install\Fichillsh
     
-    - uses: skymatic/code-sign-action@v3
-      shell: powershell
+    - name: Signing the folder
+      uses: skymatic/code-sign-action@v3
       with:
         certificate: '${{ secrets.CERTIFICATE }}'
         password: '${{ secrets.PASSWORD }}'
