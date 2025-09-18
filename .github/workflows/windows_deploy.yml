@@ -113,6 +113,18 @@ jobs:
       working-directory: ${{github.workspace}}\depsRetriever\build
       run: ./depsRetriever.exe -f ${{github.workspace}}\install\Fichillsh\libGRUpdater.dll -r --ignoreWindows -c ${{github.workspace}}\install\Fichillsh
     
+    - uses: skymatic/code-sign-action@v3
+      shell: powershell
+      with:
+        certificate: '${{ secrets.CERTIFICATE }}'
+        password: '${{ secrets.PASSWORD }}'
+        certificatesha1: '${{ secrets.CERTHASH }}'
+        certificatename: '${{ secrets.CERTNAME }}'
+        description: 'https://github.com/JonathSpirit/ProjectFichillsh'
+        timestampUrl: 'http://timestamp.digicert.com'
+        folder: '${{github.workspace}}\install\Fichillsh'
+        recursive: true
+    
     - uses: actions/upload-artifact@v4
       with:
         name: Windows64
