@@ -108,10 +108,15 @@ jobs:
       working-directory: ${{github.workspace}}\depsRetriever\build
       run: cmake --build . -j ${{steps.cpu-cores.outputs.count}} --config $BUILD_TYPE
     
-    - name: Run
+    - name: Run depsRetriever 1
       shell: powershell
       working-directory: ${{github.workspace}}\depsRetriever\build
       run: ./depsRetriever.exe -f ${{github.workspace}}\install\Fichillsh\libGRUpdater.dll -r --ignoreWindows -c ${{github.workspace}}\install\Fichillsh
+    
+    - name: Run depsRetriever 2
+      shell: powershell
+      working-directory: ${{github.workspace}}\depsRetriever\build
+      run: ./depsRetriever.exe -f ${{github.workspace}}\install\Fichillsh\Fichillsh_client.exe -r --ignoreWindows -c ${{github.workspace}}\install\Fichillsh
     
     - name: Signing the folder
       uses: skymatic/code-sign-action@v3
