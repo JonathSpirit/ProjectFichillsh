@@ -110,7 +110,7 @@ jobs:
     
     - name: Run depsRetriever
       working-directory: ${{github.workspace}}\depsRetriever\build
-      run: ./depsRetriever.exe -i ${{github.workspace}}\install\Fichillsh -r --ignoreWindows --ignoreInvalid -c ${{github.workspace}}\install\Fichillsh
+      run: ./depsRetriever.exe -i "${{env.INSTALL_PATH}}/Fichillsh" -r --ignoreWindows --ignoreInvalid -c "${{env.INSTALL_PATH}}/Fichillsh"
     
     - name: Signing the folder
       uses: skymatic/code-sign-action@v3
