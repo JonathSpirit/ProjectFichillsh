@@ -108,13 +108,17 @@ jobs:
       working-directory: ${{github.workspace}}\depsRetriever\build
       run: cmake --build . -j ${{steps.cpu-cores.outputs.count}} --config $BUILD_TYPE
     
+    - name: I love using multiple path seperator 3
+      shell: powershell
+      run: |
+        $path = "${{steps.msys2.outputs.msys2-location}}\ucrt64\bin".replace('\','/')
+        echo "MSYS2_PATH=$path" >> $env:GITHUB_ENV
+    
     - name: Copy last dlls
       working-directory: ${{ github.workspace }}\install
-      env:
-        MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
       run: |
-        cp "$env:MSYS2_LOCATION/ucrt64/bin/libssl-3-x64.dll" ./
-        cp "$env:MSYS2_LOCATION/ucrt64/bin/libcrypto-3-x64.dll" ./
+        cp "${{env.MSYS2_PATH}}/libssl-3-x64.dll" ./
+        cp "${{env.MSYS2_PATH}}/libcrypto-3-x64.dll" ./
     
     - name: Run depsRetriever
       working-directory: ${{github.workspace}}\depsRetriever\build
