@@ -116,7 +116,7 @@ jobs:
     
     - name: Copy last dlls
       working-directory: ${{ github.workspace }}\install
-      run: cp "${{env.MSYS2_PATH}}/libcrypto-3-x64.dll" "${{env.MSYS2_PATH}}/libssl-3-x64.dll" "${{env.INSTALL_PATH}}"
+      run: cp "${{env.MSYS2_PATH}}/libcrypto-3-x64.dll" "${{env.MSYS2_PATH}}/libssl-3-x64.dll" "${{env.INSTALL_PATH}}/Fichillsh"
     
     - name: Run depsRetriever
       working-directory: ${{github.workspace}}\depsRetriever\build
