@@ -590,19 +590,19 @@ void FishAward::update(fge::RenderTarget& target, fge::Event& event, fge::DeltaT
         auto const alphaFloat = static_cast<float>(this->g_fish.getColor()._a) - 0.5f * delta;
         uint8_t const alpha = alphaFloat < 0.0f ? 0 : static_cast<uint8_t>(alphaFloat);
 
-        this->g_fish.setColor(fge::SetAlpha(this->g_fish.getColor(), alpha));
+        this->g_fish.setColor(this->g_fish.getColor().setAlpha(alpha));
         for (std::size_t i = 0; i < this->g_stars.getSpriteCount(); ++i)
         {
             this->g_stars.setColor(i, fge::Color(255, 255, 255, alpha));
         }
-        this->g_text.setFillColor(fge::SetAlpha(this->g_text.getFillColor(), alpha));
-        this->g_text.setOutlineColor(fge::SetAlpha(this->g_text.getOutlineColor(), alpha));
-        this->g_textFishAttributes.setFillColor(fge::SetAlpha(this->g_textFishAttributes.getFillColor(), alpha));
-        this->g_textFishAttributes.setOutlineColor(fge::SetAlpha(this->g_textFishAttributes.getOutlineColor(), alpha));
-        this->g_newRecordsText.setFillColor(fge::SetAlpha(this->g_newRecordsText.getFillColor(), alpha));
-        this->g_newRecordsText.setOutlineColor(fge::SetAlpha(this->g_newRecordsText.getOutlineColor(), alpha));
-        this->g_newStarsRecordText.setFillColor(fge::SetAlpha(this->g_newStarsRecordText.getFillColor(), alpha));
-        this->g_newStarsRecordText.setOutlineColor(fge::SetAlpha(this->g_newStarsRecordText.getOutlineColor(), alpha));
+        this->g_text.setFillColor(this->g_text.getFillColor().setAlpha(alpha));
+        this->g_text.setOutlineColor(this->g_text.getOutlineColor().setAlpha(alpha));
+        this->g_textFishAttributes.setFillColor(this->g_textFishAttributes.getFillColor().setAlpha(alpha));
+        this->g_textFishAttributes.setOutlineColor(this->g_textFishAttributes.getOutlineColor().setAlpha(alpha));
+        this->g_newRecordsText.setFillColor(this->g_newRecordsText.getFillColor().setAlpha(alpha));
+        this->g_newRecordsText.setOutlineColor(this->g_newRecordsText.getOutlineColor().setAlpha(alpha));
+        this->g_newStarsRecordText.setFillColor(this->g_newStarsRecordText.getFillColor().setAlpha(alpha));
+        this->g_newStarsRecordText.setOutlineColor(this->g_newStarsRecordText.getOutlineColor().setAlpha(alpha));
 
         if (this->g_fish.getColor()._a == 0)
         {
@@ -783,9 +783,9 @@ void MultiplayerFishAward::update(fge::RenderTarget& target,
         auto const alphaFloat = static_cast<float>(this->g_fish.getColor()._a) - 0.5f * delta;
         uint8_t const alpha = alphaFloat < 0.0f ? 0 : static_cast<uint8_t>(alphaFloat);
 
-        this->g_fish.setColor(fge::SetAlpha(this->g_fish.getColor(), alpha));
-        this->g_text.setFillColor(fge::SetAlpha(this->g_text.getFillColor(), alpha));
-        this->g_text.setOutlineColor(fge::SetAlpha(this->g_text.getOutlineColor(), alpha));
+        this->g_fish.setColor(this->g_fish.getColor().setAlpha(alpha));
+        this->g_text.setFillColor(this->g_text.getFillColor().setAlpha(alpha));
+        this->g_text.setOutlineColor(this->g_text.getOutlineColor().setAlpha(alpha));
 
         if (this->g_fish.getColor()._a == 0)
         {
@@ -1078,15 +1078,15 @@ void FishCollectionIcon::first(fge::Scene& scene)
     this->g_button->scale(7.0f);
     this->g_button->ownViewExplicitlySetDefaultView(true);
     this->g_button->centerOriginFromLocalBounds();
-    this->g_button->setColor(fge::SetAlpha(fge::Color::White, 240));
+    this->g_button->setColor(fge::Color::White.setAlpha(240));
     this->g_button->_onButtonPressed.addLambda([&](fge::ObjButton* button) { gGameHandler->openPlayerCollection(); });
     this->g_button->setPriority(1);
 
     this->g_text->setFont("default");
     this->g_text->setCharacterSize(80);
     this->g_text->scale(1.2f);
-    this->g_text->setFillColor(fge::SetAlpha(fge::Color::White, 240));
-    this->g_text->setOutlineColor(fge::SetAlpha(fge::Color::Black, 240));
+    this->g_text->setFillColor(fge::Color::White.setAlpha(240));
+    this->g_text->setOutlineColor(fge::Color::Black.setAlpha(240));
     this->g_text->setOutlineThickness(1.0f);
     this->g_text->setString("B");
     this->g_text->centerOriginFromLocalBounds();

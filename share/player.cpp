@@ -248,8 +248,8 @@ FGE_OBJ_UPDATE_BODY(PlayerChatMessage)
     if (this->g_fading)
     {
         auto alpha = 255 - static_cast<uint8_t>(this->g_time / 3.0f * 255.0f);
-        this->g_objText.setFillColor(fge::SetAlpha(this->g_objText.getFillColor(), alpha));
-        this->g_objText.setOutlineColor(fge::SetAlpha(this->g_objText.getOutlineColor(), alpha));
+        this->g_objText.setFillColor(this->g_objText.getFillColor().setAlpha(alpha));
+        this->g_objText.setOutlineColor(this->g_objText.getOutlineColor().setAlpha(alpha));
         if (alpha == 0)
         {
             scene.delUpdatedObject();
