@@ -410,7 +410,7 @@ public:
                                     network.enableReturnPacket(true);
                                     network._client.setPacketReturnRate(
                                             std::chrono::milliseconds(RETURN_PACKET_DELAYms));
-                                    network._client.getPacketReorderer().setMaximumSize(
+                                    network.getClientContext()._reorderer.setMaximumSize(
                                             FGE_NET_PACKET_REORDERER_CACHE_COMPUTE(RETURN_PACKET_DELAYms, F_TICK_TIME));
                                 }
                             }

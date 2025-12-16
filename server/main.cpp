@@ -236,7 +236,7 @@ public:
             fge::net::ClientSharedPtr client;
             fge::net::FluxProcessResults processResult;
             do {
-                processResult = networkFlux.process(client, netPacket, true);
+                processResult = networkFlux.process(client, netPacket);
                 if (processResult != fge::net::FluxProcessResults::USER_RETRIEVABLE)
                 {
                     continue;
