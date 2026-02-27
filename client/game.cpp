@@ -96,8 +96,8 @@ void GameHandler::update(fge::DeltaTime const& deltaTime)
 
 void GameHandler::pushCaughtFishEvent(std::string const& fishName) const
 {
-    auto& packet = this->g_network->startReturnEvent(fge::net::ReturnEvents::REVT_CUSTOM);
-    packet->packet() << StatEvents::CAUGHT_FISH << fishName;
+    auto& packet = this->g_network->startComplexReturnEvent(static_cast<uint16_t>(StatEvents::CAUGHT_FISH));
+    packet->packet() << fishName;
     this->g_network->endReturnEvent();
 }
 void GameHandler::pushChatEvent(std::string const& chat) const
@@ -107,8 +107,8 @@ void GameHandler::pushChatEvent(std::string const& chat) const
         return;
     }
 
-    auto& packet = this->g_network->startReturnEvent(fge::net::ReturnEvents::REVT_CUSTOM);
-    packet->packet() << StatEvents::PLAYER_CHAT << chat;
+    auto& packet = this->g_network->startComplexReturnEvent(static_cast<uint16_t>(StatEvents::PLAYER_CHAT));
+    packet->packet() << chat;
     this->g_network->endReturnEvent();
 }
 

@@ -748,9 +748,13 @@ void Player::setState(States state)
     this->g_state = state;
     if (state == States::IDLE)
     {
+#ifndef FGE_DEF_SERVER
         auto animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
         animationName = animationName.substr(animationName.find('_'));
         animationName = "idle" + animationName;
+#else
+        std::string animationName;
+#endif
         if (this->g_audioWalking != -1)
         {
 #ifndef FGE_DEF_SERVER

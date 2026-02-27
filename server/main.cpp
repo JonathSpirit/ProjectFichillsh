@@ -124,56 +124,51 @@ public:
         });
 
         //Handling clients return packet
-        networkFlux._onClientReturnEvent.addLambda([&](fge::net::ClientSharedPtr const& client, fge::net::Identity id,
-                                                       fge::net::ReceivedPacketPtr const& packet) {
-            using namespace fge::net::rules;
-            auto err = RStrictLess<StatEvents>(StatEvents::EVENT_COUNT, {packet->packet()})
-                               .and_then([&](auto& chain) {
-                switch (chain.value())
-                {
-                case StatEvents::CAUGHT_FISH:
-                {
-                    std::string fishName;
-                    chain.packet() >> fishName;
-                    if (chain.packet().isValid())
-                    {
-                        auto const playerId = this->getPlayerId(id);
-                        std::cout << "Player " << playerId << " caught a fish " << fishName << "\n";
-                        this->g_playerEvents->pushEventIgnore(
-                                std::make_pair(StatEvents::CAUGHT_FISH, PlayerEventData{playerId, fishName}), id);
-                    }
-                }
-                break;
-                case StatEvents::PLAYER_CHAT:
-                {
-                    std::string message;
-                    chain.packet() >> message;
-                    if (message.size() > F_NET_CHAT_MAX_SIZE)
-                    {
-                        std::cout << "Player " << this->getPlayerId(id) << " sent a too long message, discarded\n";
-                        return chain;
-                    }
-                    if (chain.packet().isValid())
-                    {
-                        auto const playerId = this->getPlayerId(id);
-                        std::cout << "Player " << playerId << " message: " << message << "\n";
-                        this->g_playerEvents->pushEventIgnore(
-                                std::make_pair(StatEvents::PLAYER_CHAT, PlayerEventData{playerId, message}), id);
-                    }
-                }
-                break;
-                }
-                return chain;
-            }).end();
-
-            if (err)
+        networkFlux._onClientReturnEvent.setLambda([&](fge::net::ClientSharedPtr const& client, fge::net::Identity id,
+                                                       uint16_t eventId, fge::net::ReceivedPacketPtr const& packet) {
+            if (eventId >= static_cast<uint16_t>(StatEvents::EVENT_COUNT))
             {
-                std::cout << "Error in client packet: \n";
-                err->dump(std::cout);
+                std::cout << "Received unknown event id " << eventId << " from client " << id.toString() << "\n";
+                return;
+            }
+
+            switch (static_cast<StatEvents>(eventId))
+            {
+            case StatEvents::CAUGHT_FISH:
+            {
+                std::string fishName;
+                *packet >> fishName;
+                if (packet->isValid())
+                {
+                    auto const playerId = this->getPlayerId(id);
+                    std::cout << "Player " << playerId << " caught a fish " << fishName << "\n";
+                    this->g_playerEvents->pushEventIgnore(
+                            std::make_pair(StatEvents::CAUGHT_FISH, PlayerEventData{playerId, fishName}), id);
+                }
+            }
+            break;
+            case StatEvents::PLAYER_CHAT:
+            {
+                std::string message;
+                *packet >> message;
+                if (message.size() > F_NET_CHAT_MAX_SIZE)
+                {
+                    std::cout << "Player " << this->getPlayerId(id) << " sent a too long message, discarded\n";
+                    return;
+                }
+                if (packet->isValid())
+                {
+                    auto const playerId = this->getPlayerId(id);
+                    std::cout << "Player " << playerId << " message: " << message << "\n";
+                    this->g_playerEvents->pushEventIgnore(
+                            std::make_pair(StatEvents::PLAYER_CHAT, PlayerEventData{playerId, message}), id);
+                }
+            }
+            break;
             }
         });
 
-        networkFlux._onClientReturnPacket.addLambda([&](fge::net::ClientSharedPtr const& client, fge::net::Identity id,
+        networkFlux._onClientReturnPacket.setLambda([&](fge::net::ClientSharedPtr const& client, fge::net::Identity id,
                                                         fge::net::ReceivedPacketPtr const& packet) {
             if (client->getStatus().getNetworkStatus() != fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
             {
@@ -331,7 +326,7 @@ public:
                 for (auto itClient = networkFlux._clients.begin(lock); itClient != networkFlux._clients.end(lock);
                      ++itClient)
                 {
-                    auto& currentClient = itClient->second._client;
+                    auto& currentClient = itClient->second;
 
                     if (currentClient->getStatus().getNetworkStatus() !=
                         fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
@@ -376,7 +371,7 @@ public:
                 for (auto itClient = networkFlux._clients.begin(lock); itClient != networkFlux._clients.end(lock);
                      ++itClient)
                 {
-                    auto& currentClient = itClient->second._client;
+                    auto& currentClient = itClient->second;
                     if (currentClient->getStatus().getNetworkStatus() !=
                         fge::net::ClientStatus::NetworkStatus::AUTHENTICATED)
                     {
