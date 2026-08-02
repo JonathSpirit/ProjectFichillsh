@@ -7,6 +7,7 @@
 #include "FastEngine/object/C_object.hpp"
 #ifndef FGE_DEF_SERVER
     #include "box2d/box2d.h"
+    #include "FastEngine/accessor/C_audio.hpp"
 #endif
 
 #define F_PLAYER_SPEED 30.0f
@@ -179,8 +180,10 @@ private:
     fge::DeclareChild<fge::ObjText> g_objChatText{this};
 #ifdef FGE_DEF_SERVER
     unsigned int g_bodyId;
+    void* g_audioWalking = nullptr;
 #else
     b2BodyId g_bodyId;
+    MIX_Track* g_audioWalking = nullptr;
 #endif
     States g_state = States::WALKING;
     States g_serverState = States::WALKING;
@@ -190,6 +193,5 @@ private:
     std::vector<float> g_transitionYPoints;
     fge::ObjectPlan g_transitionPlan;
     bool g_transitionLast = false;
-    int g_audioWalking = -1;
     bool g_isUserControlled = true;
 };

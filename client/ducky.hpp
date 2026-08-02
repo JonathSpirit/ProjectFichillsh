@@ -8,7 +8,7 @@
 #define F_DUCK_WALK_TIME_MIN_S 3.0f
 #define F_DUCK_WALK_TIME_MAX_S 14.0f
 #define F_DUCK_QUACK_TIME_MIN_S 10.0f
-#define F_DUCK_QUACK_TIME_MAX_S 80.0f
+#define F_DUCK_QUACK_TIME_MAX_S 50.0f
 
 class Ducky : public fge::Object
 {

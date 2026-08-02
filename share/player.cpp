@@ -1,7 +1,9 @@
 #include "player.hpp"
+
 #ifndef FGE_DEF_SERVER
     #include "../client/game.hpp"
     #include "FastEngine/manager/audio_manager.hpp"
+    #include "FastEngine/accessor/C_audio.hpp"
 #else
     #include "FastEngine/C_scene.hpp"
 #endif //FGE_DEF_SERVER
@@ -137,7 +139,7 @@ FGE_OBJ_UPDATE_BODY(FishBait)
                 }
             }
 
-            Mix_PlayChannel(-1, fge::audio::gManager.getElement("splash")->_ptr.get(), 0);
+            fge::Audio("splash").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 1.0f, true);
             this->g_state = Stats::WAITING;
             this->g_time = 0.0f;
             sinusValue = 1.0f;
@@ -424,37 +426,37 @@ FGE_OBJ_UPDATE_BODY(Player)
 
             b2Body_SetLinearVelocity(this->g_bodyId, {0.0f, 0.0f});
 
-            Mix_PlayChannel(-1, fge::audio::gManager.getElement("swipe")->_ptr.get(), 0);
+            fge::Audio("swipe").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 1.0f, true);
             this->g_state = States::THROWING;
             this->g_objAnim.getAnimation().setLoop(false);
             this->g_objAnimShadow.getAnimation().setLoop(false);
 
-            if (this->g_audioWalking != -1)
+            if (this->g_audioWalking != nullptr)
             {
-                Mix_HaltChannel(this->g_audioWalking);
-                this->g_audioWalking = -1;
+                MIX_StopTrack(this->g_audioWalking, 0);
+                this->g_audioWalking = nullptr;
             }
             break;
         }
 
         fge::Vector2i moveDirection{0, 0};
-        if (event.isKeyPressed(SDLK_w))
+        if (event.isKeyPressed(SDLK_W))
         {
             moveDirection.y = -1;
             animationName += "_up";
         }
-        else if (event.isKeyPressed(SDLK_s))
+        else if (event.isKeyPressed(SDLK_S))
         {
             moveDirection.y = 1;
             animationName += "_down";
         }
 
-        if (event.isKeyPressed(SDLK_a))
+        if (event.isKeyPressed(SDLK_A))
         {
             moveDirection.x = -1;
             animationName += "_left";
         }
-        else if (event.isKeyPressed(SDLK_d))
+        else if (event.isKeyPressed(SDLK_D))
         {
             moveDirection.x = 1;
             animationName += "_right";
@@ -465,26 +467,22 @@ FGE_OBJ_UPDATE_BODY(Player)
             animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
             animationName = animationName.substr(animationName.find('_'));
             animationName = "idle" + animationName;
-            if (this->g_audioWalking != -1)
+            if (this->g_audioWalking != nullptr)
             {
-                if (Mix_Playing(this->g_audioWalking) != 0)
-                {
-                    Mix_HaltChannel(this->g_audioWalking);
-                }
-                this->g_audioWalking = -1;
+                MIX_StopTrack(this->g_audioWalking, 0);
+                this->g_audioWalking = nullptr;
             }
 
-            if (event.isKeyPressed(SDLK_t))
+            if (event.isKeyPressed(SDLK_T))
             {
                 this->startChatting(event);
             }
         }
         else
         { //Walking
-            if (this->g_audioWalking == -1 || Mix_Playing(this->g_audioWalking) == 0)
+            if (this->g_audioWalking == nullptr)
             {
-                this->g_audioWalking =
-                        Mix_PlayChannel(-1, fge::audio::gManager.getElement("walk_grass")->_ptr.get(), -1);
+                this->g_audioWalking = fge::Audio("walk_grass").playAudio(FGE_AUDIO_AVAILABLE_TRACK, -1, 1.0f, true);
             }
             animationName = "walk" + animationName;
             this->g_direction = moveDirection;
@@ -514,8 +512,8 @@ FGE_OBJ_UPDATE_BODY(Player)
         }
         break;
     case States::FISHING:
-        if (event.isKeyPressed(SDLK_w) || event.isKeyPressed(SDLK_s) || event.isKeyPressed(SDLK_a) ||
-            event.isKeyPressed(SDLK_d))
+        if (event.isKeyPressed(SDLK_W) || event.isKeyPressed(SDLK_S) || event.isKeyPressed(SDLK_A) ||
+            event.isKeyPressed(SDLK_D))
         {
             if (auto fishBait = this->g_fishBait.lock())
             {
@@ -755,15 +753,15 @@ void Player::setState(States state)
 #else
         std::string animationName;
 #endif
-        if (this->g_audioWalking != -1)
+        if (this->g_audioWalking != nullptr)
         {
 #ifndef FGE_DEF_SERVER
-            if (Mix_Playing(this->g_audioWalking) != 0)
+            if (!MIX_TrackPlaying(this->g_audioWalking))
             {
-                Mix_HaltChannel(this->g_audioWalking);
+                MIX_StopTrack(this->g_audioWalking, 0);
             }
 #endif
-            this->g_audioWalking = -1;
+            this->g_audioWalking = nullptr;
         }
 
 #ifndef FGE_DEF_SERVER
@@ -832,6 +830,7 @@ void Player::startChatting([[maybe_unused]] fge::Event& event)
     auto const posx = this->g_objChatText->getGlobalBounds()._width / 2.0f;
     this->g_objChatText->setPosition({-posx, this->g_objChatText->getPosition().y});
     this->g_objChatText->_drawMode = DrawModes::DRAW_ALWAYS_DRAWN;
+    fge::vulkan::GetActiveContext().startTextInput();
 
     event._onTextInput.addLambda([&](fge::Event const& evt, SDL_TextInputEvent const& arg) {
         auto const key = evt.getKeyUnicode();
@@ -853,7 +852,7 @@ void Player::startChatting([[maybe_unused]] fge::Event& event)
         this->g_objChatText->setPosition({-posx, this->g_objChatText->getPosition().y});
     }, this);
     event._onKeyDown.addLambda([&](fge::Event const& evt, SDL_KeyboardEvent const& arg) {
-        if (arg.keysym.sym == SDLK_BACKSPACE)
+        if (arg.key == SDLK_BACKSPACE)
         {
             auto str = this->g_objChatText->getString();
             if (str.size() > 1)
@@ -862,8 +861,9 @@ void Player::startChatting([[maybe_unused]] fge::Event& event)
                 this->g_objChatText->setString(std::move(str));
             }
         }
-        else if (arg.keysym.sym == SDLK_RETURN || arg.keysym.sym == SDLK_ESCAPE)
+        else if (arg.key == SDLK_RETURN || arg.key == SDLK_ESCAPE)
         {
+            fge::vulkan::GetActiveContext().stopTextInput();
             this->g_state = States::WALKING;
             this->g_objChatText->_drawMode = DrawModes::DRAW_ALWAYS_HIDDEN;
             evt._onTextInput.delSub(this);

@@ -2,6 +2,7 @@
 #include "../share/player.hpp"
 #include "FastEngine/C_random.hpp"
 #include "FastEngine/manager/audio_manager.hpp"
+#include "FastEngine/accessor/C_audio.hpp"
 #include "fish.hpp"
 #include <iostream>
 
@@ -225,6 +226,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         if (this->g_keyToPress.getScale().x >= 0.3f)
         {
             this->g_currentTime = 0.0f;
+            fge::vulkan::GetActiveContext().startTextInput();
             this->g_state = States::WAITING_INPUT;
         }
         return;
@@ -239,14 +241,16 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         {
             this->g_currentTime = 0.0f;
             this->g_state = States::FISH_TIME;
-            Mix_PlayChannel(-1, fge::audio::gManager.getElement("jingle")->_ptr.get(), 0);
+            fge::vulkan::GetActiveContext().stopTextInput();
+            fge::Audio("jingle").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 1.0f, true);
             return;
         }
 
         if (this->g_currentTime >= F_MINIGAME_WAITING_KEY_TIME)
         { //Failed
             scene.delUpdatedObject();
-            Mix_PlayChannel(-1, fge::audio::gManager.getElement("loose_fish")->_ptr.get(), 0);
+            fge::vulkan::GetActiveContext().stopTextInput();
+            fge::Audio("loose_fish").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 1.0f, true);
             return;
         }
     }
@@ -265,12 +269,12 @@ FGE_OBJ_UPDATE_BODY(Minigame)
     }
 
     //Update slider
-    if (event.isKeyPressed(SDLK_w))
+    if (event.isKeyPressed(SDLK_W))
     {
         this->g_sliderVelocity = std::clamp<float>(this->g_sliderVelocity - F_MINIGAME_SLIDER_ACCELERATION * delta,
                                                    -F_MINIGAME_SLIDER_MAX_VELOCITY, F_MINIGAME_SLIDER_MAX_VELOCITY);
     }
-    else if (event.isKeyPressed(SDLK_s))
+    else if (event.isKeyPressed(SDLK_S))
     {
         this->g_sliderVelocity = std::clamp<float>(this->g_sliderVelocity + F_MINIGAME_SLIDER_ACCELERATION * delta,
                                                    -F_MINIGAME_SLIDER_MAX_VELOCITY, F_MINIGAME_SLIDER_MAX_VELOCITY);
@@ -324,11 +328,11 @@ FGE_OBJ_UPDATE_BODY(Minigame)
                 if (heart.getScale().x <= 0.1f)
                 { //Loosing a heart
                     heart.setScale(0.0f);
-                    Mix_PlayChannel(-1, fge::audio::gManager.getElement("loose_life")->_ptr.get(), 0);
+                    fge::Audio("loose_fish").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 1.0f, true);
                     if (i == this->g_hearts.size() - 1)
                     { //Lost the last heart
                         scene.delUpdatedObject();
-                        Mix_PlayChannel(-1, fge::audio::gManager.getElement("loose_fish")->_ptr.get(), 0);
+                        fge::Audio("loose_fish").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 1.0f, true);
                         return;
                     }
                 }
@@ -341,7 +345,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
         this->g_fishRemainingTime -= delta;
         if (this->g_fishRemainingTime <= 0.0f)
         {
-            Mix_PlayChannel(-1, fge::audio::gManager.getElement("victory_fish")->_ptr.get(), 0);
+            fge::Audio("victory_fish").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 1.0f, true);
 
             auto const result = gGameHandler->addFishToPlayerCollection(this->g_fishReward);
 
@@ -518,7 +522,7 @@ void Minigame::first(fge::Scene& scene)
     auto player = gGameHandler->getPlayer();
     player->catchingFish();
 
-    Mix_PlayChannel(-1, fge::audio::gManager.getElement("fish_is_here")->_ptr.get(), 0);
+    fge::Audio("fish_is_here").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 1.0f, true);
 }
 void Minigame::removed(fge::Scene& scene)
 {

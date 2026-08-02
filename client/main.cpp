@@ -3,11 +3,13 @@
 #include "FastEngine/graphic/C_renderWindow.hpp"
 #include "FastEngine/manager/anim_manager.hpp"
 #include "FastEngine/manager/reg_manager.hpp"
+#include "FastEngine/accessor/C_audio.hpp"
 #include "FastEngine/network/C_server.hpp"
 #include "FastEngine/object/C_objRenderMap.hpp"
 #include "FastEngine/object/C_objSpriteBatches.hpp"
 #include "FastEngine/object/C_objTilelayer.hpp"
-#include "SDL.h"
+#include "SDL3/SDL.h"
+#include "SDL3/SDL_main.h"
 
 #include "../share/network.hpp"
 #include "../share/player.hpp"
@@ -151,13 +153,14 @@ public:
         fge::audio::gManager.loadFromFile("loose_life", "resources/audio/negative_1.ogg");
         fge::audio::gManager.loadFromFile("loose_fish", "resources/audio/negative_2.ogg");
         fge::audio::gManager.loadFromFile("walk_grass", "resources/audio/walk_grass_1.ogg");
-        Mix_VolumeChunk(fge::audio::gManager.getElement("walk_grass")->_ptr.get(), MIX_MAX_VOLUME);
         fge::audio::gManager.loadFromFile("swipe", "resources/audio/swipe_1.ogg");
         fge::audio::gManager.loadFromFile("splash", "resources/audio/splash_1.ogg");
         fge::audio::gManager.loadFromFile("victory_fish", "resources/audio/positive_1.ogg");
         fge::audio::gManager.loadFromFile("ducky", "resources/audio/duck_1.ogg");
         fge::audio::gManager.loadFromFile("jingle", "resources/audio/jingle_1.ogg");
         fge::audio::gManager.loadFromFile("fish_is_here", "resources/audio/fish_is_here_1.ogg");
+
+        fge::audio::gManager.generateTracks(0, fge::audio::gManager.size()+1);
 
         //Load fishes
         gFishManager.loadFromFile("algae", 10.0f, 50.0f, 1.0f, 5.0f, FishData::Rarity::COMMON,
@@ -306,7 +309,7 @@ public:
 
         //Setup events
         event._onKeyUp.addLambda([](fge::Event const& evt, SDL_KeyboardEvent const& arg) {
-            if (arg.keysym.sym == SDLK_b)
+            if (arg.key == SDLK_B)
             {
                 gGameHandler->openPlayerCollection();
             }
@@ -432,7 +435,7 @@ public:
         {
             //Update events
             event.process(10);
-            if (event.isEventType(SDL_QUIT))
+            if (event.isEventType(SDL_EVENT_QUIT))
             {
                 running = false;
             }
@@ -640,15 +643,15 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
-    SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "system");
+    //SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
+    //SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "system");
 
     auto instance = Context::init(SDL_INIT_VIDEO | SDL_INIT_EVENTS,
                                   "Fichillsh [" F_TAG_STR "] on FastEngine [" FGE_VERSION_FULL_WITHTAG_STRING "]");
     Context::enumerateExtensions();
 
     SurfaceSDLWindow window(instance, FGE_WINDOWPOS_CENTERED, {1366, 768},
-                            SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+                             SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
     // Check that the window was successfully created
     if (!window.isCreated())

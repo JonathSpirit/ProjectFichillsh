@@ -4,7 +4,7 @@
 #include "FastEngine/fge_version.hpp"
 #include "FastEngine/manager/reg_manager.hpp"
 #include "FastEngine/network/C_server.hpp"
-#include "SDL.h"
+#include "SDL3/SDL.h"
 
 #include <csignal>
 #include <iostream>

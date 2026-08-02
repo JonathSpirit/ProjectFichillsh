@@ -1,6 +1,7 @@
 #include "ducky.hpp"
 #include "FastEngine/C_random.hpp"
 #include "FastEngine/C_scene.hpp"
+#include "FastEngine/accessor/C_audio.hpp"
 #include "FastEngine/extra/extra_pathFinding.hpp"
 #include "FastEngine/manager/audio_manager.hpp"
 #include "FastEngine/object/C_objTilelayer.hpp"
@@ -25,7 +26,7 @@ FGE_OBJ_UPDATE_BODY(Ducky)
         if (gTimeBeforeQuack <= 0.0f)
         {
             gTimeBeforeQuack = fge::_random.range(F_DUCK_QUACK_TIME_MIN_S, F_DUCK_QUACK_TIME_MAX_S);
-            Mix_PlayChannel(-1, fge::audio::gManager.getElement("ducky")->_ptr.get(), 0);
+            fge::Audio("ducky").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 1.0f, true);
         }
     }
 

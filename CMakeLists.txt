@@ -68,12 +68,12 @@ target_sources(${PROJECT_SERVER} PRIVATE share/player.cpp share/player.hpp)
 #Dependencies
 add_dependencies(${PROJECT_CLIENT} box2d GRUpdater GRUpdaterCmd)
 
-target_link_libraries(${PROJECT_CLIENT} PRIVATE SDL2::SDL2main FastEngine::FastEngine)
+target_link_libraries(${PROJECT_CLIENT} PRIVATE FastEngine::FastEngine)
 target_link_libraries(${PROJECT_CLIENT} PRIVATE box2d GRUpdater)
 
 target_include_directories(${PROJECT_CLIENT} PRIVATE ${GRUpdater_SOURCE_DIR})
 
-target_link_libraries(${PROJECT_SERVER} PRIVATE SDL2::SDL2main FastEngine::FastEngineServer)
+target_link_libraries(${PROJECT_SERVER} PRIVATE FastEngine::FastEngineServer)
 
 #Check for release
 if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -89,8 +89,8 @@ add_custom_command(TARGET ${PROJECT_CLIENT} PRE_BUILD
         VERBATIM)
 
 if(WIN32)
-    set(FGE_LINK_SERVER_LIBRARIES "FastEngine::FastEngineServer;SDL2::SDL2;SDL2_image::SDL2_image")
-    set(FGE_LINK_CLIENT_LIBRARIES "FastEngine::FastEngine;SDL2::SDL2;SDL2_image::SDL2_image;SDL2_mixer::SDL2_mixer;GRUpdater")
+    set(FGE_LINK_SERVER_LIBRARIES "FastEngine::FastEngineServer;SDL3::SDL3;SDL3_image::SDL3_image")
+    set(FGE_LINK_CLIENT_LIBRARIES "FastEngine::FastEngine;SDL3::SDL3;SDL3_image::SDL3_image;SDL3_mixer::SDL3_mixer;GRUpdater")
 
     foreach (FGE_LINK_LIBRARY ${FGE_LINK_CLIENT_LIBRARIES})
         add_custom_command(TARGET ${PROJECT_CLIENT} PRE_BUILD
