@@ -1,9 +1,9 @@
 #include "FastEngine/C_clock.hpp"
+#include "FastEngine/accessor/C_audio.hpp"
 #include "FastEngine/fge_includes.hpp"
 #include "FastEngine/graphic/C_renderWindow.hpp"
 #include "FastEngine/manager/anim_manager.hpp"
 #include "FastEngine/manager/reg_manager.hpp"
-#include "FastEngine/accessor/C_audio.hpp"
 #include "FastEngine/network/C_server.hpp"
 #include "FastEngine/object/C_objRenderMap.hpp"
 #include "FastEngine/object/C_objSpriteBatches.hpp"
@@ -160,7 +160,7 @@ public:
         fge::audio::gManager.loadFromFile("jingle", "resources/audio/jingle_1.ogg");
         fge::audio::gManager.loadFromFile("fish_is_here", "resources/audio/fish_is_here_1.ogg");
 
-        fge::audio::gManager.generateTracks(0, fge::audio::gManager.size()+1);
+        fge::audio::gManager.generateTracks(0, fge::audio::gManager.size() + 1);
 
         //Load fishes
         gFishManager.loadFromFile("algae", 10.0f, 50.0f, 1.0f, 5.0f, FishData::Rarity::COMMON,
@@ -651,7 +651,7 @@ int main(int argc, char* argv[])
     Context::enumerateExtensions();
 
     SurfaceSDLWindow window(instance, FGE_WINDOWPOS_CENTERED, {1366, 768},
-                             SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+                            SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
     // Check that the window was successfully created
     if (!window.isCreated())

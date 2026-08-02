@@ -2,8 +2,8 @@
 
 #ifndef FGE_DEF_SERVER
     #include "../client/game.hpp"
-    #include "FastEngine/manager/audio_manager.hpp"
     #include "FastEngine/accessor/C_audio.hpp"
+    #include "FastEngine/manager/audio_manager.hpp"
 #else
     #include "FastEngine/C_scene.hpp"
 #endif //FGE_DEF_SERVER

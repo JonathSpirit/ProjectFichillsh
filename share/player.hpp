@@ -6,8 +6,8 @@
 #include "FastEngine/object/C_objText.hpp"
 #include "FastEngine/object/C_object.hpp"
 #ifndef FGE_DEF_SERVER
-    #include "box2d/box2d.h"
     #include "FastEngine/accessor/C_audio.hpp"
+    #include "box2d/box2d.h"
 #endif
 
 #define F_PLAYER_SPEED 30.0f

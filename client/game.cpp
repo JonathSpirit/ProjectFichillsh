@@ -1,8 +1,8 @@
 #include "game.hpp"
 #include "../share/player.hpp"
 #include "FastEngine/C_random.hpp"
-#include "FastEngine/manager/audio_manager.hpp"
 #include "FastEngine/accessor/C_audio.hpp"
+#include "FastEngine/manager/audio_manager.hpp"
 #include "fish.hpp"
 #include <iostream>
 
