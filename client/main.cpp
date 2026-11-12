@@ -38,6 +38,7 @@ public:
         if (!fge::LoadJsonFromFile("server.json", config))
         {
             std::cout << "Can't load server.json, continuing anyway\n";
+            config = nlohmann::json::object();
         }
 
         fge::net::IpAddress serverIp = config.value<std::string>("ip", F_NET_DEFAULT_IP);
