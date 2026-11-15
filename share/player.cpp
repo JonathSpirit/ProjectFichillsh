@@ -756,10 +756,7 @@ void Player::setState(States state)
         if (this->g_audioWalking != nullptr)
         {
 #ifndef FGE_DEF_SERVER
-            if (!MIX_TrackPlaying(this->g_audioWalking))
-            {
-                MIX_StopTrack(this->g_audioWalking, 0);
-            }
+            MIX_StopTrack(this->g_audioWalking, 0);
 #endif
             this->g_audioWalking = nullptr;
         }
