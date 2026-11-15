@@ -205,6 +205,15 @@ void GameHandler::openPlayerCollection()
 
     this->g_scene->newObject<FishCollection>({FGE_SCENE_PLAN_HIGH_TOP + 1});
 }
+void GameHandler::closePlayerCollection()
+{
+    auto collection = this->g_scene->getFirstObj_ByClass("FISH_COLLECTION");
+    if (!collection)
+    {
+        return;
+    }
+    collection->getObject<FishCollection>()->close();
+}
 bool GameHandler::isPlayerCollectionOpen() const
 {
     return this->g_scene->getFirstObj_ByClass("FISH_COLLECTION") != nullptr;
@@ -907,13 +916,7 @@ void FishCollection::first(fge::Scene& scene)
     this->g_buttonClose->scale(4.0f);
     this->g_buttonClose->ownViewExplicitlySetDefaultView(true);
     this->g_buttonClose->centerOriginFromLocalBounds();
-    this->g_buttonClose->_onButtonPressed.addLambda([&](fge::ObjButton* button) {
-        if (auto const objectData = this->_myObjectData.lock())
-        {
-            gGameHandler->getPlayer()->setState(Player::States::WALKING);
-            objectData->getScene()->delObject(objectData->getSid());
-        }
-    });
+    this->g_buttonClose->_onButtonPressed.addLambda([&](fge::ObjButton* button) { this->close(); });
 
     this->g_buttonNextPage->setTexture("arrows");
     this->g_buttonNextPage->setTextureOnRect({{16, 0}, {16, 16}});
@@ -992,6 +995,8 @@ void FishCollection::first(fge::Scene& scene)
     this->g_maxPage = fishCollection.size() / (F_COLLECTION_MAX_COL * F_COLLECTION_MAX_ROW);
     this->g_currentPage = 0;
 
+    fge::Audio("book").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 0.5f, true);
+
     std::cout << "current: " << this->g_currentPage << " max: " << this->g_maxPage << std::endl;
 }
 
@@ -1020,6 +1025,16 @@ fge::RectFloat FishCollection::getGlobalBounds() const
 fge::RectFloat FishCollection::getLocalBounds() const
 {
     return Object::getLocalBounds();
+}
+
+void FishCollection::close()
+{
+    if (auto const objectData = this->_myObjectData.lock())
+    {
+        gGameHandler->getPlayer()->setState(Player::States::WALKING);
+        objectData->getScene()->delObject(objectData->getSid());
+        fge::Audio("book_close").playAudio(FGE_AUDIO_AVAILABLE_TRACK, 0, 0.5f, true);
+    }
 }
 
 //FishCollectionIcon
@@ -1083,7 +1098,16 @@ void FishCollectionIcon::first(fge::Scene& scene)
     this->g_button->ownViewExplicitlySetDefaultView(true);
     this->g_button->centerOriginFromLocalBounds();
     this->g_button->setColor(fge::Color::White.setAlpha(240));
-    this->g_button->_onButtonPressed.addLambda([&](fge::ObjButton* button) { gGameHandler->openPlayerCollection(); });
+    this->g_button->_onButtonPressed.addLambda([&](fge::ObjButton* button) {
+        if (!gGameHandler->isPlayerCollectionOpen())
+        {
+            gGameHandler->openPlayerCollection();
+        }
+        else
+        {
+            gGameHandler->closePlayerCollection();
+        }
+    });
     this->g_button->setPriority(1);
 
     this->g_text->setFont("default");

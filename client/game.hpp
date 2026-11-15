@@ -104,6 +104,7 @@ public:
     NewRecords_t addFishToPlayerCollection(FishInstance const& fish);
 
     void openPlayerCollection();
+    void closePlayerCollection();
     [[nodiscard]] bool isPlayerCollectionOpen() const;
 
 private:
@@ -246,6 +247,8 @@ public:
 
     [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
     [[nodiscard]] fge::RectFloat getLocalBounds() const override;
+
+    void close();
 
 private:
     struct FishEntry

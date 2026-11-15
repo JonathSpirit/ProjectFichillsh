@@ -160,6 +160,8 @@ public:
         fge::audio::gManager.loadFromFile("ducky", "resources/audio/duck_1.ogg");
         fge::audio::gManager.loadFromFile("jingle", "resources/audio/jingle_1.ogg");
         fge::audio::gManager.loadFromFile("fish_is_here", "resources/audio/fish_is_here_1.ogg");
+        fge::audio::gManager.loadFromFile("book", "resources/audio/book_1.ogg");
+        fge::audio::gManager.loadFromFile("book_close", "resources/audio/book_2.ogg");
 
         fge::audio::gManager.generateTracks(0, fge::audio::gManager.size() + 1);
 
@@ -310,9 +312,16 @@ public:
 
         //Setup events
         event._onKeyUp.addLambda([](fge::Event const& evt, SDL_KeyboardEvent const& arg) {
-            if (arg.key == SDLK_B)
+            if (arg.key == SDLK_B && arg.repeat == false)
             {
-                gGameHandler->openPlayerCollection();
+                if (!gGameHandler->isPlayerCollectionOpen())
+                {
+                    gGameHandler->openPlayerCollection();
+                }
+                else
+                {
+                    gGameHandler->closePlayerCollection();
+                }
             }
         });
 

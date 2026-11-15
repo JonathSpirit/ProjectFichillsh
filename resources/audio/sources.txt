@@ -37,3 +37,13 @@ Original name : WinSquare
     URL : https://pixabay.com/sound-effects/winsquare-6993/
     Author : Fupicat (Freesound)
     Original license : Pixabay Content License
+
+Original name : Paper
+    URL : https://pixabay.com/sound-effects/film-special-effects-paper-66648/
+    Author : isapozhnik (Freesound)
+    Original license : Pixabay Content License
+
+Original name : Book Closing
+    URL : https://pixabay.com/sound-effects/film-special-effects-book-closing-414441/
+    Author : Wolff-SFX
+    Original license : Pixabay Content License
