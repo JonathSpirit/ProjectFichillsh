@@ -99,7 +99,7 @@ FishInstance FishManager::generateRandomFish() const
     }
     else if (fishInstance._weight > fishData->_ptr->_weightMin + weightDelta)
     {
-        fishInstance._starCount = 1; //1 star
+        fishInstance._starCount += 1; //1 star
     }
 
     //Same for the length
@@ -110,7 +110,7 @@ FishInstance FishManager::generateRandomFish() const
     }
     else if (fishInstance._length > fishData->_ptr->_lengthMin + lengthDelta)
     {
-        fishInstance._starCount = 1; //1 star
+        fishInstance._starCount += 1; //1 star
     }
 
     return fishInstance;
