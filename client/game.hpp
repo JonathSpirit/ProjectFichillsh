@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FastEngine/C_scene.hpp"
+#include "FastEngine/extensions/C_signalGenerator.hpp"
 #include "FastEngine/network/C_server.hpp"
 #include "FastEngine/object/C_objButton.hpp"
 #include "FastEngine/object/C_objRectangleShape.hpp"
@@ -38,20 +39,44 @@
 #define F_GAME_FISH_COUNTDOWN_MIN 30
 
 #define F_MINIGAME_DIFFICULTY_START 0.0f
-#define F_MINIGAME_DIFFICULTY_RARITY_COMMON 10.0f
-#define F_MINIGAME_DIFFICULTY_RARITY_UNCOMMON 20.0f
-#define F_MINIGAME_DIFFICULTY_RARITY_RARE 30.0f
-#define F_MINIGAME_DIFFICULTY_RANDOM_VARIATION 15.0f
+#define F_MINIGAME_DIFFICULTY_RARITY_COMMON 30.0f
+#define F_MINIGAME_DIFFICULTY_RARITY_UNCOMMON 60.0f
+#define F_MINIGAME_DIFFICULTY_RARITY_RARE 90.0f
+#define F_MINIGAME_DIFFICULTY_STAR_MULTIPLIER 5.0f
+#define F_MINIGAME_DIFFICULTY_RANDOM_VARIATION 10.0f
 #define F_MINIGAME_DIFFICULTY_MAX                                                                                      \
-    (F_MINIGAME_DIFFICULTY_START + F_MINIGAME_DIFFICULTY_RARITY_RARE * F_FISH_STAR_MAX +                               \
+    (F_MINIGAME_DIFFICULTY_START + F_MINIGAME_DIFFICULTY_RARITY_RARE + F_FISH_STAR_MAX * F_MINIGAME_DIFFICULTY_STAR_MULTIPLIER +                               \
      F_MINIGAME_DIFFICULTY_RANDOM_VARIATION)
 #define F_MINIGAME_TIME_MAX 16.0f
 #define F_MINIGAME_TIME_MIN 10.0f
+#define F_MINIGAME_TIME_DELTA 0.01f
 #define F_MINIGAME_SINUS_QUANTITY_MAX 5.0f
 #define F_MINIGAME_SINUS_QUANTITY_MIN 1.0f
-#define F_MINIGAME_SINUS_FREQ_MAX 0.4f
-#define F_MINIGAME_SINUS_FREQ_MIN 0.1f
-#define F_MINIGAME_SINUS_FREQ_VARIATION 0.1f
+//Fish movement (ratios of the slider capacity, from the easiest to the hardest fish)
+#define F_MINIGAME_FISH_VELOCITY_RATIO_MIN 0.15f
+#define F_MINIGAME_FISH_VELOCITY_RATIO_MAX 0.65f
+#define F_MINIGAME_FISH_ACCELERATION_RATIO_MIN 0.2f
+#define F_MINIGAME_FISH_ACCELERATION_RATIO_MAX 0.6f
+//Fish behaviour (EASY = difficulty 0, HARD = difficulty max)
+#define F_MINIGAME_FISH_PAUSE_MIN_EASY 1.0f
+#define F_MINIGAME_FISH_PAUSE_MIN_HARD 0.15f
+#define F_MINIGAME_FISH_PAUSE_MAX_EASY 2.0f
+#define F_MINIGAME_FISH_PAUSE_MAX_HARD 0.6f
+#define F_MINIGAME_FISH_JUMP_MIN_EASY 0.1f  //Ratio of the gauge size
+#define F_MINIGAME_FISH_JUMP_MIN_HARD 0.25f //Ratio of the gauge size
+#define F_MINIGAME_FISH_JUMP_MAX_EASY 0.4f  //Ratio of the gauge size
+#define F_MINIGAME_FISH_JUMP_MAX_HARD 1.0f  //Ratio of the gauge size
+#define F_MINIGAME_FISH_SPEED_RATIO_MIN_EASY 0.5f
+#define F_MINIGAME_FISH_SPEED_RATIO_MIN_HARD 0.7f
+#define F_MINIGAME_FISH_FEINT_RATE_EASY 0.0f //Direction change per second while moving
+#define F_MINIGAME_FISH_FEINT_RATE_HARD 0.4f //Direction change per second while moving
+#define F_MINIGAME_FISH_START_PAUSE 1.0f     //Time given to the player at the start, fish stay at the center
+//Fish drift (slow sinus from the signal generator)
+#define F_MINIGAME_DRIFT_AMPLITUDE_MIN 3.0f
+#define F_MINIGAME_DRIFT_AMPLITUDE_MAX 10.0f
+#define F_MINIGAME_DRIFT_FREQ_MIN 0.15f
+#define F_MINIGAME_DRIFT_FREQ_MAX 0.5f
+#define F_MINIGAME_DRIFT_BUDGET_RATIO 0.25f //Max part of the velocity/acceleration budget used by the drift
 
 #define F_MINIGAME_SLIDER_ACCELERATION 600.0f
 #define F_MINIGAME_SLIDER_MAX_VELOCITY 200.0f
@@ -64,6 +89,8 @@
 
 #define F_COLLECTION_MAX_COL 2
 #define F_COLLECTION_MAX_ROW 3
+
+#define F_MINIGAME_DEBUG_SHOW_GRAPHS 0
 
 class Player;
 
@@ -149,7 +176,8 @@ private:
 
     FishInstance g_fishReward;
     float g_difficulty{0.0f};
-    std::function<float(float)> g_sinusFunction;
+    fge::SignalGeneratorF g_signalGenerator;
+    fge::SignalF g_fishTrajectory;
     float g_currentTime{0.0f};
     float g_fishRemainingTime{0.0f};
     std::array<fge::ObjSprite, F_MINIGAME_HEARTS_COUNT> g_hearts;

@@ -107,6 +107,13 @@ public:
         fge::texture::gManager.loadFromFile("arrows", "resources/sprites/arrows.png");
         fge::texture::gManager.loadFromFile("close_1", "resources/sprites/close_1.png");
 
+#if F_MINIGAME_DEBUG_SHOW_GRAPHS == 1
+        fge::texture::gManager.loadFromFile("close", "resources/window/close.png");
+        fge::texture::gManager.loadFromFile("minimize", "resources/window/minimize.png");
+        fge::texture::gManager.loadFromFile("resize", "resources/window/resize.png");
+        fge::texture::gManager.loadFromFile("window", "resources/window/window.png");
+#endif
+
         //Load animations
         fge::anim::gManager.loadFromFile("human_1", "resources/sprites/human_1.json");
         fge::anim::gManager.loadFromFile("ducky_1", "resources/sprites/ducky_1.json");

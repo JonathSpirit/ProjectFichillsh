@@ -3,8 +3,17 @@
 #include "FastEngine/C_random.hpp"
 #include "FastEngine/accessor/C_audio.hpp"
 #include "FastEngine/manager/audio_manager.hpp"
+
+#if F_MINIGAME_DEBUG_SHOW_GRAPHS == 1
+    #include "FastEngine/extensions/C_objChart.hpp"
+    #include "FastEngine/object/C_objWindow.hpp"
+#endif
+
 #include "fish.hpp"
+#include <algorithm>
+#include <cmath>
 #include <iostream>
+#include <vector>
 
 //GameHandler
 
@@ -221,6 +230,221 @@ bool GameHandler::isPlayerCollectionOpen() const
 
 std::unique_ptr<GameHandler> gGameHandler;
 
+//Fish trajectory generation
+
+namespace
+{
+
+//Parameters of the fish movement, all derived from the normalized difficulty [0, 1]
+struct FishMotionParams
+{
+    float _maxVelocity;      //Maximum speed of the target movement (without the drift)
+    float _maxAcceleration;  //Maximum acceleration of the target movement (without the drift)
+    float _pauseMin;         //Minimum pause between 2 movements
+    float _pauseMax;         //Maximum pause between 2 movements
+    float _jumpMin;          //Minimum distance of a movement
+    float _jumpMax;          //Maximum distance of a movement
+    float _speedRatioMin;    //A movement use a random speed between _speedRatioMin*_maxVelocity and _maxVelocity
+    float _feintRate;        //Average number of direction change per second while moving
+};
+
+inline float ApproachValue(float current, float target, float maxStep)
+{
+    if (current < target)
+    {
+        return std::min(current + maxStep, target);
+    }
+    return std::max(current - maxStep, target);
+}
+
+//Pick a new target from the current position, respecting the jump distance and the bounds
+float PickFishTarget(float position, FishMotionParams const& params, float lower, float upper)
+{
+    float const roomUp = upper - position;
+    float const roomDown = position - lower;
+
+    bool goUp = fge::_random.range(0, 1) == 1;
+    if (goUp && roomUp < params._jumpMin && roomDown > roomUp)
+    {
+        goUp = false;
+    }
+    else if (!goUp && roomDown < params._jumpMin && roomUp > roomDown)
+    {
+        goUp = true;
+    }
+
+    float const room = goUp ? roomUp : roomDown;
+    float const maxJump = std::min(params._jumpMax, room);
+    float const minJump = std::min(params._jumpMin, maxJump);
+    float const jump = fge::_random.range(minJump, maxJump);
+
+    return std::clamp(goUp ? position + jump : position - jump, lower, upper);
+}
+
+//Generate a trajectory that respect, by construction, the max velocity and acceleration.
+//The fish move from target to target with pauses, and can change its direction while moving (feint).
+fge::SignalF GenerateFishMotion(FishMotionParams const& params,
+                                float lower,
+                                float upper,
+                                float startPause,
+                                float duration,
+                                float sampleInterval)
+{
+    auto const count = static_cast<std::size_t>(std::ceil(duration / sampleInterval)) + 1;
+
+    fge::SignalF signal;
+    signal.reserve(count);
+
+    float const maxVelocityStep = params._maxAcceleration * sampleInterval;
+    float position = std::clamp(0.0f, lower, upper);
+    float velocity = 0.0f;
+    float target = position;
+    float speedLimit = 0.0f;
+    float pause = startPause;
+    bool moving = false;
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        signal.addSample(static_cast<float>(i) * sampleInterval, position);
+
+        if (!moving)
+        {
+            velocity = ApproachValue(velocity, 0.0f, maxVelocityStep);
+            pause -= sampleInterval;
+            if (pause <= 0.0f && velocity == 0.0f)
+            {
+                target = PickFishTarget(position, params, lower, upper);
+                speedLimit = params._maxVelocity * fge::_random.range(params._speedRatioMin, 1.0f);
+                moving = true;
+            }
+        }
+        else
+        {
+            //Feint: change the target while moving, the acceleration limit is still respected
+            if (fge::_random.range(0.0f, 1.0f) < params._feintRate * sampleInterval)
+            {
+                target = PickFishTarget(position, params, lower, upper);
+            }
+
+            float const distance = target - position;
+
+            if (std::abs(distance) < 1.0f && std::abs(velocity) <= maxVelocityStep)
+            { //Target reached
+                velocity = 0.0f;
+                moving = false;
+                pause = fge::_random.range(params._pauseMin, params._pauseMax);
+            }
+            else
+            {
+                //Desired velocity: the max speed, reduced in order to be able to brake before the target.
+                //The braking speed is computed for discrete steps (velocity reduced by maxVelocityStep per sample),
+                //so the fish never overshoot its target.
+                float const brakingSteps =
+                        (std::sqrt(1.0f + 8.0f * std::abs(distance) / (sampleInterval * maxVelocityStep)) - 1.0f) /
+                        2.0f;
+                float const brakingSpeed = brakingSteps * maxVelocityStep;
+                float const desiredVelocity = std::copysign(std::min(speedLimit, brakingSpeed), distance);
+
+                velocity = ApproachValue(velocity, desiredVelocity, maxVelocityStep);
+            }
+        }
+
+        position = std::clamp(position + velocity * sampleInterval, lower, upper);
+    }
+
+    return signal;
+}
+
+//Build the full fish trajectory from the normalized difficulty [0, 1].
+//The fish velocity and acceleration never exceed a ratio of the slider capacity (see F_MINIGAME_FISH_*_RATIO_*),
+//so the trajectory is always followable, and nothing has to be limited/scaled afterward.
+fge::SignalF GenerateFishTrajectory(float difficultyRatio,
+                                    float gaugeHalfSize,
+                                    fge::SignalGeneratorF& driftGenerator,
+                                    fge::SignalF* motionOnly = nullptr)
+{
+    float const d = std::clamp(difficultyRatio, 0.0f, 1.0f);
+    float const gaugeSize = gaugeHalfSize * 2.0f;
+    float const twoPi = 2.0f * static_cast<float>(FGE_MATH_PI);
+
+    //Total budget of the fish
+    float const maxVelocity = F_MINIGAME_SLIDER_MAX_VELOCITY *
+                              std::lerp(F_MINIGAME_FISH_VELOCITY_RATIO_MIN, F_MINIGAME_FISH_VELOCITY_RATIO_MAX, d);
+    float const maxAcceleration = F_MINIGAME_SLIDER_ACCELERATION *
+                                  std::lerp(F_MINIGAME_FISH_ACCELERATION_RATIO_MIN, F_MINIGAME_FISH_ACCELERATION_RATIO_MAX, d);
+
+    //Drift: some slow sinus from the signal generator, so the fish is never completely static.
+    //Its worst case velocity/acceleration are reserved from the budget.
+    float const driftOmegaMax = twoPi * F_MINIGAME_DRIFT_FREQ_MAX;
+    float const driftAmplitude =
+            std::min({std::lerp(F_MINIGAME_DRIFT_AMPLITUDE_MIN, F_MINIGAME_DRIFT_AMPLITUDE_MAX, d),
+                      F_MINIGAME_DRIFT_BUDGET_RATIO * maxVelocity / driftOmegaMax,
+                      F_MINIGAME_DRIFT_BUDGET_RATIO * maxAcceleration / (driftOmegaMax * driftOmegaMax)});
+
+    auto const driftQuantity = static_cast<std::size_t>(
+            std::round(std::lerp(F_MINIGAME_SINUS_QUANTITY_MIN, F_MINIGAME_SINUS_QUANTITY_MAX, d)));
+
+    std::vector<float> driftWeights(driftQuantity);
+    float driftWeightsSum = 0.0f;
+    for (auto& weight: driftWeights)
+    {
+        weight = fge::_random.range(0.5f, 1.0f);
+        driftWeightsSum += weight;
+    }
+
+    driftGenerator.clearWaves();
+    float driftVelocity = 0.0f;
+    float driftAcceleration = 0.0f;
+    for (std::size_t i = 0; i < driftQuantity; ++i)
+    {
+        float const amplitude = driftAmplitude * driftWeights[i] / driftWeightsSum;
+        float const frequency = fge::_random.range(F_MINIGAME_DRIFT_FREQ_MIN, F_MINIGAME_DRIFT_FREQ_MAX);
+        float const phase = fge::_random.range(0.0f, 360.0f);
+        float const omega = twoPi * frequency;
+
+        driftVelocity += omega * amplitude;
+        driftAcceleration += omega * omega * amplitude;
+
+        driftGenerator.addWave(fge::SignalGeneratorF::Wave{fge::SignalGeneratorF::WaveTypes::WAVE_SINUSOID, amplitude,
+                                                           frequency, phase, 0.5f, 0.0f});
+    }
+
+    //Target movement, it gets the remaining budget
+    FishMotionParams params{};
+    params._maxVelocity = maxVelocity - driftVelocity;
+    params._maxAcceleration = maxAcceleration - driftAcceleration;
+    params._pauseMin = std::lerp(F_MINIGAME_FISH_PAUSE_MIN_EASY, F_MINIGAME_FISH_PAUSE_MIN_HARD, d);
+    params._pauseMax = std::lerp(F_MINIGAME_FISH_PAUSE_MAX_EASY, F_MINIGAME_FISH_PAUSE_MAX_HARD, d);
+    params._jumpMin = gaugeSize * std::lerp(F_MINIGAME_FISH_JUMP_MIN_EASY, F_MINIGAME_FISH_JUMP_MIN_HARD, d);
+    params._jumpMax = gaugeSize * std::lerp(F_MINIGAME_FISH_JUMP_MAX_EASY, F_MINIGAME_FISH_JUMP_MAX_HARD, d);
+    params._speedRatioMin = std::lerp(F_MINIGAME_FISH_SPEED_RATIO_MIN_EASY, F_MINIGAME_FISH_SPEED_RATIO_MIN_HARD, d);
+    params._feintRate = std::lerp(F_MINIGAME_FISH_FEINT_RATE_EASY, F_MINIGAME_FISH_FEINT_RATE_HARD, d);
+
+    std::cout << "Fish motion: difficulty " << d << " velocity " << params._maxVelocity << " (+drift "
+              << driftVelocity << ") acceleration " << params._maxAcceleration << " (+drift " << driftAcceleration
+              << ") drift amplitude " << driftAmplitude << " (" << driftQuantity << " waves)" << std::endl;
+
+    //The drift amplitude is kept as a margin so the final trajectory never leaves the gauge
+    auto const motion = GenerateFishMotion(params, -gaugeHalfSize + driftAmplitude, gaugeHalfSize - driftAmplitude,
+                                           F_MINIGAME_FISH_START_PAUSE, F_MINIGAME_TIME_MAX * 2.0f,
+                                           F_MINIGAME_TIME_DELTA);
+
+    fge::SignalF trajectory;
+    trajectory.reserve(motion.getSamples().size());
+    for (auto const& sample: motion.getSamples())
+    {
+        trajectory.addSample(sample.x, sample.y + driftGenerator.getValue(sample.x));
+    }
+
+    if (motionOnly != nullptr)
+    {
+        *motionOnly = fge::SignalF{motion};
+    }
+    return trajectory;
+}
+
+} // namespace
+
 //Minigame
 
 FGE_OBJ_UPDATE_BODY(Minigame)
@@ -367,7 +591,7 @@ FGE_OBJ_UPDATE_BODY(Minigame)
     }
 
     //Update fish position
-    auto const posy = this->g_sinusFunction(this->g_currentTime);
+    auto const posy = this->g_fishTrajectory.getValue(this->g_currentTime);
     this->g_fish.setPosition({this->g_gauge.getPosition().x + posXeffect, posy});
 }
 
@@ -477,7 +701,7 @@ void Minigame::first(fge::Scene& scene)
         this->g_difficulty += F_MINIGAME_DIFFICULTY_RARITY_RARE;
         break;
     }
-    this->g_difficulty *= static_cast<float>(this->g_fishReward._starCount);
+    this->g_difficulty += static_cast<float>(this->g_fishReward._starCount) * F_MINIGAME_DIFFICULTY_STAR_MULTIPLIER;
     this->g_difficulty += fge::_random.range(0.0f, F_MINIGAME_DIFFICULTY_RANDOM_VARIATION);
 
     //Setup hearts
@@ -494,35 +718,60 @@ void Minigame::first(fge::Scene& scene)
                                                   F_MINIGAME_DIFFICULTY_MAX, F_MINIGAME_TIME_MIN, F_MINIGAME_TIME_MAX);
 
     //Generate fish positions
-    auto sinusQuantity = static_cast<std::size_t>(
-            std::round(fge::ConvertRange(this->g_difficulty, F_MINIGAME_DIFFICULTY_START, F_MINIGAME_DIFFICULTY_MAX,
-                                         F_MINIGAME_SINUS_QUANTITY_MIN, F_MINIGAME_SINUS_QUANTITY_MAX)));
+    auto const difficultyRatio = fge::ConvertRange(this->g_difficulty, F_MINIGAME_DIFFICULTY_START,
+                                                   F_MINIGAME_DIFFICULTY_MAX, 0.0f, 1.0f);
+    fge::SignalF origin; //Target movement only, without the drift (debug)
+    this->g_fishTrajectory = GenerateFishTrajectory(difficultyRatio, this->g_gauge.getSize().y / 2.0f,
+                                                    this->g_signalGenerator, &origin);
 
-    std::vector<float> sinusValues(sinusQuantity, 0.0f);
-    std::vector<float> sinusOffset(sinusQuantity, 0.0f);
-    for (std::size_t i = 0; i < sinusValues.size(); ++i)
-    {
-        auto frequency = fge::ConvertRange(this->g_difficulty, F_MINIGAME_DIFFICULTY_START, F_MINIGAME_DIFFICULTY_MAX,
-                                           F_MINIGAME_SINUS_FREQ_MIN, F_MINIGAME_SINUS_FREQ_MAX);
-        frequency += fge::_random.range(-F_MINIGAME_SINUS_FREQ_VARIATION, F_MINIGAME_SINUS_FREQ_VARIATION);
+#if F_MINIGAME_DEBUG_SHOW_GRAPHS == 1
+    //Create a window containing a chart that fill it
+    auto const createChart = [&](fge::Vector2f const& position, fge::Vector2f const& size, fge::Color color) {
+        auto* objWindow = scene.newObject<fge::ObjWindow>({FGE_SCENE_PLAN_HIGH_TOP});
+        objWindow->setTextureClose("close");
+        objWindow->setTextureMinimize("minimize");
+        objWindow->setTextureResize("resize");
+        objWindow->setTexture("window");
+        objWindow->setSize(size);
+        objWindow->setPosition(position);
+        objWindow->showExitButton(false);
 
-        sinusValues[i] = 2.0f * static_cast<float>(FGE_MATH_PI) * frequency;
-        sinusOffset[i] = fge::_random.range(0.0f, 30.0f);
-
-        std::cout << "Sinus " << i << ": frequency: " << frequency << " offset: " << sinusOffset[i] << std::endl;
-    }
-
-    this->g_sinusFunction = [sinusValues, sinusQuantity, sinusOffset, this](float const time) {
-        float value = 0.0f;
-        for (std::size_t i = 0; i < sinusValues.size(); ++i)
-        {
-            value += std::sin((time + sinusOffset[i]) * sinusValues[i]) * (1.0f / static_cast<float>(sinusQuantity));
-        }
-        return value * this->g_gauge.getSize().y / 2.0f + this->g_gauge.getPosition().y / 2.0f;
+        auto* objChart = objWindow->_windowScene.newObject<fge::ObjChartF>();
+        objChart->setFont("default");
+        objChart->setDynamicSize(
+                {{0.0f, 0.0f}, {fge::DynamicSize::SizeModes::SIZE_AUTO, fge::DynamicSize::SizeModes::SIZE_AUTO}});
+        objChart->setPointSize(3.0f);
+        objChart->setDefaultPointColor(color);
+        objChart->setLineColor(color);
+        return objChart;
     };
+#endif
+
+#if F_MINIGAME_DEBUG_SHOW_GRAPHS == 1
+    {
+        fge::ObjectContainer container;
+        scene.getAllObj_ByClass(FGE_OBJWINDOW_CLASSNAME, container);
+        for (auto const& obj: container)
+        {
+            scene.delObject(obj->getSid());
+        }
+        auto const fishSpeed = this->g_fishTrajectory.derivative();
+        auto const fishAcceleration = fishSpeed.derivative();
+
+        auto* objChart = createChart({100.0f, 100.0f}, {600.0f, 400.0f}, fge::Color::Blue);
+        objChart->setPoints(this->g_fishTrajectory.getSamples());
+
+        objChart = createChart({110.0f, 110.0f}, {600.0f, 400.0f}, fge::Color::Red);
+        objChart->setPoints(origin.getSamples());
+        objChart = createChart({110.0f, 110.0f}, {600.0f, 400.0f}, fge::Color::Yellow);
+        objChart->setPoints(fishAcceleration.getSamples());
+        objChart = createChart({110.0f, 110.0f}, {600.0f, 400.0f}, fge::Color::Cyan);
+        objChart->setPoints(fishSpeed.getSamples());
+    }
+#endif
 
     auto target = scene.getLinkedRenderTarget();
-    this->setPosition({target->getSize().x / 2.0f, target->getSize().y / 2.0f});
+    this->setPosition({static_cast<float>(target->getSize().x) / 2.0f, static_cast<float>(target->getSize().y) / 2.0f});
 
     if (auto obj = scene.getFirstObj_ByTag("topMap"))
     {
