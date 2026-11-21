@@ -3,3 +3,6 @@ cmake-build*/
 *build*/
 */*.tiled-session
 install/
+fgeDeploy.exe
+install-deploy/
+dist/
