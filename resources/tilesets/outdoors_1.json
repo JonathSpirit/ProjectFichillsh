@@ -666,6 +666,30 @@
          "animation":[
                 {
                  "duration":200,
+                 "tileid":110
+                }, 
+                {
+                 "duration":200,
+                 "tileid":104
+                }, 
+                {
+                 "duration":500,
+                 "tileid":89
+                }, 
+                {
+                 "duration":200,
+                 "tileid":104
+                }, 
+                {
+                 "duration":200,
+                 "tileid":110
+                }],
+         "id":110
+        }, 
+        {
+         "animation":[
+                {
+                 "duration":200,
                  "tileid":120
                 }, 
                 {
@@ -802,6 +826,78 @@
              "x":0,
              "y":0
             }
+        }, 
+        {
+         "animation":[
+                {
+                 "duration":200,
+                 "tileid":123
+                }, 
+                {
+                 "duration":200,
+                 "tileid":132
+                }, 
+                {
+                 "duration":500,
+                 "tileid":117
+                }, 
+                {
+                 "duration":200,
+                 "tileid":132
+                }, 
+                {
+                 "duration":200,
+                 "tileid":123
+                }],
+         "id":123
+        }, 
+        {
+         "animation":[
+                {
+                 "duration":200,
+                 "tileid":124
+                }, 
+                {
+                 "duration":200,
+                 "tileid":133
+                }, 
+                {
+                 "duration":500,
+                 "tileid":118
+                }, 
+                {
+                 "duration":200,
+                 "tileid":133
+                }, 
+                {
+                 "duration":200,
+                 "tileid":124
+                }],
+         "id":124
+        }, 
+        {
+         "animation":[
+                {
+                 "duration":200,
+                 "tileid":125
+                }, 
+                {
+                 "duration":200,
+                 "tileid":134
+                }, 
+                {
+                 "duration":500,
+                 "tileid":119
+                }, 
+                {
+                 "duration":200,
+                 "tileid":134
+                }, 
+                {
+                 "duration":200,
+                 "tileid":125
+                }],
+         "id":125
         }],
  "tilewidth":16,
  "type":"tileset",
