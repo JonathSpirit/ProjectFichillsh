@@ -55,6 +55,7 @@ target_sources(${PROJECT_CLIENT} PRIVATE client/main.cpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/game.cpp client/game.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/fish.cpp client/fish.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE client/ducky.cpp client/ducky.hpp)
+target_sources(${PROJECT_CLIENT} PRIVATE client/seller.cpp client/seller.hpp)
 
 target_sources(${PROJECT_CLIENT} PRIVATE share/network.hpp)
 target_sources(${PROJECT_CLIENT} PRIVATE share/player.cpp share/player.hpp)

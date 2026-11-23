@@ -120,7 +120,7 @@ private:
     fge::ObjectDataWeak g_player;
 };
 
-class Player : public fge::Object, public fge::Subscriber
+class Player : public fge::Object, public fge::Subscriber, public fge::CommandHandler
 {
 public:
     enum class States : uint8_t
@@ -135,6 +135,7 @@ public:
     using Stats_t = std::underlying_type_t<States>;
 
     Player() = default;
+    Player(Player const& player);
     ~Player() override = default;
 
     FGE_OBJ_UPDATE_DECLARE
@@ -188,6 +189,8 @@ private:
     States g_state = States::WALKING;
     States g_serverState = States::WALKING;
     fge::ObjectDataWeak g_fishBait;
+    fge::ObjectDataWeak g_actionable;
+    bool g_actionableFlag{false};
     fge::Vector2i g_direction{0, 1};
     fge::Vector2f g_serverPosition;
     std::vector<float> g_transitionYPoints;

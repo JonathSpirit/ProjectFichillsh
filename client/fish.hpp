@@ -7,6 +7,14 @@
 #define F_FISH_FORCE_FISH 0
 #define F_FISH_FORCE_FISHNAME "duck-fish" // Set the fish to give in minigame when F_FISH_FORCE_FISH is 1
 
+#define F_FISH_RARITY_COMMON_VALUE 10.0f
+#define F_FISH_RARITY_UNCOMMON_VALUE 25.0f
+#define F_FISH_RARITY_RARE_VALUE 50.0f
+#define F_FISH_WEIGHT_MIN_VALUE 1.0f
+#define F_FISH_WEIGHT_MAX_VALUE 10.0f
+#define F_FISH_LENGTH_MIN_VALUE 1.0f
+#define F_FISH_LENGTH_MAX_VALUE 10.0f
+
 struct FishData
 {
     enum class Rarity
@@ -54,6 +62,8 @@ public:
 
     std::string const& getRandomFishName() const;
     [[nodiscard]] FishInstance generateRandomFish() const;
+
+    [[nodiscard]] std::optional<float> retrieveMoneyValue(FishInstance const& instance) const;
 };
 
 extern FishManager gFishManager;

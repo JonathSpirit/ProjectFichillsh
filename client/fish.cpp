@@ -1,5 +1,6 @@
 #include "fish.hpp"
 #include "FastEngine/C_random.hpp"
+#include "FastEngine/extra/extra_function.hpp"
 #include "FastEngine/manager/texture_manager.hpp"
 
 bool FishManager::initialize()
@@ -114,6 +115,38 @@ FishInstance FishManager::generateRandomFish() const
     }
 
     return fishInstance;
+}
+
+std::optional<float> FishManager::retrieveMoneyValue(FishInstance const& instance) const
+{
+    auto fishData = this->getElement(instance._name);
+    if (!fishData || !fishData->_valid)
+    {
+        return std::nullopt;
+    }
+
+    float result = 0.0f;
+
+    switch (fishData->_ptr->_rarity)
+    {
+    case FishData::Rarity::COMMON:
+        result += F_FISH_RARITY_COMMON_VALUE;
+        break;
+    case FishData::Rarity::UNCOMMON:
+        result += F_FISH_RARITY_UNCOMMON_VALUE;
+        break;
+    case FishData::Rarity::RARE:
+        result += F_FISH_RARITY_RARE_VALUE;
+        break;
+    }
+
+    result += fge::ConvertRange(instance._weight, fishData->_ptr->_weightMin, fishData->_ptr->_weightMax,
+                                F_FISH_WEIGHT_MIN_VALUE, F_FISH_WEIGHT_MAX_VALUE);
+    result += fge::ConvertRange(instance._length, fishData->_ptr->_lengthMin, fishData->_ptr->_lengthMax,
+                                F_FISH_LENGTH_MIN_VALUE, F_FISH_LENGTH_MAX_VALUE);
+    result += static_cast<float>(instance._starCount) * 4.0f;
+
+    return std::round(result);
 }
 
 void to_json(nlohmann::json& j, FishInstance const& p)

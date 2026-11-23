@@ -45,8 +45,8 @@
 #define F_MINIGAME_DIFFICULTY_STAR_MULTIPLIER 5.0f
 #define F_MINIGAME_DIFFICULTY_RANDOM_VARIATION 10.0f
 #define F_MINIGAME_DIFFICULTY_MAX                                                                                      \
-    (F_MINIGAME_DIFFICULTY_START + F_MINIGAME_DIFFICULTY_RARITY_RARE + F_FISH_STAR_MAX * F_MINIGAME_DIFFICULTY_STAR_MULTIPLIER +                               \
-     F_MINIGAME_DIFFICULTY_RANDOM_VARIATION)
+    (F_MINIGAME_DIFFICULTY_START + F_MINIGAME_DIFFICULTY_RARITY_RARE +                                                 \
+     F_FISH_STAR_MAX * F_MINIGAME_DIFFICULTY_STAR_MULTIPLIER + F_MINIGAME_DIFFICULTY_RANDOM_VARIATION)
 #define F_MINIGAME_TIME_MAX 16.0f
 #define F_MINIGAME_TIME_MIN 10.0f
 #define F_MINIGAME_TIME_DELTA 0.01f
@@ -130,6 +130,9 @@ public:
     using NewRecords_t = std::underlying_type_t<NewRecords>;
     NewRecords_t addFishToPlayerCollection(FishInstance const& fish);
 
+    void sellAllFishes(fge::Vector2f const& sellerPosition);
+    void addMoney(float money);
+
     void openPlayerCollection();
     void closePlayerCollection();
     [[nodiscard]] bool isPlayerCollectionOpen() const;
@@ -141,6 +144,8 @@ private:
     fge::net::ClientSideNetUdp* g_network;
     unsigned int g_fishCountDown = 0;
     FishCollectionData g_fishPlayerCollection;
+    std::vector<FishInstance> g_caughtFishes;
+    float g_money{0.0f};
 };
 
 extern std::unique_ptr<GameHandler> gGameHandler;
@@ -195,6 +200,48 @@ private:
     uint32_t g_unicodeKeyToPress = 0;
 
     float g_sliderVelocity = 0.0f;
+};
+
+class SellingFish : public fge::Object
+{
+public:
+    SellingFish() = default;
+    SellingFish(FishInstance const& instance,
+                fge::Vector2f const& startPosition,
+                float timeStart,
+                fge::Vector2f const& endPosition);
+    ~SellingFish() override = default;
+
+    FGE_OBJ_UPDATE_DECLARE
+    FGE_OBJ_DRAW_DECLARE
+
+    void first(fge::Scene& scene) override;
+
+    void callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) override;
+
+    char const* getClassName() const override;
+    char const* getReadableClassName() const override;
+
+    [[nodiscard]] fge::RectFloat getGlobalBounds() const override;
+    [[nodiscard]] fge::RectFloat getLocalBounds() const override;
+
+private:
+    FishInstance g_fishInstance;
+    fge::ObjSprite g_fish;
+    fge::ObjText g_moneyText;
+    fge::Vector2f g_endPosition;
+    fge::Vector2f g_startPosition;
+    float g_timeStart{0.0f};
+    float g_time{0.0f};
+    float g_fishValue{0.0f};
+    uint8_t g_alpha{0};
+    enum class States
+    {
+        IDLE_HIDDEN,
+        MOVING,
+        HIDING,
+        MONEY_TEXT
+    } g_state = States::IDLE_HIDDEN;
 };
 
 class FishAward : public fge::Object

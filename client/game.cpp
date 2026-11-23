@@ -134,6 +134,12 @@ bool GameHandler::loadPlayerCollectionFromFile()
 
     for (auto const& [name, instance]: jsonFish.items())
     {
+        if (name == "money")
+        {
+            //TODO: separate into an json array instead
+            continue;
+        }
+
         auto const fishInstance = instance.get<FishInstance>();
         this->g_fishPlayerCollection[name] = fishInstance;
         if (name != fishInstance._name)
@@ -141,6 +147,8 @@ bool GameHandler::loadPlayerCollectionFromFile()
             return false;
         }
     }
+
+    this->g_money = jsonFish.value("money", 0.0f);
 
     return true;
 }
@@ -153,6 +161,8 @@ void GameHandler::savePlayerCollectionToFile() const
         jsonFish[name] = instance;
     }
 
+    jsonFish["money"] = this->g_money;
+
     fge::SaveJsonToFile(F_COLLECTION_FILE, jsonFish);
 }
 GameHandler::FishCollectionData const& GameHandler::getFishPlayerCollection() const
@@ -161,6 +171,8 @@ GameHandler::FishCollectionData const& GameHandler::getFishPlayerCollection() co
 }
 GameHandler::NewRecords_t GameHandler::addFishToPlayerCollection(FishInstance const& fish)
 {
+    this->g_caughtFishes.push_back(fish);
+
     auto const it = this->g_fishPlayerCollection.find(fish._name);
     if (it == this->g_fishPlayerCollection.end())
     {
@@ -196,6 +208,23 @@ GameHandler::NewRecords_t GameHandler::addFishToPlayerCollection(FishInstance co
         this->savePlayerCollectionToFile();
     }
     return newRecords;
+}
+
+void GameHandler::sellAllFishes(fge::Vector2f const& sellerPosition)
+{
+    float time = 0.0f;
+    auto const startPosition = this->getPlayer()->getPosition();
+
+    for (auto const& instance: this->g_caughtFishes)
+    {
+        this->g_scene->newObject<SellingFish>(instance, startPosition, time, sellerPosition);
+        time += 0.2f;
+    }
+    this->g_caughtFishes.clear();
+}
+void GameHandler::addMoney(float money)
+{
+    this->g_money += money;
 }
 
 void GameHandler::openPlayerCollection()
@@ -238,14 +267,14 @@ namespace
 //Parameters of the fish movement, all derived from the normalized difficulty [0, 1]
 struct FishMotionParams
 {
-    float _maxVelocity;      //Maximum speed of the target movement (without the drift)
-    float _maxAcceleration;  //Maximum acceleration of the target movement (without the drift)
-    float _pauseMin;         //Minimum pause between 2 movements
-    float _pauseMax;         //Maximum pause between 2 movements
-    float _jumpMin;          //Minimum distance of a movement
-    float _jumpMax;          //Maximum distance of a movement
-    float _speedRatioMin;    //A movement use a random speed between _speedRatioMin*_maxVelocity and _maxVelocity
-    float _feintRate;        //Average number of direction change per second while moving
+    float _maxVelocity;     //Maximum speed of the target movement (without the drift)
+    float _maxAcceleration; //Maximum acceleration of the target movement (without the drift)
+    float _pauseMin;        //Minimum pause between 2 movements
+    float _pauseMax;        //Maximum pause between 2 movements
+    float _jumpMin;         //Minimum distance of a movement
+    float _jumpMax;         //Maximum distance of a movement
+    float _speedRatioMin;   //A movement use a random speed between _speedRatioMin*_maxVelocity and _maxVelocity
+    float _feintRate;       //Average number of direction change per second while moving
 };
 
 inline float ApproachValue(float current, float target, float maxStep)
@@ -370,8 +399,8 @@ fge::SignalF GenerateFishTrajectory(float difficultyRatio,
     //Total budget of the fish
     float const maxVelocity = F_MINIGAME_SLIDER_MAX_VELOCITY *
                               std::lerp(F_MINIGAME_FISH_VELOCITY_RATIO_MIN, F_MINIGAME_FISH_VELOCITY_RATIO_MAX, d);
-    float const maxAcceleration = F_MINIGAME_SLIDER_ACCELERATION *
-                                  std::lerp(F_MINIGAME_FISH_ACCELERATION_RATIO_MIN, F_MINIGAME_FISH_ACCELERATION_RATIO_MAX, d);
+    float const maxAcceleration = F_MINIGAME_SLIDER_ACCELERATION * std::lerp(F_MINIGAME_FISH_ACCELERATION_RATIO_MIN,
+                                                                             F_MINIGAME_FISH_ACCELERATION_RATIO_MAX, d);
 
     //Drift: some slow sinus from the signal generator, so the fish is never completely static.
     //Its worst case velocity/acceleration are reserved from the budget.
@@ -420,14 +449,14 @@ fge::SignalF GenerateFishTrajectory(float difficultyRatio,
     params._speedRatioMin = std::lerp(F_MINIGAME_FISH_SPEED_RATIO_MIN_EASY, F_MINIGAME_FISH_SPEED_RATIO_MIN_HARD, d);
     params._feintRate = std::lerp(F_MINIGAME_FISH_FEINT_RATE_EASY, F_MINIGAME_FISH_FEINT_RATE_HARD, d);
 
-    std::cout << "Fish motion: difficulty " << d << " velocity " << params._maxVelocity << " (+drift "
-              << driftVelocity << ") acceleration " << params._maxAcceleration << " (+drift " << driftAcceleration
+    std::cout << "Fish motion: difficulty " << d << " velocity " << params._maxVelocity << " (+drift " << driftVelocity
+              << ") acceleration " << params._maxAcceleration << " (+drift " << driftAcceleration
               << ") drift amplitude " << driftAmplitude << " (" << driftQuantity << " waves)" << std::endl;
 
     //The drift amplitude is kept as a margin so the final trajectory never leaves the gauge
-    auto const motion = GenerateFishMotion(params, -gaugeHalfSize + driftAmplitude, gaugeHalfSize - driftAmplitude,
-                                           F_MINIGAME_FISH_START_PAUSE, F_MINIGAME_TIME_MAX * 2.0f,
-                                           F_MINIGAME_TIME_DELTA);
+    auto const motion =
+            GenerateFishMotion(params, -gaugeHalfSize + driftAmplitude, gaugeHalfSize - driftAmplitude,
+                               F_MINIGAME_FISH_START_PAUSE, F_MINIGAME_TIME_MAX * 2.0f, F_MINIGAME_TIME_DELTA);
 
     fge::SignalF trajectory;
     trajectory.reserve(motion.getSamples().size());
@@ -718,11 +747,11 @@ void Minigame::first(fge::Scene& scene)
                                                   F_MINIGAME_DIFFICULTY_MAX, F_MINIGAME_TIME_MIN, F_MINIGAME_TIME_MAX);
 
     //Generate fish positions
-    auto const difficultyRatio = fge::ConvertRange(this->g_difficulty, F_MINIGAME_DIFFICULTY_START,
-                                                   F_MINIGAME_DIFFICULTY_MAX, 0.0f, 1.0f);
+    auto const difficultyRatio =
+            fge::ConvertRange(this->g_difficulty, F_MINIGAME_DIFFICULTY_START, F_MINIGAME_DIFFICULTY_MAX, 0.0f, 1.0f);
     fge::SignalF origin; //Target movement only, without the drift (debug)
-    this->g_fishTrajectory = GenerateFishTrajectory(difficultyRatio, this->g_gauge.getSize().y / 2.0f,
-                                                    this->g_signalGenerator, &origin);
+    this->g_fishTrajectory =
+            GenerateFishTrajectory(difficultyRatio, this->g_gauge.getSize().y / 2.0f, this->g_signalGenerator, &origin);
 
 #if F_MINIGAME_DEBUG_SHOW_GRAPHS == 1
     //Create a window containing a chart that fill it
@@ -812,6 +841,129 @@ fge::RectFloat Minigame::getGlobalBounds() const
 }
 
 fge::RectFloat Minigame::getLocalBounds() const
+{
+    return Object::getLocalBounds();
+}
+
+//SellingFish
+
+SellingFish::SellingFish(FishInstance const& instance,
+                         fge::Vector2f const& startPosition,
+                         float timeStart,
+                         fge::Vector2f const& endPosition)
+{
+    this->g_fishInstance = instance;
+    this->g_startPosition = startPosition;
+    this->g_endPosition = endPosition + fge::_random.rangeVec2(-8.0f, 8.0f, -8.0f, 8.0f);
+    this->g_timeStart = timeStart;
+
+    auto const fish = gFishManager.getElement(this->g_fishInstance._name);
+    this->g_fish.setTexture(fish->_ptr->_textureName);
+    this->g_fish.setTextureRect(fish->_ptr->_textureRect);
+    this->g_fish.scale(0.3f);
+    this->g_fish.centerOriginFromLocalBounds();
+
+    if (fge::_random.range<unsigned int>(0, 1) ? true : false)
+    {
+        this->g_fish.flipHorizontal();
+    }
+
+    this->setPosition(startPosition);
+
+    this->g_fishValue = gFishManager.retrieveMoneyValue(this->g_fishInstance).value_or(0.0f);
+}
+
+void SellingFish::update(fge::RenderTarget& target,
+                         fge::Event& event,
+                         fge::DeltaTime const& deltaTime,
+                         fge::Scene& scene)
+{
+    auto const delta = fge::DurationToSecondFloat(deltaTime);
+
+    switch (this->g_state)
+    {
+    case States::IDLE_HIDDEN:
+        this->g_time += delta;
+        if (this->g_time >= this->g_timeStart)
+        {
+            this->g_state = States::MOVING;
+            this->_drawMode = DrawModes::DRAW_DEFAULT;
+        }
+        break;
+    case States::MOVING:
+        this->setPosition(fge::ReachVector(this->getPosition(), this->g_endPosition, 60.0f, delta));
+        if (this->getPosition() == this->g_endPosition)
+        {
+            this->g_alpha = std::numeric_limits<uint8_t>::max();
+            this->g_state = States::HIDING;
+        }
+        break;
+    case States::HIDING:
+        this->g_alpha = fge::ReachValue<uint8_t>(this->g_alpha, 0, 1.0f, delta);
+        this->g_fish.setColor(this->g_fish.getColor().setAlpha(this->g_alpha));
+        if (this->g_alpha == 0)
+        {
+            this->g_moneyText.setFont("default");
+            this->g_moneyText.setFillColor(fge::Color::Yellow);
+            this->g_moneyText.setOutlineColor(fge::Color::Black);
+            this->g_moneyText.setOutlineThickness(1);
+            this->g_moneyText.setString("+" + fge::string::ToStr(this->g_fishValue, 0, false) + "$");
+            this->g_moneyText.setScale(0.2f);
+            this->g_moneyText.centerOriginFromLocalBounds();
+            this->g_time = 0.0f;
+            gGameHandler->addMoney(this->g_fishValue);
+            this->g_state = States::MONEY_TEXT;
+        }
+        break;
+    case States::MONEY_TEXT:
+        this->g_moneyText.move({0.0f, -1.0f * delta});
+        this->g_time += delta;
+        if (this->g_time >= 3.0f)
+        {
+            scene.delUpdatedObject();
+        }
+        break;
+    }
+}
+
+void SellingFish::draw(fge::RenderTarget& target, fge::RenderStates const& states) const
+{
+    auto copyStates = states.copy();
+    copyStates._resTransform.set(target.requestGlobalTransform(*this, copyStates._resTransform));
+
+    if (this->g_state == States::MONEY_TEXT)
+    {
+        this->g_moneyText.draw(target, copyStates);
+    }
+    else
+    {
+        this->g_fish.draw(target, copyStates);
+    }
+}
+
+void SellingFish::first(fge::Scene& scene)
+{
+    this->_drawMode = DrawModes::DRAW_ALWAYS_HIDDEN;
+}
+
+void SellingFish::callbackRegister(fge::Event& event, fge::GuiElementHandler* guiElementHandlerPtr) {}
+
+char const* SellingFish::getClassName() const
+{
+    return "FISH_AWARD";
+}
+
+char const* SellingFish::getReadableClassName() const
+{
+    return "fish award";
+}
+
+fge::RectFloat SellingFish::getGlobalBounds() const
+{
+    return Object::getGlobalBounds();
+}
+
+fge::RectFloat SellingFish::getLocalBounds() const
 {
     return Object::getLocalBounds();
 }

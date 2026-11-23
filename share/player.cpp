@@ -414,6 +414,19 @@ FGE_OBJ_UPDATE_BODY(Player)
 
         if (event.isKeyPressed(SDLK_SPACE))
         {
+            if (auto actionable = this->g_actionable.lock())
+            {
+                if (!this->g_actionableFlag)
+                {
+                    this->g_actionableFlag = true;
+                    if (actionable->isClass("FISH_SELLER"))
+                    {
+                        gGameHandler->sellAllFishes(actionable->getObject()->getPosition());
+                    }
+                }
+                break;
+            }
+
             animationName = this->g_objAnim.getAnimation().getGroup()->_groupName;
             animationName = animationName.substr(animationName.find('_'));
             animationName = "rod" + animationName;
@@ -437,6 +450,10 @@ FGE_OBJ_UPDATE_BODY(Player)
                 this->g_audioWalking = nullptr;
             }
             break;
+        }
+        else
+        {
+            this->g_actionableFlag = false;
         }
 
         fge::Vector2i moveDirection{0, 0};
@@ -589,6 +606,11 @@ FGE_OBJ_DRAW_BODY(Player)
 }
 #endif //FGE_DEF_SERVER
 
+Player::Player(Player const& player) :
+        Object(player),
+        fge::CommandHandler()
+{}
+
 void Player::first(fge::Scene& scene)
 {
     this->g_objAnim.setAnimation(fge::Animation{"human_1", "idle_down"});
@@ -661,6 +683,20 @@ void Player::first(fge::Scene& scene)
     this->g_transitionPlan = tilemap->retrieveGeneratedTilelayerObject("DepthObjects")->getPlan();
     scene.setObjectPlan(this->_myObjectData.lock()->getSid(), this->g_transitionPlan);
 #endif
+
+    this->addCmd("actionable_set",
+                 fge::CommandStaticHelpers::newLambda(
+                         [this](fge::Object* caller, fge::Property const& args, fge::Scene* scene) -> fge::Property {
+        if (caller != nullptr)
+        {
+            this->g_actionable = caller->_myObjectData;
+        }
+        else
+        {
+            this->g_actionable.reset();
+        }
+        return {};
+    }));
 
     this->networkRegister();
 }

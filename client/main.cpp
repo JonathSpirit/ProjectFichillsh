@@ -16,6 +16,7 @@
 #include "ducky.hpp"
 #include "fish.hpp"
 #include "game.hpp"
+#include "seller.hpp"
 
 #include <iostream>
 #include <memory>
@@ -302,12 +303,16 @@ public:
         auto const specialObjects = tilemap->findLayerName("SpecialObjects")->get()->as<fge::ObjectGroupLayer>();
         objPlayer->boxMove(specialObjects->findObjectName("spawn")->_position);
 
-        //Load duckies
+        //Load duckies and sellers (should be one but who knows ...)
         for (auto const& object: specialObjects->getObjects())
         {
             if (object._name == "duckySpawn")
             {
                 this->newObject<Ducky>(object._position);
+            }
+            else if (object._name == "sellerSpawn")
+            {
+                this->newObject<Seller>(object._position);
             }
         }
 
@@ -529,6 +534,9 @@ public:
                 continue;
             }
         }
+
+        //Last saving
+        gGameHandler->savePlayerCollectionToFile();
 
         network.disconnect().wait();
         network.stop();
